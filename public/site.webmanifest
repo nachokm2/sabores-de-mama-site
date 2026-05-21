@@ -1,0 +1,26 @@
+{
+  "name": "Sabores de Mamá",
+  "short_name": "SaborMamá",
+  "description": "Comida casera hecha con amor. Pedidos por WhatsApp.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0A0604",
+  "theme_color": "#C8873A",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["food", "shopping"],
+  "lang": "es-CL"
+}

@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm install *)",
+      "Bash(npm run *)",
+      "Bash(ping -n 4 127.0.0.1)",
+      "Bash(curl -s -o nul -w \"%{http_code}\" http://localhost:5173)",
+      "WebFetch(domain:saboresdemama.com)",
+      "Bash(curl -L -o \"logo.jpg\" \"https://saboresdemama.com/wp-content/uploads/2025/06/cropped-cropped-Logo-sabores-de-mama-1.jpg\" -w \"logo.jpg: %{http_code} \\(%{size_download} bytes\\)\\\\n\" --silent)",
+      "Bash(curl -L -o \"hero-bg.png\" \"https://saboresdemama.com/wp-content/uploads/2025/06/hogar-dulce-hogar.png\" -w \"hero-bg.png: %{http_code} \\(%{size_download} bytes\\)\\\\n\" --silent)",
+      "Bash(wait)"
+    ]
+  }
+}

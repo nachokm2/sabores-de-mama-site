@@ -1,0 +1,12 @@
+User-agent: *
+Allow: /
+
+# Disallow admin paths (future backend)
+Disallow: /api/
+Disallow: /admin/
+Disallow: /_/
+
+Sitemap: https://saboresdemama.com/sitemap.xml
+
+# Crawl-delay for responsible bots
+Crawl-delay: 10
