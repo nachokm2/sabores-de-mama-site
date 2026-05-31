@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { SERVICES, DISH_CATEGORIES, DULCES_FAMILIAR, DULCES_SNACKS } from '../../data/menu'
 import SectionLabel from '../ui/SectionLabel'
-import { useWhatsApp } from '../../hooks/useWhatsApp'
+import { openChatBot } from '../../lib/openChatBot'
 import { useScrollReveal } from '../../hooks/useScrollAnimation'
 
 /* ── WhatsApp icon ───────────────────────────────────────────────────────────── */
@@ -75,10 +75,7 @@ function ServiceCard({ service, index }) {
 
         {/* CTA */}
         <motion.button
-          onClick={() => {
-            const url = `https://wa.me/${import.meta.env.VITE_WHATSAPP_NUMBER }?text=${encodeURIComponent(msg)}`
-            window.open(url, '_blank', 'noopener,noreferrer')
-          }}
+          onClick={openChatBot}
           className={`w-full flex items-center justify-center gap-2.5 py-3.5 rounded-xl text-sm font-semibold font-body transition-all duration-300 ${
             service.highlight
               ? 'bg-amber text-espresso hover:bg-gold shadow-[0_4px_20px_rgba(200,135,58,0.4)]'
