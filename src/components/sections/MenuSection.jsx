@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { SERVICES, DISH_CATEGORIES, DULCES_FAMILIAR, DULCES_SNACKS } from '../../data/menu'
+import { SERVICES, DISH_CATEGORIES, DULCES_FAMILIAR, DULCES_SNACKS, DISH_DESCRIPTIONS } from '../../data/menu'
 import SectionLabel from '../ui/SectionLabel'
 import { openChatBot } from '../../lib/openChatBot'
 import { useScrollReveal } from '../../hooks/useScrollAnimation'
@@ -134,12 +134,17 @@ function CategoryAccordion({ cat, index }) {
             <div className="px-4 md:px-5 pb-5 border-t border-white/8 pt-4">
               <div className="flex flex-wrap gap-2">
                 {cat.items.map((item) => (
-                  <span
-                    key={item}
-                    className="font-body text-ivory/70 text-xs bg-white/6 border border-white/10 px-3 py-1.5 rounded-full hover:border-amber/40 hover:text-amber transition-colors duration-200"
-                  >
-                    {item}
-                  </span>
+                  <div key={item} className="relative group/pill">
+                    <span className="font-body text-ivory/70 text-xs bg-white/6 border border-white/10 px-3 py-1.5 rounded-full hover:border-amber/40 hover:text-amber transition-colors duration-200 cursor-default block">
+                      {item}
+                    </span>
+                    {DISH_DESCRIPTIONS[item] && (
+                      <div className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-2.5 z-50 w-48 bg-bark border border-amber/25 rounded-xl px-3 py-2 text-center shadow-xl opacity-0 group-hover/pill:opacity-100 transition-opacity duration-200">
+                        <p className="font-body text-ivory/85 text-xs leading-snug">{DISH_DESCRIPTIONS[item]}</p>
+                        <span className="absolute top-full left-1/2 -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-l-transparent border-r-transparent border-t-bark/90" />
+                      </div>
+                    )}
+                  </div>
                 ))}
               </div>
             </div>
