@@ -16,8 +16,6 @@ function WaIcon({ className = 'w-4 h-4' }) {
 
 /* ── Service card ────────────────────────────────────────────────────────────── */
 function ServiceCard({ service, index }) {
-  const { openDefault } = useWhatsApp()
-  const msg = `¡Hola! Me interesa el servicio de ${service.name}. ¿Me puedes dar más información?`
   return (
     <motion.article
       className={`relative rounded-3xl overflow-hidden flex flex-col ${service.highlight ? 'ring-2 ring-amber/50' : 'ring-1 ring-white/10'}`}
