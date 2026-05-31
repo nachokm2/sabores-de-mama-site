@@ -24,6 +24,7 @@ export async function sendLead(data) {
     comuna:         data.comuna    || '-',
     platos:         data.platos?.length ? data.platos.join(', ') : '-',
     personas:       data.personas  || '-',
+    condiciones:    data.condiciones || 'Ninguna',
     interes:        data.interes   || '-',
     dudas:          data.dudas?.length ? data.dudas.join(' | ') : 'Ninguna',
     fecha:          new Date().toLocaleString('es-CL', { timeZone: 'America/Santiago' }),

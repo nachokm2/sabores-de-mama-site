@@ -1,8 +1,8 @@
 import { motion } from 'framer-motion'
-import { useWhatsApp } from '../hooks/useWhatsApp'
+import { openChatBot } from '../lib/openChatBot'
 
 export default function NotFound() {
-  const { openDefault } = useWhatsApp()
+  
 
   return (
     <div className="min-h-screen bg-espresso flex items-center justify-center px-6">
@@ -27,7 +27,7 @@ export default function NotFound() {
           <a href="/" className="btn-primary">
             Volver al inicio
           </a>
-          <button onClick={openDefault} className="btn-outline">
+          <button onClick={openChatBot} className="btn-outline">
             Ver el menú
           </button>
         </div>

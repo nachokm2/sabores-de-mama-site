@@ -5,7 +5,7 @@ import PageHero from '../components/ui/PageHero'
 import SectionLabel from '../components/ui/SectionLabel'
 import WhatsAppCTA from '../components/sections/WhatsAppCTA'
 import { useScrollReveal } from '../hooks/useScrollAnimation'
-import { useWhatsApp } from '../hooks/useWhatsApp'
+import { openChatBot } from '../lib/openChatBot'
 import { Helmet } from 'react-helmet-async'
 
 /* ── Team ────────────────────────────────────────────────────────────────── */
@@ -152,7 +152,6 @@ function TimelineItem({ item, index }) {
 }
 
 export default function Nosotros() {
-  const { openDefault } = useWhatsApp()
   const ref1 = useScrollReveal({ selector: '.fade-item', stagger: 0.12, y: 35 })
 
   return (
@@ -173,7 +172,7 @@ export default function Nosotros() {
           subtitle="Somos una familia que decidió compartir lo que más amamos: la comida que reconforta, que recuerda y que une."
           breadcrumb={[{ label: 'Inicio', href: '/' }, { label: 'Nosotros', href: '/nosotros' }]}
         >
-          <button onClick={openDefault} className="btn-whatsapp text-sm">
+          <button onClick={openChatBot} className="btn-whatsapp text-sm">
             Hacer un pedido
           </button>
         </PageHero>

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { useWhatsApp } from '../../hooks/useWhatsApp'
+import { openChatBot } from '../../lib/openChatBot'
 
 const NAV_LINKS = [
   { label: 'Inicio',   href: '/' },
@@ -34,7 +34,6 @@ function WhatsAppSmall({ className = 'w-4 h-4' }) {
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
-  const { openDefault } = useWhatsApp()
   const location = useLocation()
 
   useEffect(() => {
@@ -107,7 +106,7 @@ export default function Navbar() {
           {/* Desktop CTA */}
           <div className="hidden md:flex items-center gap-4">
             <motion.button
-              onClick={openDefault}
+              onClick={openChatBot}
               className="flex items-center gap-2 bg-[#25D366] text-white text-sm font-medium px-5 py-2.5 rounded-full hover:bg-[#1ebe57] transition-colors shadow-[0_2px_12px_rgba(37,211,102,0.35)]"
               whileHover={{ scale: 1.03 }}
               whileTap={{ scale: 0.97 }}
@@ -186,7 +185,7 @@ export default function Navbar() {
                 className="pt-4 border-t border-ivory/10"
               >
                 <button
-                  onClick={openDefault}
+                  onClick={openChatBot}
                   className="flex items-center gap-3 bg-[#25D366] text-white font-semibold px-7 py-4 rounded-full w-full justify-center text-lg"
                 >
                   <WhatsAppSmall className="w-5 h-5" />

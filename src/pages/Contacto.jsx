@@ -6,7 +6,7 @@ import Footer from '../components/layout/Footer'
 import PageHero from '../components/ui/PageHero'
 import SectionLabel from '../components/ui/SectionLabel'
 import { SITE, getWhatsAppLink } from '../data/siteConfig'
-import { useWhatsApp } from '../hooks/useWhatsApp'
+import { openChatBot } from '../lib/openChatBot'
 
 const WhatsAppIcon = ({ className = 'w-6 h-6' }) => (
   <svg viewBox="0 0 24 24" fill="currentColor" className={className} aria-hidden="true">
@@ -90,7 +90,6 @@ function AnimatedAnswer({ open, answer }) {
 }
 
 export default function Contacto() {
-  const { openDefault, openMenu } = useWhatsApp()
 
   return (
     <>
@@ -109,7 +108,7 @@ export default function Contacto() {
           subtitle="Un mensaje y en minutos tienes tu pedido confirmado. Sin apps, sin registros. Solo comida de verdad."
           breadcrumb={[{ label: 'Inicio', href: '/' }, { label: 'Contacto', href: '/contacto' }]}
         >
-          <button onClick={openDefault} className="btn-whatsapp">
+          <button onClick={openChatBot} className="btn-whatsapp">
             <WhatsAppIcon className="w-5 h-5" />
             Abrir WhatsApp
           </button>
@@ -268,7 +267,7 @@ export default function Contacto() {
             </p>
             <div className="flex flex-wrap justify-center gap-4">
               <motion.button
-                onClick={openDefault}
+                onClick={openChatBot}
                 className="flex items-center gap-3 bg-[#25D366] text-white font-semibold text-base px-8 py-4 rounded-full shadow-[0_4px_24px_rgba(37,211,102,0.4)] hover:bg-[#1ebe57] transition-colors"
                 whileHover={{ scale: 1.04 }}
                 whileTap={{ scale: 0.96 }}
@@ -277,7 +276,7 @@ export default function Contacto() {
                 Hacer pedido ahora
               </motion.button>
               <motion.button
-                onClick={openMenu}
+                onClick={openChatBot}
                 className="btn-outline-light"
                 whileHover={{ scale: 1.04 }}
                 whileTap={{ scale: 0.96 }}

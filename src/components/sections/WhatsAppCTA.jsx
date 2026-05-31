@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion'
-import { useWhatsApp } from '../../hooks/useWhatsApp'
+import { openChatBot } from '../../lib/openChatBot'
 import { SITE } from '../../data/siteConfig'
 
 const WhatsAppIcon = () => (
@@ -28,7 +28,6 @@ function SmokeEffect() {
 }
 
 export default function WhatsAppCTA() {
-  const { openDefault, openMenu } = useWhatsApp()
 
   return (
     <section
@@ -106,7 +105,7 @@ export default function WhatsAppCTA() {
           transition={{ duration: 0.7, delay: 0.35 }}
         >
           <motion.button
-            onClick={openDefault}
+            onClick={openChatBot}
             className="flex items-center gap-3 bg-[#25D366] text-white font-semibold text-base px-8 py-4 rounded-full shadow-[0_4px_24px_rgba(37,211,102,0.45)] hover:bg-[#1ebe57] transition-colors"
             whileHover={{ scale: 1.04 }}
             whileTap={{ scale: 0.96 }}
@@ -116,7 +115,7 @@ export default function WhatsAppCTA() {
             Pedir ahora por WhatsApp
           </motion.button>
           <motion.button
-            onClick={openMenu}
+            onClick={openChatBot}
             className="btn-outline-light"
             whileHover={{ scale: 1.04 }}
             whileTap={{ scale: 0.96 }}

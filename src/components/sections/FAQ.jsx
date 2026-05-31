@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import SectionLabel from '../ui/SectionLabel'
-import { useWhatsApp } from '../../hooks/useWhatsApp'
+import { openChatBot } from '../../lib/openChatBot'
 
 const FAQ_ITEMS = [
   {
@@ -74,7 +74,6 @@ function FaqItem({ item, index }) {
 }
 
 export default function FAQ() {
-  const { openDefault } = useWhatsApp()
 
   return (
     <section className="section-padding bg-cream" aria-labelledby="faq-heading">
@@ -99,7 +98,7 @@ export default function FAQ() {
               te respondemos en minutos.
             </p>
             <motion.button
-              onClick={openDefault}
+              onClick={openChatBot}
               className="btn-whatsapp text-sm"
               whileHover={{ scale: 1.04 }}
               whileTap={{ scale: 0.96 }}

@@ -10,7 +10,7 @@ import {
   SERVICES, DISH_CATEGORIES, MEAL_PREP_READY,
   EXTRAS, DULCES_FAMILIAR, DULCES_SNACKS, COMMUNES,
 } from '../data/menu'
-import { useWhatsApp } from '../hooks/useWhatsApp'
+import { openChatBot } from '../lib/openChatBot'
 
 const WA_NUMBER = import.meta.env.VITE_WHATSAPP_NUMBER 
 function waLink(msg) {
@@ -176,7 +176,6 @@ function ServiceSummary({ service, index }) {
 
 /* ── Page ─────────────────────────────────────────────────────────────────────── */
 export default function Menu() {
-  const { openDefault } = useWhatsApp()
 
   return (
     <>
@@ -195,7 +194,7 @@ export default function Menu() {
           subtitle="Elige tu servicio y hasta 5 preparaciones. Tú pones los ingredientes, yo cocino con amor."
           breadcrumb={[{ label: 'Inicio', href: '/' }, { label: 'Menú', href: '/menu' }]}
         >
-          <button onClick={openDefault} className="btn-whatsapp text-sm">
+          <button onClick={openChatBot} className="btn-whatsapp text-sm">
             <WaIcon className="w-4 h-4" />
             Agendar por WhatsApp
           </button>

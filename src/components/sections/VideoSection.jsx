@@ -1,13 +1,12 @@
 import { useState, useRef } from 'react'
 import { motion } from 'framer-motion'
 import SectionLabel from '../ui/SectionLabel'
-import { useWhatsApp } from '../../hooks/useWhatsApp'
+import { openChatBot } from '../../lib/openChatBot'
 
 export default function VideoSection() {
   const [playing, setPlaying] = useState(false)
   const [muted, setMuted]     = useState(true)
   const videoRef              = useRef(null)
-  const { openDefault }       = useWhatsApp()
 
   const togglePlay = () => {
     const v = videoRef.current
@@ -165,7 +164,7 @@ export default function VideoSection() {
             </div>
 
             <motion.button
-              onClick={openDefault}
+              onClick={openChatBot}
               className="btn-primary-dark text-sm"
               initial={{ opacity: 0, y: 16 }}
               whileInView={{ opacity: 1, y: 0 }}

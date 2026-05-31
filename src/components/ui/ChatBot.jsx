@@ -1,6 +1,17 @@
 import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { sendLead } from '../../lib/sendLead'
+import { sendMealPrepEmail } from '../../lib/generateMealPrepEmail'
+import { DELIVERY_PRICES } from '../../data/menu'
+
+function getDeliveryPrice(comuna) {
+  const key = comuna.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').trim()
+  return DELIVERY_PRICES[key] ?? null
+}
+
+function fmtCLP(n) {
+  return '$' + n.toLocaleString('es-CL')
+}
 
 const WA_NUMBER = import.meta.env.VITE_WHATSAPP_NUMBER 
 
@@ -118,6 +129,7 @@ function buildWAMsg(d) {
     ...(d.platos?.map(p => `  • ${p}`) || []),
     '',
     `*PERSONAS:* ${d.personas}`,
+    d.condiciones ? `*CONDICION ALIMENTICIA:* ${d.condiciones}` : null,
     d.dudas?.filter(q => q.length >= 6).length
       ? `\n*CONSULTAS PREVIAS*\n${d.dudas.filter(q => q.length >= 6).map(q => `  • ${q}`).join('\n')}`
       : null,
@@ -204,6 +216,7 @@ function SummaryCard({ data }) {
         <span className="text-ivory/80">{data.platos?.join(', ')}</span>
       </div>
       <Row l="Personas"  v={data.personas} />
+      {data.condiciones && <Row l="Condiciones" v={data.condiciones} />}
       <div className="flex items-center gap-2 pt-1.5 border-t border-white/10">
         <span className="text-warm-gray">Interés:</span>
         <span className={`font-bold ${ic}`}>{data.interes}</span>
@@ -242,6 +255,23 @@ export default function ChatBot() {
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [msgs, typing])
+
+  // Escucha el evento global para abrir el bot desde cualquier CTA del sitio
+  useEffect(() => {
+    const handler = () => {
+      setMsgs([])
+      setStep('init')
+      setInput('')
+      setPlatos([])
+      setCatOpen(null)
+      setSummary(null)
+      setData({ service: null, comuna: null, deliveryPrice: null, nombre: null, telefono: null, correo: null, personas: null, platos: [], condiciones: null, dudas: [], interes: null })
+      setTyping(false)
+      setOpen(true)
+    }
+    window.addEventListener('sabores:open-chatbot', handler)
+    return () => window.removeEventListener('sabores:open-chatbot', handler)
+  }, [])
 
   useEffect(() => {
     if (open && step === 'init') initChat()
@@ -292,10 +322,14 @@ export default function ChatBot() {
 
     const found = checkCobertura(val, data.service)
     const label = found ? toTitleCase(found) : val
-    setData(p => ({ ...p, comuna: label }))
+    const deliveryPrice = data.service === 'mealprep' ? getDeliveryPrice(found || val) : null
+    setData(p => ({ ...p, comuna: label, deliveryPrice }))
 
     if (found) {
-      await bot('¡Genial! Tenemos cobertura en tu zona. 🎉\n\nElige los platos que te interesan (hasta 5).', 'platos')
+      const deliveryMsg = deliveryPrice != null
+        ? `\n\nEl costo de delivery a *${label}* es *${fmtCLP(deliveryPrice)}*.\n\nElige los platos que te interesan (hasta 5).`
+        : '\n\nElige los platos que te interesan (hasta 5).'
+      await bot('¡Genial! Tenemos cobertura en tu zona. 🎉' + deliveryMsg, 'platos')
     } else {
       await bot(
         'Actualmente no contamos con cobertura para tu comuna. Estamos trabajando para ampliar nuestras zonas de atención.\n\n¿Me dejas tus datos para avisarte cuando lleguemos a tu sector?',
@@ -306,6 +340,11 @@ export default function ChatBot() {
 
   // ── Paso 3: Platos ────────────────────────────────────────────────────────
   async function onPlatosConfirm() {
+    const isMeal = data.service === 'mealprep'
+    if (isMeal && platos.length < 5) {
+      await bot('Para el Meal Prep necesitas seleccionar *exactamente 5 platos*. Te faltan ' + (5 - platos.length) + '.', 'platos', 300)
+      return
+    }
     if (!platos.length) return
     addUser(platos.join(', '))
     setData(p => ({ ...p, platos }))
@@ -326,6 +365,19 @@ export default function ChatBot() {
     setInput('')
     addUser(`${n} persona${n !== 1 ? 's' : ''}`)
     setData(p => ({ ...p, personas: n }))
+    setStep('waiting')
+    await bot('¿Tienes alguna *condición alimenticia* o restricción de dieta que debamos considerar?\n\nEj: diabetes, sin lactosa, sin gluten, alergia a algún alimento o condimento.\n\nSi no tienes ninguna, escribe "ninguna".', 'condiciones')
+  }
+
+  // ── Paso 4b: Condiciones alimenticias ────────────────────────────────────────
+  async function onCondiciones() {
+    const val = input.trim()
+    if (!val) return
+    setInput('')
+    const noCondicion = NO_MORE_QUESTIONS.test(norm(val)) || norm(val) === 'ninguna' || norm(val) === 'no tengo' || norm(val) === 'no'
+    const condiciones = noCondicion ? null : val
+    addUser(condiciones || 'Ninguna')
+    setData(p => ({ ...p, condiciones }))
     setStep('waiting')
     await bot('¿Tienes alguna pregunta sobre el servicio?\n\nPuedes escribirla aquí o *continuar directamente*.', 'dudas')
   }
@@ -373,11 +425,24 @@ export default function ChatBot() {
     addUser(val)
     setData(p => ({ ...p, telefono: val }))
     setStep('waiting')
-    await bot('¿Cuál es tu *correo electrónico*? _(opcional — escribe "omitir" si prefieres)_', 'datos_correo')
+    const correoMsg = data.service === 'mealprep'
+      ? '¿Cuál es tu *correo electrónico*? Lo necesitamos para enviarte la lista de ingredientes y guía de conservación.'
+      : '¿Cuál es tu *correo electrónico*? _(opcional — escribe "omitir" si prefieres)_'
+    await bot(correoMsg, 'datos_correo')
   }
 
   async function onCorreo() {
     const val = input.trim()
+    const isMeal = data.service === 'mealprep'
+
+    // Meal Prep: email obligatorio
+    if (isMeal && (!val || norm(val) === 'omitir' || norm(val) === 'no')) {
+      addUser(val || '-')
+      setInput('')
+      await bot('Para el Meal Prep necesitamos tu correo para enviarte la lista de ingredientes. Por favor ingrésalo.', 'datos_correo', 400)
+      return
+    }
+
     setInput('')
     const correo = norm(val) === 'omitir' || norm(val) === 'no' || !val ? null : val
     addUser(correo || 'Sin correo')
@@ -388,14 +453,30 @@ export default function ChatBot() {
     setData(final)
     setSummary(final)
 
-    // Captura el lead por correo (no bloquea el flujo si falla)
+    // Captura lead por correo (notificación interna al negocio)
     sendLead(final)
 
     setTyping(true)
     await sleep(1200)
     setTyping(false)
-    addBot('¡Perfecto! Ya tengo toda la información. 🎉\n\nAquí está el *resumen* de tu solicitud:', { isSummary: true })
-    setStep('resumen')
+
+    if (isMeal) {
+      // Meal Prep → enviar email con lista de ingredientes al cliente
+      addBot('Generando tu lista de ingredientes y guía de conservación...', {})
+      setStep('waiting')
+      await sleep(800)
+      const result = await sendMealPrepEmail(final, final.personas)
+      if (result.ok) {
+        addBot(`Lista enviada a *${correo}* ✓\n\nRevisa tu bandeja de entrada (o spam) para ver la lista completa de ingredientes, tiempos de conservación e instrucciones de calentado.`, { isSummary: true, isMealPrep: true })
+      } else {
+        addBot('Hubo un problema al enviar el correo. Te contactaremos directamente para enviarte la lista.\n\nAquí está el resumen de tu solicitud:', { isSummary: true, isMealPrep: true })
+      }
+      setStep('resumen')
+    } else {
+      // Cocinera a Domicilio → WhatsApp
+      addBot('¡Perfecto! Ya tengo toda la información.\n\nAquí está el *resumen* de tu solicitud:', { isSummary: true, isMealPrep: false })
+      setStep('resumen')
+    }
   }
 
   // ── Sin cobertura ─────────────────────────────────────────────────────────
@@ -444,16 +525,17 @@ export default function ChatBot() {
     setPlatos([])
     setCatOpen(null)
     setSummary(null)
-    setData({ service: null, comuna: null, nombre: null, telefono: null, correo: null, personas: null, platos: [], dudas: [], interes: null })
+    setData({ service: null, comuna: null, deliveryPrice: null, nombre: null, telefono: null, correo: null, personas: null, platos: [], condiciones: null, dudas: [], interes: null })
     setTyping(false)
   }
 
   // ── Dispatcher ────────────────────────────────────────────────────────────
   function handleSend() {
     switch (step) {
-      case 'cobertura':    onCobertura();  break
-      case 'personas':     onPersonas();   break
-      case 'dudas':        onDuda();       break
+      case 'cobertura':    onCobertura();    break
+      case 'personas':     onPersonas();     break
+      case 'condiciones':  onCondiciones();  break
+      case 'dudas':        onDuda();         break
       case 'datos_nombre': onNombre();     break
       case 'datos_tel':    onTelefono();   break
       case 'datos_correo': onCorreo();     break
@@ -463,7 +545,7 @@ export default function ChatBot() {
     }
   }
 
-  const textSteps = ['cobertura','personas','dudas','datos_nombre','datos_tel','datos_correo','nc_nombre','nc_tel','nc_correo']
+  const textSteps = ['cobertura','personas','condiciones','dudas','datos_nombre','datos_tel','datos_correo','nc_nombre','nc_tel','nc_correo']
 
   // ── Render ────────────────────────────────────────────────────────────────
   return (
@@ -569,14 +651,23 @@ export default function ChatBot() {
                       {m.isSummary && summary && (
                         <div className="mt-1">
                           <SummaryCard data={summary} />
-                          <motion.button
-                            onClick={() => window.open(`https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(buildWAMsg(summary))}`, '_blank', 'noopener,noreferrer')}
-                            className="w-full mt-2 flex items-center justify-center gap-2 bg-[#25D366] text-white font-semibold py-2.5 rounded-xl text-xs hover:bg-[#1ebe57] transition-colors font-body"
-                            whileHover={{ scale: 1.02 }}
-                            whileTap={{ scale: 0.97 }}
-                          >
-                            <WaIcon /> Continuar en WhatsApp
-                          </motion.button>
+                          {m.isMealPrep ? (
+                            /* Meal Prep → confirmación email */
+                            <div className="mt-2 bg-white/5 border border-amber/20 rounded-xl px-3.5 py-2.5 font-body text-xs text-ivory/70 text-center">
+                              Lista enviada a <strong className="text-amber">{summary.correo}</strong>.<br/>
+                              Revisa tu bandeja de entrada.
+                            </div>
+                          ) : (
+                            /* Cocinera a Domicilio → WhatsApp */
+                            <motion.button
+                              onClick={() => window.open(`https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(buildWAMsg(summary))}`, '_blank', 'noopener,noreferrer')}
+                              className="w-full mt-2 flex items-center justify-center gap-2 bg-[#25D366] text-white font-semibold py-2.5 rounded-xl text-xs hover:bg-[#1ebe57] transition-colors font-body"
+                              whileHover={{ scale: 1.02 }}
+                              whileTap={{ scale: 0.97 }}
+                            >
+                              <WaIcon /> Agendar por WhatsApp
+                            </motion.button>
+                          )}
                         </div>
                       )}
                     </div>
@@ -654,10 +745,12 @@ export default function ChatBot() {
                     </div>
                   ))}
                   <div className="flex items-center justify-between pt-1">
-                    <span className="font-body text-2xs text-warm-gray">{platos.length}/5 seleccionados</span>
+                    <span className={`font-body text-2xs ${data.service === 'mealprep' && platos.length < 5 ? 'text-amber font-semibold' : 'text-warm-gray'}`}>
+                      {platos.length}/5 {data.service === 'mealprep' ? '(se requieren 5)' : 'seleccionados'}
+                    </span>
                     <button
                       onClick={onPlatosConfirm}
-                      disabled={!platos.length}
+                      disabled={data.service === 'mealprep' ? platos.length < 5 : platos.length === 0}
                       className="font-body bg-amber text-espresso text-xs font-semibold px-4 py-2 rounded-xl disabled:opacity-40 hover:bg-gold transition-colors"
                     >
                       Confirmar ✓
@@ -680,6 +773,7 @@ export default function ChatBot() {
                         step === 'cobertura'    ? 'Ej: Las Condes, Providencia...' :
                         step === 'personas'     ? 'Número de personas...' :
                         step === 'dudas'        ? 'Escribe tu pregunta...' :
+                        step === 'condiciones'   ? 'Ej: sin lactosa, diabetes... o escribe "ninguna"' :
                         (step === 'datos_nombre' || step === 'nc_nombre') ? 'Tu nombre completo...' :
                         (step === 'datos_tel'   || step === 'nc_tel')    ? '+56 9 xxxx xxxx' :
                                                    'Tu correo (o "omitir")...'

@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react'
 import { motion } from 'framer-motion'
 import { gsap } from 'gsap'
-import { useWhatsApp } from '../../hooks/useWhatsApp'
+import { openChatBot } from '../../lib/openChatBot'
 import { useReducedMotion } from '../../hooks/useReducedMotion'
 
 /* ── Smoke particle ──────────────────────────────────────────────────────── */
@@ -62,7 +62,6 @@ function FoodBadge({ emoji, label, delay }) {
 
 /* ── Main component ──────────────────────────────────────────────────────── */
 export default function Hero() {
-  const { openDefault, openMenu } = useWhatsApp()
   const prefersReduced = useReducedMotion()
   const bgRef = useRef(null)
   const titleRef = useRef(null)
@@ -213,7 +212,7 @@ export default function Hero() {
             transition={{ duration: 0.8, delay: 1.2 }}
           >
             <button
-              onClick={openDefault}
+              onClick={openChatBot}
               className="btn-whatsapp text-sm px-7 py-3.5"
               aria-label="Hacer pedido por WhatsApp"
             >
@@ -221,7 +220,7 @@ export default function Hero() {
               Pedir ahora
             </button>
             <button
-              onClick={openMenu}
+              onClick={openChatBot}
               className="btn-outline-light text-sm"
               aria-label="Ver el menú completo"
             >

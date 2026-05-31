@@ -168,6 +168,23 @@ export const DULCES_SNACKS = [
 
 // ── Comunas ───────────────────────────────────────────────────────────────────
 export const COMMUNES = {
-  mealPrep:  ['Las Condes', 'Providencia', 'La Reina', 'Ñuñoa', 'Vitacura', 'Santiago', 'Lo Barnechea', 'San Miguel'],
+  mealPrep:  ['Las Condes', 'Providencia', 'La Reina', 'Ñuñoa', 'Vitacura', 'Santiago', 'Lo Barnechea', 'San Miguel', 'Huechuraba', 'Puente Alto', 'La Florida', 'Macul', 'Cerrillos'],
   cocinera:  ['Las Condes', 'Providencia', 'Vitacura', 'Ñuñoa'],
+}
+
+// ── Precios de delivery Meal Prep (clave normalizada: sin tildes, minúscula) ──
+export const DELIVERY_PRICES = {
+  'santiago':     5000,
+  'providencia':  6000,
+  'nunoa':        7000,
+  'la reina':     7000,
+  'vitacura':     8000,
+  'las condes':   8000,
+  'lo barnechea': 10000,
+  'huechuraba':   8000,
+  'san miguel':   8000,
+  'macul':        9000,
+  'cerrillos':    10000,
+  'la florida':   12000,
+  'puente alto':  14000,
 }

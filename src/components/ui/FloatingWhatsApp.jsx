@@ -1,6 +1,6 @@
 import { motion, AnimatePresence } from 'framer-motion'
 import { useState, useEffect } from 'react'
-import { useWhatsApp } from '../../hooks/useWhatsApp'
+import { openChatBot } from '../../lib/openChatBot'
 
 const WhatsAppIcon = () => (
   <svg viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6" aria-hidden="true">
@@ -9,7 +9,7 @@ const WhatsAppIcon = () => (
 )
 
 export default function FloatingWhatsApp() {
-  const { openDefault } = useWhatsApp()
+  
   const [visible, setVisible] = useState(false)
   const [pulse, setPulse] = useState(true)
 
@@ -46,7 +46,7 @@ export default function FloatingWhatsApp() {
               <span className="absolute inset-0 rounded-full bg-[#25D366] animate-ping opacity-60" />
             )}
             <motion.button
-              onClick={openDefault}
+              onClick={openChatBot}
               aria-label="Contactar por WhatsApp"
               className="relative flex items-center justify-center w-14 h-14 rounded-full bg-[#25D366] text-white shadow-[0_4px_24px_rgba(37,211,102,0.5)] hover:bg-[#1ebe57] active:scale-95 transition-colors duration-200"
               whileHover={{ scale: 1.08 }}

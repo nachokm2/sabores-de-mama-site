@@ -5,7 +5,7 @@ import Navbar from '../components/layout/Navbar'
 import Footer from '../components/layout/Footer'
 import PageHero from '../components/ui/PageHero'
 import WhatsAppCTA from '../components/sections/WhatsAppCTA'
-import { useWhatsApp } from '../hooks/useWhatsApp'
+import { openChatBot } from '../lib/openChatBot'
 
 /* ── All gallery items including real photos ────────────────────────────── */
 const GALLERY_ITEMS = [
@@ -239,7 +239,7 @@ export default function Galeria() {
               <p className="text-ivory/40 font-body text-sm mb-5">
                 ¿Te antojaste? Pide ahora por WhatsApp.
               </p>
-              <button onClick={openDefault} className="btn-primary-dark">
+              <button onClick={openChatBot} className="btn-primary-dark">
                 Hacer un pedido
               </button>
             </motion.div>
