@@ -1,7 +1,6 @@
 import { motion } from 'framer-motion'
 import Navbar from '../components/layout/Navbar'
 import Footer from '../components/layout/Footer'
-import FloatingWhatsApp from '../components/ui/FloatingWhatsApp'
 import PageHero from '../components/ui/PageHero'
 import SectionLabel from '../components/ui/SectionLabel'
 import WhatsAppCTA from '../components/sections/WhatsAppCTA'
@@ -359,7 +358,6 @@ export default function Nosotros() {
       </main>
 
       <Footer />
-      <FloatingWhatsApp />
     </>
   )
 }

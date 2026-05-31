@@ -3,7 +3,6 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { Helmet } from 'react-helmet-async'
 import Navbar from '../components/layout/Navbar'
 import Footer from '../components/layout/Footer'
-import FloatingWhatsApp from '../components/ui/FloatingWhatsApp'
 import PageHero from '../components/ui/PageHero'
 import WhatsAppCTA from '../components/sections/WhatsAppCTA'
 import { useWhatsApp } from '../hooks/useWhatsApp'
@@ -251,7 +250,6 @@ export default function Galeria() {
       </main>
 
       <Footer />
-      <FloatingWhatsApp />
 
       <Lightbox item={selected} onClose={() => setSelected(null)} onPrev={goPrev} onNext={goNext} />
     </>

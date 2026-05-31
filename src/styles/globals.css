@@ -52,6 +52,23 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     font-feature-settings: "kern" 1, "liga" 1, "calt" 1;
+    overflow-x: hidden;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(200,135,58,0.35) transparent;
+  }
+
+  ::-webkit-scrollbar {
+    width: 5px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: rgba(200,135,58,0.35);
+    border-radius: 3px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgba(200,135,58,0.6);
   }
 
   /* Lenis smooth scroll override */

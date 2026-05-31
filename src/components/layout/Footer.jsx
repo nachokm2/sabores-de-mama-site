@@ -64,20 +64,31 @@ export default function Footer() {
                 { href: SITE.social.instagram, icon: <InstagramIcon />, label: 'Instagram' },
                 { href: SITE.social.facebook,  icon: <FacebookIcon />,  label: 'Facebook' },
                 { href: SITE.social.tiktok,    icon: <TikTokIcon />,    label: 'TikTok' },
-              ].map(({ href, icon, label }) => (
-                <motion.a
-                  key={label}
-                  href={href}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  aria-label={label}
-                  className="w-9 h-9 rounded-full border border-ivory/15 flex items-center justify-center text-warm-gray hover:text-amber hover:border-amber/60 transition-colors duration-200"
-                  whileHover={{ scale: 1.1, y: -2 }}
-                  whileTap={{ scale: 0.95 }}
-                >
-                  {icon}
-                </motion.a>
-              ))}
+              ].map(({ href, icon, label }) =>
+                href ? (
+                  <motion.a
+                    key={label}
+                    href={href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label={label}
+                    className="w-9 h-9 rounded-full border border-ivory/15 flex items-center justify-center text-warm-gray hover:text-amber hover:border-amber/60 transition-colors duration-200"
+                    whileHover={{ scale: 1.1, y: -2 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    {icon}
+                  </motion.a>
+                ) : (
+                  <span
+                    key={label}
+                    aria-label={`${label} (próximamente)`}
+                    title={`${label} próximamente`}
+                    className="w-9 h-9 rounded-full border border-ivory/8 flex items-center justify-center text-warm-gray/30 cursor-default"
+                  >
+                    {icon}
+                  </span>
+                )
+              )}
             </div>
           </div>
 

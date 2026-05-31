@@ -3,7 +3,6 @@ import { motion } from 'framer-motion'
 import { Helmet } from 'react-helmet-async'
 import Navbar from '../components/layout/Navbar'
 import Footer from '../components/layout/Footer'
-import FloatingWhatsApp from '../components/ui/FloatingWhatsApp'
 import PageHero from '../components/ui/PageHero'
 import SectionLabel from '../components/ui/SectionLabel'
 import { SITE, getWhatsAppLink } from '../data/siteConfig'
@@ -17,28 +16,28 @@ const WhatsAppIcon = ({ className = 'w-6 h-6' }) => (
 
 const FAQ_ITEMS = [
   {
-    q: '¿Cuál es el tiempo de entrega?',
-    a: 'Dependiendo de la zona y la demanda del día, normalmente entre 45 minutos y 1 hora. Te confirmamos el tiempo exacto al hacer el pedido.',
+    q: '¿En qué comunas trabajan?',
+    a: 'Meal Prep: Las Condes, Providencia, La Reina, Ñuñoa, Vitacura, Santiago, Lo Barnechea y San Miguel. Cocinera a Domicilio: Las Condes, Providencia, Vitacura y Ñuñoa.',
   },
   {
-    q: '¿Tienen delivery los fines de semana?',
-    a: 'Sí, atendemos sábados y domingos de 11:00 a 17:00. Los domingos son especialmente populares para la cazuela familiar.',
+    q: '¿Cuántas preparaciones incluye cada servicio?',
+    a: 'Cada servicio incluye hasta 5 preparaciones a elegir de nuestro menú. Si quieres algo que no está en la lista, nos adaptamos a tus preferencias.',
   },
   {
-    q: '¿Se puede hacer pedido con anticipación?',
-    a: 'Por supuesto. Puedes escribirnos el día anterior o en la mañana para asegurar tu pedido, especialmente para los platos más pedidos.',
+    q: '¿Qué necesito para el Meal Prep?',
+    a: 'Solo enviar los ingredientes a mi domicilio (via Rappi, PedidosYa u otro delivery) o acordar la entrega. Yo me encargo de cocinar, porcionar y sellar al vacío todo.',
   },
   {
-    q: '¿Hacen pedidos grandes o para eventos?',
-    a: 'Sí, tenemos precios especiales para pedidos de 10 o más porciones. Escríbenos con al menos 48 horas de anticipación.',
+    q: '¿Qué necesito para la Cocinera a Domicilio?',
+    a: 'Tener los ingredientes listos en casa. Yo llego, cocino hasta 5 preparaciones en 2 a 5 horas según la cantidad y complejidad, y dejo la cocina limpia al terminar.',
   },
   {
-    q: '¿Cómo se paga?',
-    a: 'Aceptamos transferencia bancaria y efectivo al momento de la entrega. Te enviamos los datos de pago al confirmar el pedido.',
+    q: '¿Los Dulces Saludables necesitan ingredientes?',
+    a: 'No, los dulces son elaborados completamente por mí. Puedes agregarlos a cualquier servicio sin aportar nada extra.',
   },
   {
-    q: '¿En qué comunas hacen delivery?',
-    a: 'Cubrimos varias comunas de Santiago. Escríbenos tu dirección y te confirmamos si estamos en tu sector.',
+    q: '¿Cómo se coordina y paga el servicio?',
+    a: 'Todo se coordina por WhatsApp. Al confirmar el servicio te enviamos los datos de pago. Aceptamos transferencia bancaria.',
   },
 ]
 
@@ -175,7 +174,7 @@ export default function Contacto() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {[
                     { icon: '⏰', title: 'Horarios', lines: [SITE.hours.weekdays, SITE.hours.weekend] },
-                    { icon: '📍', title: 'Cobertura', lines: [SITE.address, 'Consulta tu sector'] },
+                    { icon: '📍', title: 'Cobertura', lines: ['Meal Prep: Las Condes, Providencia, La Reina, Ñuñoa, Vitacura, Santiago, Lo Barnechea, San Miguel', 'Cocinera: Las Condes, Providencia, Vitacura, Ñuñoa'] },
                   ].map((card) => (
                     <motion.div
                       key={card.title}
@@ -202,19 +201,29 @@ export default function Contacto() {
                       { label: 'Instagram', href: SITE.social.instagram, icon: '📸' },
                       { label: 'Facebook',  href: SITE.social.facebook,  icon: '👍' },
                       { label: 'TikTok',    href: SITE.social.tiktok,    icon: '🎵' },
-                    ].map(({ label, href, icon }) => (
-                      <motion.a
-                        key={label}
-                        href={href}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        aria-label={label}
-                        className="flex items-center gap-2 text-sm font-body text-warm-gray hover:text-amber transition-colors duration-200"
-                        whileHover={{ y: -2 }}
-                      >
-                        <span aria-hidden="true">{icon}</span> {label}
-                      </motion.a>
-                    ))}
+                    ].map(({ label, href, icon }) =>
+                      href ? (
+                        <motion.a
+                          key={label}
+                          href={href}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          aria-label={label}
+                          className="flex items-center gap-2 text-sm font-body text-warm-gray hover:text-amber transition-colors duration-200"
+                          whileHover={{ y: -2 }}
+                        >
+                          <span aria-hidden="true">{icon}</span> {label}
+                        </motion.a>
+                      ) : (
+                        <span
+                          key={label}
+                          title={`${label} próximamente`}
+                          className="flex items-center gap-2 text-sm font-body text-warm-gray/30 cursor-default select-none"
+                        >
+                          <span aria-hidden="true">{icon}</span> {label}
+                        </span>
+                      )
+                    )}
                   </div>
                 </div>
               </div>
@@ -281,7 +290,6 @@ export default function Contacto() {
       </main>
 
       <Footer />
-      <FloatingWhatsApp />
     </>
   )
 }

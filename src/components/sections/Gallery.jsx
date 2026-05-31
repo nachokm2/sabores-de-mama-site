@@ -55,7 +55,7 @@ const GALLERY_ITEMS = [
     id: 7,
     emoji: '🥟',
     label: 'Empanadas de Pino',
-    image: null,
+    image: '/assets/images/empanadas.jpg',
     gradient: 'from-bark via-bark to-terracotta',
     span: 'col-span-1 row-span-1',
   },
@@ -170,7 +170,7 @@ export default function Gallery() {
   return (
     <section
       id="galeria"
-      className="section-padding bg-espresso overflow-hidden"
+      className="relative section-padding bg-espresso overflow-hidden"
       aria-labelledby="gallery-heading"
     >
       {/* Ambient glow */}

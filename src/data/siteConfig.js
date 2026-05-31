@@ -3,7 +3,7 @@ export const SITE = {
   tagline:     'Comida casera hecha con amor',
   description: 'Sabores auténticos que te devuelven a la mesa familiar. Comida casera preparada con ingredientes frescos y mucho cariño, lista para disfrutar en tu hogar.',
   url:         import.meta.env.VITE_SITE_URL || 'https://saboresdemama.com',
-  whatsapp:    import.meta.env.VITE_WHATSAPP_NUMBER || '56966705821',
+  whatsapp:    import.meta.env.VITE_WHATSAPP_NUMBER ,
   email:       'hola@saboresdemama.com',
   address:     'Santiago, Chile',
   hours: {
@@ -11,9 +11,9 @@ export const SITE = {
     weekend:  'Sábado y Domingo: 11:00 – 17:00',
   },
   social: {
-    instagram: 'https://instagram.com/saboresdemama',
-    facebook:  'https://facebook.com/saboresdemama',
-    tiktok:    'https://tiktok.com/@saboresdemama',
+    instagram: 'https://instagram.com/saboresdemama.casero',
+    facebook:  null,
+    tiktok:    'https://tiktok.com/@saboresdemama.casero',
   },
 }
 

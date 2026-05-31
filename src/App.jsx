@@ -7,6 +7,7 @@ import Menu      from './pages/Menu'
 import Galeria   from './pages/Galeria'
 import Contacto  from './pages/Contacto'
 import NotFound  from './pages/NotFound'
+import ChatBot   from './components/ui/ChatBot'
 
 function ScrollToTop() {
   const { pathname } = useLocation()
@@ -55,6 +56,7 @@ function App() {
   return (
     <BrowserRouter>
       <AppContent />
+      <ChatBot />
     </BrowserRouter>
   )
 }

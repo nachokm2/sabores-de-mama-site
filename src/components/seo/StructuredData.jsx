@@ -29,7 +29,7 @@ export const restaurantSchema = {
       closes: '17:00',
     },
   ],
-  sameAs: [SITE.social.instagram, SITE.social.facebook],
+  sameAs: [SITE.social.instagram, SITE.social.tiktok].filter(Boolean),
   hasMenu: `${SITE.url}/#menu`,
   potentialAction: {
     '@type': 'OrderAction',

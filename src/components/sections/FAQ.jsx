@@ -5,28 +5,28 @@ import { useWhatsApp } from '../../hooks/useWhatsApp'
 
 const FAQ_ITEMS = [
   {
-    q: '¿Cuál es el tiempo de entrega?',
-    a: 'Normalmente entre 45 minutos y 1 hora según tu sector y la demanda del día. Te confirmamos el tiempo exacto al recibir tu pedido.',
+    q: '¿En qué consiste la Cocinera a Domicilio?',
+    a: 'Voy directamente a tu hogar y cocino hasta 5 preparaciones usando tus propios ingredientes. El servicio dura entre 2 y 5 horas según la cantidad de platos, y al finalizar dejo la cocina limpia y ordenada. Valor: $55.000.',
   },
   {
-    q: '¿Hacen delivery los fines de semana?',
-    a: 'Sí, atendemos sábados y domingos de 11:00 a 17:00. Los domingos son especialmente populares para la cazuela familiar.',
+    q: '¿Qué es el servicio de Meal Prep?',
+    a: 'Preparo tus comidas en mi cocina con los ingredientes que tú me envías (vía delivery o en persona). Cada preparación queda porcionada y sellada al vacío para que la conserves durante la semana. Valor: $60.000. La entrega tiene un costo adicional.',
   },
   {
-    q: '¿Puedo hacer el pedido con anticipación?',
-    a: 'Por supuesto. Puedes escribirnos el día anterior o en la mañana para asegurar tu pedido, especialmente para los platos más solicitados.',
+    q: '¿Cuántas preparaciones puedo elegir?',
+    a: 'Puedes elegir hasta 5 preparaciones por servicio. Si tienes un plato en mente que no está en el listado, sin problema — me adapto a tus preferencias y creamos un menú totalmente personalizado.',
   },
   {
-    q: '¿Hacen pedidos para eventos o grupos grandes?',
-    a: 'Sí, tenemos precios especiales para pedidos de 10 o más porciones. Contáctanos con al menos 48 horas de anticipación.',
+    q: '¿En qué comunas trabajan?',
+    a: 'El Meal Prep llega a: Las Condes, Providencia, La Reina, Ñuñoa, Vitacura, Santiago, Lo Barnechea y San Miguel. La Cocinera a Domicilio cubre: Las Condes, Providencia, Vitacura y Ñuñoa.',
   },
   {
-    q: '¿Cómo se paga?',
-    a: 'Aceptamos transferencia bancaria y efectivo al momento de la entrega. Los datos de pago se envían al confirmar el pedido.',
+    q: '¿Cómo se coordinan los ingredientes para el Meal Prep?',
+    a: 'Puedes enviar los ingredientes directamente a mi domicilio usando tu app de delivery preferida (Rappi, PedidosYa, etc.), o acordar otra forma de entrega al momento de agendar.',
   },
   {
-    q: '¿En qué comunas hacen delivery?',
-    a: 'Cubrimos varias comunas de Santiago. Escríbenos tu dirección y te confirmamos si estamos en tu sector.',
+    q: '¿Los Dulces Saludables requieren ingredientes de mi parte?',
+    a: 'No, los dulces saludables son elaborados completamente por mí y no requieren ningún ingrediente de tu parte. Puedes agregarlos fácilmente a cualquiera de los servicios.',
   },
 ]
 
