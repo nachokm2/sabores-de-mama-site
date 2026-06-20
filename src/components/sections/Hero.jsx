@@ -33,7 +33,7 @@ function ScrollIndicator() {
       transition={{ delay: 2.5, duration: 0.8 }}
       aria-hidden="true"
     >
-      <span className="text-ivory/40 text-2xs font-body tracking-[0.2em] uppercase">
+      <span className="text-warm-gray text-2xs font-body tracking-[0.2em] uppercase">
         Descubrir
       </span>
       <div className="w-px h-10 bg-gradient-to-b from-amber/50 to-transparent" />
@@ -49,13 +49,13 @@ function ScrollIndicator() {
 function FoodBadge({ emoji, label, delay }) {
   return (
     <motion.div
-      className="glass flex items-center gap-2.5 rounded-full px-4 py-2.5 text-ivory"
+      className="glass flex items-center gap-2.5 rounded-full px-4 py-2.5 text-espresso"
       initial={{ opacity: 0, scale: 0.7 }}
       animate={{ opacity: 1, scale: 1 }}
       transition={{ delay, type: 'spring', stiffness: 300, damping: 25 }}
     >
       <span className="text-xl leading-none">{emoji}</span>
-      <span className="font-body text-xs font-medium text-ivory/90 whitespace-nowrap">{label}</span>
+      <span className="font-body text-xs font-medium text-espresso/90 whitespace-nowrap">{label}</span>
     </motion.div>
   )
 }
@@ -98,7 +98,7 @@ export default function Hero() {
   return (
     <section
       id="inicio"
-      className="relative min-h-screen flex flex-col justify-center overflow-hidden bg-espresso"
+      className="relative min-h-screen flex flex-col justify-center overflow-hidden bg-background"
       aria-labelledby="hero-heading"
     >
       {/* ── Cinematic background ── */}
@@ -109,20 +109,20 @@ export default function Hero() {
           alt=""
           role="presentation"
           aria-hidden="true"
-          className="absolute inset-0 w-full h-full object-cover object-center opacity-25"
+          className="absolute inset-0 w-full h-full object-cover object-center opacity-[0.12]"
           loading="eager"
           decoding="sync"
           fetchPriority="high"
         />
 
-        {/* Dark gradient base on top of image */}
+        {/* Light cream wash on top of image (mantiene texto oscuro legible) */}
         <div
           className="absolute inset-0"
           style={{
             background: `
-              radial-gradient(ellipse at 30% 50%, rgba(107,45,30,0.7) 0%, transparent 60%),
-              radial-gradient(ellipse at 75% 30%, rgba(200,135,58,0.2) 0%, transparent 50%),
-              linear-gradient(160deg, rgba(10,6,4,0.92) 0%, rgba(26,11,6,0.85) 40%, rgba(44,24,16,0.88) 100%)
+              radial-gradient(ellipse at 30% 50%, rgba(234,217,190,0.5) 0%, transparent 60%),
+              radial-gradient(ellipse at 75% 30%, rgba(194,121,47,0.12) 0%, transparent 50%),
+              linear-gradient(160deg, rgba(251,246,238,0.94) 0%, rgba(247,239,226,0.9) 40%, rgba(239,227,208,0.92) 100%)
             `,
           }}
           aria-hidden="true"
@@ -137,11 +137,11 @@ export default function Hero() {
           aria-hidden="true"
         />
 
-        {/* Vignette */}
+        {/* Soft cream vignette (aclara los bordes en vez de oscurecerlos) */}
         <div
           className="absolute inset-0"
           style={{
-            background: 'radial-gradient(ellipse at center, transparent 30%, rgba(10,6,4,0.75) 100%)',
+            background: 'radial-gradient(ellipse at center, transparent 35%, rgba(251,246,238,0.65) 100%)',
           }}
           aria-hidden="true"
         />
@@ -170,8 +170,8 @@ export default function Hero() {
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.7, delay: 0.1 }}
           >
-            <span className="w-8 h-px bg-amber" aria-hidden="true" />
-            <span className="text-amber text-xs font-semibold tracking-[0.2em] uppercase font-body">
+            <span className="w-8 h-px bg-accent-600" aria-hidden="true" />
+            <span className="text-accent-600 text-xs font-semibold tracking-[0.2em] uppercase font-body">
               Sabores de Mamá · Comida Casera
             </span>
           </motion.div>
@@ -180,7 +180,7 @@ export default function Hero() {
           <h1
             id="hero-heading"
             ref={titleRef}
-            className="font-display text-5xl sm:text-6xl md:text-7xl lg:text-8xl text-ivory leading-[1.0] tracking-tighter-display mb-6"
+            className="font-display text-5xl sm:text-6xl md:text-7xl lg:text-8xl text-espresso leading-[1.0] tracking-tighter-display mb-6"
           >
             {['La comida', 'que', 'te lleva', 'al hogar.'].map((word, i) => (
               <span
@@ -195,7 +195,7 @@ export default function Hero() {
 
           {/* Subline */}
           <motion.p
-            className="font-body text-ivory/65 text-base md:text-lg max-w-md leading-relaxed mb-10"
+            className="font-body text-warm-gray text-base md:text-lg max-w-md leading-relaxed mb-10"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 1.0 }}
@@ -244,7 +244,7 @@ export default function Hero() {
 
       {/* ── Stats strip ── */}
       <motion.div
-        className="relative z-10 border-t border-ivory/10 backdrop-blur-sm"
+        className="relative z-10 border-t border-espresso/10 backdrop-blur-sm"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 2.0, duration: 0.8 }}
@@ -257,8 +257,8 @@ export default function Hero() {
               { num: '100%',  label: 'Hecho en casa' },
             ].map(({ num, label }) => (
               <div key={label} className="text-center sm:text-left">
-                <p className="font-display text-2xl md:text-3xl text-amber font-bold">{num}</p>
-                <p className="font-body text-ivory/50 text-xs mt-0.5 leading-tight">{label}</p>
+                <p className="font-display text-2xl md:text-3xl text-terracotta font-bold">{num}</p>
+                <p className="font-body text-warm-gray text-xs mt-0.5 leading-tight">{label}</p>
               </div>
             ))}
           </div>

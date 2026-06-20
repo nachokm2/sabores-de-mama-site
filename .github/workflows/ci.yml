@@ -1,0 +1,158 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+
+# Variables compartidas para los jobs que usan Postgres.
+env:
+  NODE_VERSION: '20'
+  PG_USER: sdm
+  PG_PASSWORD: sdm_dev
+  PG_DB: sabores_de_mama
+
+jobs:
+  # ── 0) Lint (ESLint, todo el repo: frontend + backend + e2e) ──
+  lint:
+    name: Lint (ESLint)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+
+  # ── 1) Tests unitarios del frontend (Vitest + RTL, sin BD) ──
+  frontend-unit:
+    name: Frontend unit (Vitest)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - run: npm ci
+      - run: npm run build --if-present
+      - run: npm test
+
+  # ── 2) Tests del backend (Vitest + Postgres) ──
+  backend:
+    name: Backend (Vitest + Postgres)
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: sdm
+          POSTGRES_PASSWORD: sdm_dev
+          POSTGRES_DB: sabores_de_mama
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U sdm" --health-interval 10s
+          --health-timeout 5s --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+      - name: Instalar dependencias backend
+        working-directory: backend
+        run: npm ci
+      - name: Correr tests backend
+        working-directory: backend
+        env:
+          # Los tests crean/usan la BD `sabores_test` en el servicio de Postgres.
+          TEST_DATABASE_URL: postgresql://sdm:sdm_dev@localhost:5432/sabores_test
+        run: npm test
+
+  # ── 3) E2E (Playwright) contra el stack completo ──
+  e2e:
+    name: E2E (Playwright)
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: sdm
+          POSTGRES_PASSWORD: sdm_dev
+          POSTGRES_DB: sabores_de_mama
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U sdm" --health-interval 10s
+          --health-timeout 5s --health-retries 10
+    env:
+      # Backend
+      DATABASE_URL: postgresql://sdm:sdm_dev@localhost:5432/sabores_de_mama
+      PGSSL: 'false'
+      RUN_MIGRATIONS: 'true'
+      JWT_SECRET: ci_secret_para_e2e
+      ADMIN_EMAIL: admin@saboresdemama.com
+      ADMIN_PASSWORD: admin123
+      ADMIN_NOMBRE: Admin CI
+      PEDIDOS_RATE_LIMIT: '1000' # alto para no toparse con 429 desde una sola IP
+      CORS_ORIGIN: http://localhost:5173
+      CLIENT_URL: http://localhost:5173
+      BANCO_NOMBRE: Estela Zavalla
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - name: Instalar dependencias (root + backend)
+        run: |
+          npm ci
+          (cd backend && npm ci)
+
+      - name: Instalar navegador Playwright
+        run: npx playwright install --with-deps chromium
+
+      - name: Preparar BD (migraciones + menú con ingredientes)
+        working-directory: backend
+        run: |
+          node src/models/migrations.js
+          node src/models/seedMenu.js
+
+      - name: Arrancar backend
+        working-directory: backend
+        run: |
+          node src/server.js > backend.log 2>&1 &
+          for i in $(seq 1 30); do
+            if curl -sf http://localhost:4000/api/health > /dev/null; then echo "backend OK"; break; fi
+            sleep 2
+          done
+          curl -sf http://localhost:4000/api/health || (echo "backend no arrancó"; cat backend.log; exit 1)
+
+      - name: Configurar variables del frontend
+        run: |
+          cat > .env.local <<'EOF'
+          VITE_API_URL=http://localhost:4000/api
+          VITE_MEAL_PREP_BASE=60000
+          VITE_COCINERA_BASE=55000
+          VITE_DELIVERY_COST=5000
+          VITE_BANK_TITULAR=Estela Zavalla
+          VITE_BANK_BANCO=Banco de Chile
+          VITE_BANK_TIPO_CUENTA=Cuenta Corriente
+          VITE_BANK_NUMERO=0000000000
+          VITE_BANK_RUT=11.111.111-1
+          VITE_BANK_EMAIL=pagos@saboresdemama.com
+          EOF
+
+      - name: Correr E2E
+        run: npm run e2e
+
+      - name: Subir reporte de Playwright
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7

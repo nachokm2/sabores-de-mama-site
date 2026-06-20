@@ -170,13 +170,13 @@ export default function Gallery() {
   return (
     <section
       id="galeria"
-      className="relative section-padding bg-espresso overflow-hidden"
+      className="relative section-padding bg-background-soft overflow-hidden"
       aria-labelledby="gallery-heading"
     >
       {/* Ambient glow */}
       <div
         className="absolute left-1/4 top-1/2 -translate-y-1/2 w-96 h-96 rounded-full pointer-events-none"
-        style={{ background: 'radial-gradient(ellipse, rgba(200,135,58,0.08) 0%, transparent 70%)' }}
+        style={{ background: 'radial-gradient(ellipse, rgba(194,121,47,0.07) 0%, transparent 70%)' }}
         aria-hidden="true"
       />
 
@@ -194,7 +194,7 @@ export default function Gallery() {
               <span className="text-gradient-gold">una obra de arte.</span>
             </h2>
           </div>
-          <p className="font-body text-ivory/50 text-sm max-w-xs text-right hidden md:block">
+          <p className="font-body text-warm-gray text-sm max-w-xs text-right hidden md:block">
             Comida preparada a diario con pasión y recetas únicas de nuestra familia.
           </p>
         </div>

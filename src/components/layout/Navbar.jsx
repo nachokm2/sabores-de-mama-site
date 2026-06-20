@@ -3,12 +3,20 @@ import { Link, useLocation } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { openChatBot } from '../../lib/openChatBot'
 
+// R-02 · Navegación principal (orden exacto solicitado).
+// El sitio es multipágina (React Router): los servicios/productos son anclas
+// dentro de /menu, por lo que cada ítem hace scroll suave a su sección.
+// TODO (fuera de alcance de esta fase): "Hornear en Casa" aún no tiene una
+// sección/servicio propio en el contenido. Se apunta provisionalmente al bloque
+// de Servicios (/menu#servicios); crear su sección dedicada en la fase de contenido.
 const NAV_LINKS = [
-  { label: 'Inicio',   href: '/' },
-  { label: 'Nosotros', href: '/nosotros' },
-  { label: 'Menú',     href: '/menu' },
-  { label: 'Galería',  href: '/galeria' },
-  { label: 'Contacto', href: '/contacto' },
+  { label: 'Inicio',               href: '/' },
+  { label: 'Meal Prep',            href: '/menu#servicio-mealprep' },
+  { label: 'Cocinera a Domicilio', href: '/menu#servicio-cocinera' },
+  { label: 'Hornear en Casa',      href: '/menu#servicios' },
+  { label: 'Horneados',            href: '/menu#dulces' },
+  { label: 'Nosotros',             href: '/nosotros' },
+  { label: 'Contacto',             href: '/contacto' },
 ]
 
 const LogoIcon = () => (
@@ -17,7 +25,7 @@ const LogoIcon = () => (
     alt="Sabores de Mamá"
     width={40}
     height={40}
-    className="w-10 h-10 rounded-full object-cover ring-1 ring-amber/30"
+    className="w-10 h-10 rounded-full object-cover ring-1 ring-terracotta/30"
     loading="eager"
     decoding="sync"
   />
@@ -42,26 +50,32 @@ export default function Navbar() {
     return () => window.removeEventListener('scroll', onScroll)
   }, [])
 
-  // Close mobile menu on route change and scroll to top
+  // Cerrar el menú móvil al cambiar de ruta o de ancla.
+  // El scroll (top o hacia el ancla con smooth scroll) lo gestiona ScrollManager
+  // en App.jsx, por lo que aquí ya no forzamos scrollTo(top).
   useEffect(() => {
     setMenuOpen(false)
-    window.scrollTo({ top: 0, behavior: 'instant' })
-  }, [location.pathname])
+  }, [location.pathname, location.hash])
 
   useEffect(() => {
     document.body.style.overflow = menuOpen ? 'hidden' : ''
     return () => { document.body.style.overflow = '' }
   }, [menuOpen])
 
-  const isActive = (href) =>
-    href === '/' ? location.pathname === '/' : location.pathname.startsWith(href)
+  const isActive = (href) => {
+    const [path, hash] = href.split('#')
+    if (path === '/') return location.pathname === '/' && !location.hash
+    // Varias entradas comparten /menu: se distinguen por el hash de la URL.
+    if (hash) return location.pathname.startsWith(path) && location.hash === `#${hash}`
+    return location.pathname.startsWith(path)
+  }
 
   return (
     <>
       <motion.header
         className={`fixed top-0 left-0 right-0 z-[var(--z-navbar)] transition-all duration-500 ease-[var(--ease-out-expo)] ${
           scrolled
-            ? 'bg-espresso/95 backdrop-blur-md shadow-[0_4px_30px_rgba(0,0,0,0.4)]'
+            ? 'bg-background/90 backdrop-blur-md shadow-[0_4px_30px_rgba(42,28,18,0.10)] border-b border-espresso/5'
             : 'bg-transparent'
         }`}
         initial={{ y: -100 }}
@@ -78,10 +92,10 @@ export default function Navbar() {
             <Link to="/" className="flex items-center gap-3 group">
               <LogoIcon />
               <div className="flex flex-col leading-none">
-                <span className="font-display text-ivory text-base font-bold tracking-tight">
+                <span className="font-display text-espresso text-base font-bold tracking-tight">
                   Sabores de
                 </span>
-                <span className="font-display text-amber text-lg font-bold tracking-tight -mt-0.5">
+                <span className="font-display text-terracotta text-lg font-bold tracking-tight -mt-0.5">
                   Mamá
                 </span>
               </div>
@@ -89,12 +103,12 @@ export default function Navbar() {
           </motion.div>
 
           {/* Desktop nav */}
-          <ul className="hidden md:flex items-center gap-7" role="list">
+          <ul className="hidden lg:flex items-center gap-4 xl:gap-6" role="list">
             {NAV_LINKS.map((link) => (
               <li key={link.href}>
                 <Link
                   to={link.href}
-                  className={`nav-link ${isActive(link.href) ? 'text-amber' : ''}`}
+                  className={`nav-link whitespace-nowrap ${isActive(link.href) ? 'text-terracotta' : ''}`}
                   aria-current={isActive(link.href) ? 'page' : undefined}
                 >
                   {link.label}
@@ -104,7 +118,7 @@ export default function Navbar() {
           </ul>
 
           {/* Desktop CTA */}
-          <div className="hidden md:flex items-center gap-4">
+          <div className="hidden lg:flex items-center gap-4">
             <motion.button
               onClick={openChatBot}
               className="flex items-center gap-2 bg-[#25D366] text-white text-sm font-medium px-5 py-2.5 rounded-full hover:bg-[#1ebe57] transition-colors shadow-[0_2px_12px_rgba(37,211,102,0.35)]"
@@ -119,7 +133,7 @@ export default function Navbar() {
 
           {/* Mobile hamburger */}
           <button
-            className="md:hidden flex flex-col gap-1.5 p-2 rounded-lg"
+            className="lg:hidden flex flex-col gap-1.5 p-2 rounded-lg"
             onClick={() => setMenuOpen((v) => !v)}
             aria-expanded={menuOpen}
             aria-controls="mobile-menu"
@@ -128,7 +142,7 @@ export default function Navbar() {
             {[0, 1, 2].map((i) => (
               <motion.span
                 key={i}
-                className="block h-0.5 w-6 bg-ivory origin-center"
+                className="block h-0.5 w-6 bg-espresso origin-center"
                 animate={
                   menuOpen
                     ? i === 0 ? { rotate: 45, y: 8 }
@@ -151,14 +165,14 @@ export default function Navbar() {
             role="dialog"
             aria-modal="true"
             aria-label="Menú de navegación"
-            className="fixed inset-0 z-[calc(var(--z-navbar)-1)] bg-espresso/98 backdrop-blur-xl flex flex-col"
+            className="fixed inset-0 z-[calc(var(--z-navbar)-1)] bg-background/98 backdrop-blur-xl flex flex-col"
             initial={{ opacity: 0, y: '-100%' }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: '-100%' }}
             transition={{ duration: 0.5, ease: [0.19, 1, 0.22, 1] }}
           >
-            <div className="pt-24 px-8 flex flex-col gap-8">
-              <ul className="flex flex-col gap-6" role="list">
+            <div className="pt-24 px-8 pb-10 flex flex-col gap-8 overflow-y-auto h-full">
+              <ul className="flex flex-col gap-5" role="list">
                 {NAV_LINKS.map((link, i) => (
                   <motion.li
                     key={link.href}
@@ -168,8 +182,8 @@ export default function Navbar() {
                   >
                     <Link
                       to={link.href}
-                      className={`font-display text-4xl transition-colors duration-200 ${
-                        isActive(link.href) ? 'text-amber' : 'text-ivory hover:text-amber'
+                      className={`font-display text-3xl sm:text-4xl transition-colors duration-200 ${
+                        isActive(link.href) ? 'text-terracotta' : 'text-espresso hover:text-terracotta'
                       }`}
                     >
                       {link.label}
@@ -182,7 +196,7 @@ export default function Navbar() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.45 }}
-                className="pt-4 border-t border-ivory/10"
+                className="pt-4 border-t border-espresso/10"
               >
                 <button
                   onClick={openChatBot}

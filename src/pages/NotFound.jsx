@@ -5,7 +5,7 @@ export default function NotFound() {
   
 
   return (
-    <div className="min-h-screen bg-espresso flex items-center justify-center px-6">
+    <div className="min-h-screen bg-background flex items-center justify-center px-6">
       <motion.div
         className="text-center max-w-md"
         initial={{ opacity: 0, y: 30 }}
@@ -13,13 +13,13 @@ export default function NotFound() {
         transition={{ duration: 0.7 }}
       >
         <p className="text-7xl mb-6" aria-hidden="true">🍽️</p>
-        <h1 className="font-display text-ivory text-5xl font-bold mb-4">
-          <span className="text-amber">404</span>
+        <h1 className="font-display text-espresso text-5xl font-bold mb-4">
+          <span className="text-terracotta">404</span>
         </h1>
-        <p className="font-display text-ivory text-2xl mb-4">
+        <p className="font-display text-espresso text-2xl mb-4">
           Este plato no está en el menú.
         </p>
-        <p className="font-body text-ivory/55 text-base mb-8 leading-relaxed">
+        <p className="font-body text-warm-gray text-base mb-8 leading-relaxed">
           La página que buscas no existe. Pero tenemos algo mejor:
           comida casera deliciosa esperándote.
         </p>

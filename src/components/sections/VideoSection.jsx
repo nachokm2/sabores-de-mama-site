@@ -37,12 +37,12 @@ export default function VideoSection() {
       {/* Background */}
       <div
         className="absolute inset-0"
-        style={{ background: 'linear-gradient(160deg, #1A0B06 0%, #2C1810 50%, #0A0604 100%)' }}
+        style={{ background: 'linear-gradient(160deg, #F7EFE2 0%, #FBF6EE 50%, #EFE3D0 100%)' }}
         aria-hidden="true"
       />
       <div
         className="absolute left-1/2 -translate-x-1/2 bottom-0 w-[800px] h-[400px] pointer-events-none"
-        style={{ background: 'radial-gradient(ellipse at 50% 100%, rgba(200,135,58,0.15) 0%, transparent 70%)' }}
+        style={{ background: 'radial-gradient(ellipse at 50% 100%, rgba(194,121,47,0.14) 0%, transparent 70%)' }}
         aria-hidden="true"
       />
 
@@ -77,7 +77,7 @@ export default function VideoSection() {
 
             {/* Phone frame */}
             <div
-              className="relative rounded-[28px] overflow-hidden shadow-2xl ring-1 ring-ivory/10 cursor-pointer"
+              className="relative rounded-[28px] overflow-hidden shadow-2xl ring-1 ring-espresso/10 cursor-pointer"
               style={{ aspectRatio: '9/16' }}
               onClick={togglePlay}
             >
@@ -156,8 +156,8 @@ export default function VideoSection() {
                 >
                   <span className="text-2xl flex-shrink-0 mt-0.5" aria-hidden="true">{feat.icon}</span>
                   <div>
-                    <h3 className="font-display text-ivory text-base font-semibold mb-0.5">{feat.title}</h3>
-                    <p className="font-body text-ivory/50 text-sm leading-relaxed">{feat.text}</p>
+                    <h3 className="font-display text-espresso text-base font-semibold mb-0.5">{feat.title}</h3>
+                    <p className="font-body text-warm-gray text-sm leading-relaxed">{feat.text}</p>
                   </div>
                 </motion.div>
               ))}

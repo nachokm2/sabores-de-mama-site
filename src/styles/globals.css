@@ -4,15 +4,18 @@
 
 /* ─── CSS Custom Properties ──────────────────────────────────────────────── */
 :root {
-  --color-espresso:    #0A0604;
-  --color-bark:        #2C1810;
-  --color-ember:       #6B2D1E;
-  --color-terracotta:  #8B3A2C;
-  --color-amber:       #C8873A;
-  --color-gold:        #D4A853;
-  --color-wheat:       #E8C99A;
-  --color-cream:       #F5EDD6;
-  --color-ivory:       #FEFAF4;
+  /* Tema claro "comida casera" — ver tailwind.config.js (tokens). */
+  --color-espresso:    #2A1C12;  /* tinta oscura (texto) */
+  --color-bark:        #4A3727;  /* marrón secundario */
+  --color-ember:       #9E4023;  /* terracota profundo */
+  --color-terracotta:  #AE4C29;  /* primary */
+  --color-amber:       #C2792F;  /* ámbar (fondo con texto oscuro) */
+  --color-gold:        #D99A3C;  /* miel (decorativo) */
+  --color-wheat:       #EAD9BE;  /* crema cálida */
+  --color-cream:       #F7EFE2;  /* crema clara */
+  --color-ivory:       #FFFCF7;  /* superficie casi blanca */
+  --color-bg:          #FBF6EE;  /* fondo de página (blanco roto) */
+  --color-accent-text: #A8472A;  /* terracota tostado para texto AA */
 
   --font-display: "Playfair Display", Georgia, serif;
   --font-accent:  "DM Serif Display", Georgia, serif;
@@ -87,7 +90,7 @@
 
   body {
     font-family: var(--font-body);
-    background-color: var(--color-ivory);
+    background-color: var(--color-bg);
     color: var(--color-espresso);
     overflow-x: hidden;
     line-height: 1.6;
@@ -96,7 +99,7 @@
   /* Selection */
   ::selection {
     background-color: var(--color-amber);
-    color: var(--color-ivory);
+    color: var(--color-espresso);
   }
 
   /* Focus ring */
@@ -146,16 +149,16 @@
   .tracking-tighter-display { letter-spacing: -0.04em; }
   .tracking-display         { letter-spacing: -0.02em; }
 
-  /* Gradient text */
+  /* Gradient text — tonos cálidos OSCUROS para contraste AA sobre fondos claros */
   .text-gradient-gold {
-    background: linear-gradient(135deg, var(--color-gold) 0%, var(--color-amber) 50%, var(--color-wheat) 100%);
+    background: linear-gradient(135deg, var(--color-terracotta) 0%, var(--color-ember) 50%, #A8472A 100%);
     -webkit-background-clip: text;
     background-clip: text;
     -webkit-text-fill-color: transparent;
   }
 
   .text-gradient-warm {
-    background: linear-gradient(135deg, var(--color-amber) 0%, var(--color-terracotta) 100%);
+    background: linear-gradient(135deg, var(--color-ember) 0%, var(--color-terracotta) 100%);
     -webkit-background-clip: text;
     background-clip: text;
     -webkit-text-fill-color: transparent;
@@ -178,19 +181,20 @@
   .container-narrow { @apply max-w-3xl mx-auto px-5 sm:px-8; }
   .container-wide   { @apply max-w-8xl mx-auto px-5 sm:px-8 lg:px-12; }
 
-  /* Glass morphism */
+  /* Glass morphism — superficies translúcidas claras sobre tema claro */
   .glass {
-    background: rgba(254, 250, 244, 0.08);
+    background: rgba(255, 252, 247, 0.7);
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
-    border: 1px solid rgba(212, 168, 83, 0.15);
+    border: 1px solid rgba(42, 28, 18, 0.08);
   }
 
   .glass-dark {
-    background: rgba(10, 6, 4, 0.6);
+    background: rgba(255, 252, 247, 0.88);
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
-    border: 1px solid rgba(200, 135, 58, 0.2);
+    border: 1px solid rgba(181, 81, 46, 0.18);
+    box-shadow: 0 8px 30px rgba(42, 28, 18, 0.08);
   }
 
   /* Image zoom on hover */
@@ -261,28 +265,29 @@
   }
 
   .btn-primary {
-    @apply btn bg-amber text-ivory px-7 py-3.5 rounded-full
-           hover:bg-gold hover:scale-[1.02]
+    @apply btn bg-terracotta text-ivory px-7 py-3.5 rounded-full
+           hover:bg-ember hover:scale-[1.02]
            active:scale-[0.98]
-           shadow-[0_4px_20px_rgba(200,135,58,0.4)];
+           shadow-[0_4px_20px_rgba(181,81,46,0.35)];
   }
 
   .btn-primary-dark {
     @apply btn bg-amber text-espresso px-7 py-3.5 rounded-full
            font-semibold hover:bg-gold hover:scale-[1.02]
            active:scale-[0.98]
-           shadow-[0_4px_20px_rgba(200,135,58,0.5)];
+           shadow-[0_4px_20px_rgba(194,121,47,0.4)];
   }
 
   .btn-outline {
-    @apply btn border border-amber/60 text-amber px-7 py-3.5 rounded-full
-           hover:bg-amber hover:text-espresso hover:border-amber
+    @apply btn border border-terracotta/50 text-terracotta px-7 py-3.5 rounded-full
+           hover:bg-terracotta hover:text-ivory hover:border-terracotta
            hover:scale-[1.02] active:scale-[0.98];
   }
 
+  /* Antes outline claro para fondos oscuros; ahora outline oscuro para tema claro */
   .btn-outline-light {
-    @apply btn border border-ivory/40 text-ivory px-7 py-3.5 rounded-full
-           hover:bg-ivory hover:text-espresso
+    @apply btn border border-espresso/30 text-espresso px-7 py-3.5 rounded-full
+           hover:bg-espresso hover:text-ivory
            hover:scale-[1.02] active:scale-[0.98];
   }
 
@@ -294,7 +299,7 @@
   }
 
   .btn-icon {
-    @apply btn rounded-full p-3 border border-amber/30
+    @apply btn rounded-full p-3 border border-terracotta/30 text-terracotta
            hover:border-amber hover:bg-amber hover:text-espresso;
   }
 
@@ -316,8 +321,9 @@
            leading-[1.05] tracking-tighter-display text-balance;
   }
 
+  /* Tema claro: el antiguo "light" (texto claro sobre oscuro) ahora es tinta oscura */
   .section-title-light {
-    @apply section-title text-ivory;
+    @apply section-title text-espresso;
   }
 
   .section-subtitle {
@@ -326,14 +332,14 @@
   }
 
   .section-label {
-    @apply inline-flex items-center gap-2 text-amber font-body
+    @apply inline-flex items-center gap-2 text-accent-600 font-body
            text-xs font-semibold tracking-[0.18em] uppercase;
   }
 
   /* ── Nav ─────────────────────────────────────────────────────────────── */
   .nav-link {
     @apply font-body text-sm font-medium tracking-wide
-           text-ivory/80 hover:text-ivory
+           text-espresso/75 hover:text-espresso
            transition-colors duration-200
            link-underline;
   }
@@ -398,7 +404,7 @@
 .img-placeholder {
   position: relative;
   overflow: hidden;
-  background: linear-gradient(135deg, #2C1810 0%, #6B2D1E 50%, #C8873A 100%);
+  background: linear-gradient(135deg, #EAD9BE 0%, #DD8E6B 50%, #C2792F 100%);
 }
 .img-placeholder::after {
   content: '';

@@ -32,15 +32,15 @@ export default function Footer() {
 
   return (
     <footer
-      className="bg-espresso text-ivory relative overflow-hidden"
+      className="bg-background-warm text-espresso relative overflow-hidden border-t border-espresso/10"
       role="contentinfo"
       id="contacto"
     >
-      {/* Amber glow top */}
+      {/* Terracotta glow top */}
       <div
         className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-px"
         style={{
-          background: 'linear-gradient(90deg, transparent, rgba(200,135,58,0.6), transparent)',
+          background: 'linear-gradient(90deg, transparent, rgba(181,81,46,0.5), transparent)',
         }}
         aria-hidden="true"
       />
@@ -51,8 +51,8 @@ export default function Footer() {
           {/* Brand */}
           <div className="lg:col-span-2">
             <div className="flex items-center gap-3 mb-5">
-              <span className="font-display text-2xl font-bold text-ivory">
-                Sabores de <span className="text-amber">Mamá</span>
+              <span className="font-display text-2xl font-bold text-espresso">
+                Sabores de <span className="text-terracotta">Mamá</span>
               </span>
             </div>
             <p className="text-warm-gray text-sm leading-relaxed max-w-xs">
@@ -72,7 +72,7 @@ export default function Footer() {
                     target="_blank"
                     rel="noopener noreferrer"
                     aria-label={label}
-                    className="w-9 h-9 rounded-full border border-ivory/15 flex items-center justify-center text-warm-gray hover:text-amber hover:border-amber/60 transition-colors duration-200"
+                    className="w-9 h-9 rounded-full border border-espresso/15 flex items-center justify-center text-warm-gray hover:text-terracotta hover:border-terracotta/60 transition-colors duration-200"
                     whileHover={{ scale: 1.1, y: -2 }}
                     whileTap={{ scale: 0.95 }}
                   >
@@ -83,7 +83,7 @@ export default function Footer() {
                     key={label}
                     aria-label={`${label} (próximamente)`}
                     title={`${label} próximamente`}
-                    className="w-9 h-9 rounded-full border border-ivory/8 flex items-center justify-center text-warm-gray/30 cursor-default"
+                    className="w-9 h-9 rounded-full border border-espresso/10 flex items-center justify-center text-warm-gray/40 cursor-default"
                   >
                     {icon}
                   </span>
@@ -94,7 +94,7 @@ export default function Footer() {
 
           {/* Nav */}
           <nav aria-label="Links del footer">
-            <h3 className="text-xs font-semibold tracking-[0.18em] uppercase text-amber mb-5">
+            <h3 className="text-xs font-semibold tracking-[0.18em] uppercase text-accent-600 mb-5">
               Navegación
             </h3>
             <ul className="flex flex-col gap-3" role="list">
@@ -102,7 +102,7 @@ export default function Footer() {
                 <li key={link.href}>
                   <a
                     href={link.href}
-                    className="text-warm-gray text-sm hover:text-ivory transition-colors duration-200 link-underline"
+                    className="text-warm-gray text-sm hover:text-espresso transition-colors duration-200 link-underline"
                   >
                     {link.label}
                   </a>
@@ -113,7 +113,7 @@ export default function Footer() {
 
           {/* Contact */}
           <div>
-            <h3 className="text-xs font-semibold tracking-[0.18em] uppercase text-amber mb-5">
+            <h3 className="text-xs font-semibold tracking-[0.18em] uppercase text-accent-600 mb-5">
               Contacto
             </h3>
             <ul className="flex flex-col gap-3 text-warm-gray text-sm" role="list">
@@ -122,7 +122,7 @@ export default function Footer() {
                   href={getWhatsAppLink()}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="hover:text-[#25D366] transition-colors duration-200 flex items-center gap-2"
+                  className="hover:text-[#15803D] transition-colors duration-200 flex items-center gap-2"
                 >
                   <span aria-hidden="true">💬</span> WhatsApp
                 </a>
@@ -130,7 +130,7 @@ export default function Footer() {
               <li>
                 <a
                   href={`mailto:${SITE.email}`}
-                  className="hover:text-ivory transition-colors duration-200"
+                  className="hover:text-espresso transition-colors duration-200"
                 >
                   {SITE.email}
                 </a>
@@ -139,7 +139,7 @@ export default function Footer() {
                 <span aria-hidden="true">📍</span>
                 <span>{SITE.address}</span>
               </li>
-              <li className="pt-2 border-t border-ivory/10">
+              <li className="pt-2 border-t border-espresso/10">
                 <p className="text-xs leading-relaxed">
                   {SITE.hours.weekdays}
                 </p>
@@ -152,10 +152,10 @@ export default function Footer() {
         </div>
 
         {/* Bottom bar */}
-        <div className="mt-14 pt-6 border-t border-ivory/10 flex flex-col sm:flex-row items-center justify-between gap-3 text-warm-gray text-xs">
+        <div className="mt-14 pt-6 border-t border-espresso/10 flex flex-col sm:flex-row items-center justify-between gap-3 text-warm-gray text-xs">
           <p>© {year} {SITE.name}. Todos los derechos reservados.</p>
           <p className="text-center sm:text-right">
-            Hecho con <span className="text-amber">❤️</span> en Santiago, Chile
+            Hecho con <span className="text-terracotta">❤️</span> en Santiago, Chile
           </p>
         </div>
       </div>

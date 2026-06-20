@@ -150,7 +150,6 @@ function GalleryCard({ item, index, onClick }) {
 export default function Galeria() {
   const [activeFilter, setActiveFilter] = useState('todos')
   const [selected, setSelected]         = useState(null)
-  const { openDefault }                  = useWhatsApp()
 
   const filtered = useMemo(
     () => activeFilter === 'todos' ? GALLERY_ITEMS : GALLERY_ITEMS.filter(i => i.category === activeFilter),
@@ -188,11 +187,11 @@ export default function Galeria() {
         />
 
         {/* ── Gallery grid ── */}
-        <section className="section-padding bg-espresso relative overflow-hidden" aria-label="Galería de platos">
+        <section className="section-padding bg-background-soft relative overflow-hidden" aria-label="Galería de platos">
           {/* Glow */}
           <div
             className="absolute left-1/2 -translate-x-1/2 top-0 w-[700px] h-[350px] pointer-events-none"
-            style={{ background: 'radial-gradient(ellipse at 50% 0%, rgba(200,135,58,0.08) 0%, transparent 70%)' }}
+            style={{ background: 'radial-gradient(ellipse at 50% 0%, rgba(194,121,47,0.07) 0%, transparent 70%)' }}
             aria-hidden="true"
           />
 
@@ -205,8 +204,8 @@ export default function Galeria() {
                   onClick={() => setActiveFilter(cat.id)}
                   className={`px-4 py-2 rounded-full text-xs font-medium font-body border transition-all duration-300 ${
                     activeFilter === cat.id
-                      ? 'bg-amber text-espresso border-amber shadow-[0_2px_12px_rgba(200,135,58,0.4)]'
-                      : 'bg-transparent text-warm-gray border-warm-gray/30 hover:border-amber/50 hover:text-amber'
+                      ? 'bg-amber text-espresso border-amber shadow-[0_2px_12px_rgba(194,121,47,0.4)]'
+                      : 'bg-transparent text-warm-gray border-warm-gray/30 hover:border-amber/50 hover:text-accent-600'
                   }`}
                   whileHover={{ scale: 1.04 }}
                   whileTap={{ scale: 0.96 }}
@@ -236,7 +235,7 @@ export default function Galeria() {
               viewport={{ once: true }}
               transition={{ duration: 0.7 }}
             >
-              <p className="text-ivory/40 font-body text-sm mb-5">
+              <p className="text-warm-gray font-body text-sm mb-5">
                 ¿Te antojaste? Pide ahora por WhatsApp.
               </p>
               <button onClick={openChatBot} className="btn-primary-dark">

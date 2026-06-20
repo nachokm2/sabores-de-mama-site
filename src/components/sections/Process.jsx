@@ -10,7 +10,7 @@ const STEPS = [
     description: 'Revisa nuestro menú y elige lo que más se te antoje. Tenemos algo para cada hambre y cada momento.',
     color: 'from-amber/20 to-gold/10',
     borderColor: 'border-amber/30',
-    accentColor: 'text-amber',
+    accentColor: 'text-accent-600',
   },
   {
     step: '02',
@@ -19,7 +19,7 @@ const STEPS = [
     description: 'Envíanos tu pedido por WhatsApp. Te confirmamos disponibilidad y precio en minutos. Sin complicaciones.',
     color: 'from-[#25D366]/15 to-[#25D366]/5',
     borderColor: 'border-[#25D366]/30',
-    accentColor: 'text-[#25D366]',
+    accentColor: 'text-[#166534]',
   },
   {
     step: '03',
@@ -37,7 +37,7 @@ const STEPS = [
     description: 'Recibe tu comida caliente y lista para disfrutar. El sabor de mamá, en tu hogar, cuando lo necesitas.',
     color: 'from-gold/15 to-amber/10',
     borderColor: 'border-gold/30',
-    accentColor: 'text-gold',
+    accentColor: 'text-ember',
   },
 ]
 
@@ -107,7 +107,7 @@ export default function Process() {
             className="section-title text-espresso mt-4 process-item"
           >
             Pedir es
-            <span className="text-amber"> tan fácil</span>
+            <span className="text-terracotta"> tan fácil</span>
             <br />
             como llamar a mamá.
           </h2>

@@ -55,7 +55,8 @@ function TestimonialCard({ testimonial, index }) {
 function FeaturedCard({ testimonial }) {
   return (
     <motion.div
-      className="relative rounded-3xl bg-espresso p-8 md:p-10 overflow-hidden"
+      className="relative rounded-3xl p-8 md:p-10 overflow-hidden"
+      style={{ background: 'linear-gradient(160deg, #B5512E 0%, #9E4023 100%)' }}
       initial={{ opacity: 0, scale: 0.96 }}
       whileInView={{ opacity: 1, scale: 1 }}
       viewport={{ once: true, margin: '-60px' }}
@@ -64,13 +65,13 @@ function FeaturedCard({ testimonial }) {
       {/* Background glow */}
       <div
         className="absolute -top-20 -right-20 w-60 h-60 rounded-full pointer-events-none"
-        style={{ background: 'radial-gradient(ellipse, rgba(200,135,58,0.15) 0%, transparent 70%)' }}
+        style={{ background: 'radial-gradient(ellipse, rgba(255,252,247,0.16) 0%, transparent 70%)' }}
         aria-hidden="true"
       />
 
       {/* Quote mark */}
       <span
-        className="absolute top-6 right-8 font-display text-[120px] text-amber/10 leading-none select-none"
+        className="absolute top-6 right-8 font-display text-[120px] text-ivory/15 leading-none select-none"
         aria-hidden="true"
       >
         "
@@ -86,13 +87,13 @@ function FeaturedCard({ testimonial }) {
 
       <div className="flex items-center gap-4">
         <div
-          className={`w-12 h-12 rounded-full bg-gradient-to-br ${testimonial.avatarGradient} flex items-center justify-center`}
+          className={`w-12 h-12 rounded-full bg-gradient-to-br ${testimonial.avatarGradient} flex items-center justify-center ring-2 ring-ivory/25`}
         >
           <span className="font-display text-ivory font-bold">{testimonial.avatar}</span>
         </div>
         <div>
           <p className="font-body text-ivory font-semibold">{testimonial.name}</p>
-          <p className="font-body text-warm-gray text-sm">{testimonial.role} · {testimonial.location}</p>
+          <p className="font-body text-ivory/70 text-sm">{testimonial.role} · {testimonial.location}</p>
         </div>
       </div>
     </motion.div>
@@ -124,7 +125,7 @@ export default function Testimonials() {
           >
             Familias que ya
             <br />
-            <em className="not-italic text-amber">saben el secreto.</em>
+            <em className="not-italic text-terracotta">saben el secreto.</em>
           </h2>
         </div>
 

@@ -31,7 +31,7 @@ export default function FloatingWhatsApp() {
         >
           {/* Tooltip */}
           <motion.div
-            className="glass-dark text-ivory text-xs font-body px-3 py-2 rounded-xl whitespace-nowrap pointer-events-none"
+            className="glass-dark text-espresso text-xs font-body px-3 py-2 rounded-xl whitespace-nowrap pointer-events-none"
             initial={{ opacity: 0, x: 10 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.3 }}

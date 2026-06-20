@@ -1,0 +1,32 @@
+{
+  "name": "sabores-de-mama-backend",
+  "version": "1.0.0",
+  "description": "API backend de Sabores de Mamá (Express + PostgreSQL)",
+  "type": "module",
+  "main": "src/server.js",
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "nodemon src/server.js",
+    "migrate": "node src/models/migrations.js",
+    "seed": "node src/models/seed.js",
+    "seed:menu": "node src/models/seedMenu.js",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "jsonwebtoken": "^9.0.2",
+    "nodemailer": "^6.9.16",
+    "pg": "^8.13.1"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.7",
+    "supertest": "^7.2.2",
+    "vitest": "^2.1.9"
+  }
+}

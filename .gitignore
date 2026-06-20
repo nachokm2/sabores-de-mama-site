@@ -7,3 +7,7 @@ dist/
 .DS_Store
 Thumbs.db
 .claude/
+lh-report.json
+.lhtmp/
+test-results/
+playwright-report/

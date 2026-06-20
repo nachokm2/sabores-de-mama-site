@@ -1,9 +1,47 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { SERVICES, DISH_CATEGORIES, DULCES_FAMILIAR, DULCES_SNACKS, DISH_DESCRIPTIONS } from '../../data/menu'
 import SectionLabel from '../ui/SectionLabel'
-import { openChatBot } from '../../lib/openChatBot'
+import { getPlatos } from '../../lib/publicApi'
 import { useScrollReveal } from '../../hooks/useScrollAnimation'
+
+// Cada servicio inicia su propio flujo de pedido.
+const SERVICE_ROUTES = {
+  mealprep: '/meal-prep',
+  cocinera: '/cocinera-a-domicilio',
+}
+
+// Iconos por categoría (la BD guarda la categoría como texto libre).
+const CATEGORY_ICONS = {
+  'Carnes y Pollo': '🍗',
+  'Legumbres y Caldos': '🥘',
+  'Quiches y Tortillas': '🥧',
+  'Otros Platos': '🍽️',
+  'Acompañamientos': '🍚',
+}
+
+// Agrupa los platos de la API por categoría → estructura del acordeón.
+function buildCategoriesFromApi(platos) {
+  const map = new Map()
+  for (const p of platos) {
+    const label = p.categoria || 'Otros Platos'
+    if (!map.has(label)) map.set(label, [])
+    map.get(label).push(p.nombre)
+  }
+  return Array.from(map, ([label, items], i) => ({
+    id: `api-cat-${i}`,
+    label,
+    icon: CATEGORY_ICONS[label] || '🍽️',
+    items,
+  }))
+}
+
+function buildDescriptionsFromApi(platos) {
+  const d = {}
+  for (const p of platos) if (p.descripcion) d[p.nombre] = p.descripcion
+  return d
+}
 
 /* ── WhatsApp icon ───────────────────────────────────────────────────────────── */
 function WaIcon({ className = 'w-4 h-4' }) {
@@ -16,10 +54,12 @@ function WaIcon({ className = 'w-4 h-4' }) {
 
 /* ── Service card ────────────────────────────────────────────────────────────── */
 function ServiceCard({ service, index }) {
+  const navigate = useNavigate()
+  const irAlFlujo = () => navigate(SERVICE_ROUTES[service.id] || '/meal-prep')
   return (
     <motion.article
-      className={`relative rounded-3xl overflow-hidden flex flex-col ${service.highlight ? 'ring-2 ring-amber/50' : 'ring-1 ring-white/10'}`}
-      style={{ background: 'linear-gradient(160deg, #1A0B06 0%, #2C1810 100%)' }}
+      className={`relative rounded-3xl overflow-hidden flex flex-col shadow-[0_10px_40px_rgba(42,28,18,0.08)] ${service.highlight ? 'ring-2 ring-amber/50' : 'ring-1 ring-espresso/10'}`}
+      style={{ background: 'linear-gradient(160deg, #FFFCF7 0%, #F7EFE2 100%)' }}
       initial={{ opacity: 0, y: 40 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: '-60px' }}
@@ -39,19 +79,19 @@ function ServiceCard({ service, index }) {
         <div className="flex items-center gap-3 mb-5">
           <span className="text-3xl" aria-hidden="true">{service.icon}</span>
           <div>
-            <p className="font-body text-amber text-xs font-semibold tracking-[0.15em] uppercase">{service.tagline}</p>
-            <h3 className="font-display text-ivory text-xl font-bold leading-tight">{service.name}</h3>
+            <p className="font-body text-accent-600 text-xs font-semibold tracking-[0.15em] uppercase">{service.tagline}</p>
+            <h3 className="font-display text-espresso text-xl font-bold leading-tight">{service.name}</h3>
           </div>
         </div>
 
         {/* Price */}
         <div className="mb-5">
-          <span className="font-display text-4xl font-bold text-amber">{service.priceLabel}</span>
+          <span className="font-display text-4xl font-bold text-terracotta">{service.priceLabel}</span>
           <span className="font-body text-warm-gray text-sm ml-2">por servicio</span>
         </div>
 
         {/* Description */}
-        <p className="font-body text-ivory/60 text-sm leading-relaxed mb-6">
+        <p className="font-body text-warm-gray text-sm leading-relaxed mb-6">
           {service.description}
         </p>
 
@@ -59,32 +99,31 @@ function ServiceCard({ service, index }) {
         <ul className="space-y-2.5 mb-7 flex-1" aria-label={`Incluye en ${service.name}`}>
           {service.features.map((f) => (
             <li key={f} className="flex items-start gap-2.5">
-              <span className="text-amber mt-0.5 flex-shrink-0" aria-hidden="true">✓</span>
-              <span className="font-body text-ivory/70 text-sm">{f}</span>
+              <span className="text-accent-600 mt-0.5 flex-shrink-0" aria-hidden="true">✓</span>
+              <span className="font-body text-warm-gray text-sm">{f}</span>
             </li>
           ))}
         </ul>
 
         {/* Communes */}
-        <div className="mb-7 p-3.5 rounded-xl bg-white/5 border border-white/8">
+        <div className="mb-7 p-3.5 rounded-xl bg-espresso/[0.04] border border-espresso/10">
           <p className="font-body text-warm-gray text-xs font-semibold uppercase tracking-wider mb-2">📍 Comunas disponibles</p>
-          <p className="font-body text-ivory/60 text-xs leading-relaxed">{service.communes.join(' · ')}</p>
+          <p className="font-body text-warm-gray text-xs leading-relaxed">{service.communes.join(' · ')}</p>
         </div>
 
-        {/* CTA */}
+        {/* CTA → inicia el flujo del servicio */}
         <motion.button
-          onClick={openChatBot}
+          onClick={irAlFlujo}
           className={`w-full flex items-center justify-center gap-2.5 py-3.5 rounded-xl text-sm font-semibold font-body transition-all duration-300 ${
             service.highlight
-              ? 'bg-amber text-espresso hover:bg-gold shadow-[0_4px_20px_rgba(200,135,58,0.4)]'
-              : 'bg-white/8 text-ivory border border-white/15 hover:bg-amber hover:text-espresso hover:border-amber'
+              ? 'bg-amber text-espresso hover:bg-gold shadow-[0_4px_20px_rgba(194,121,47,0.4)]'
+              : 'bg-espresso/[0.05] text-espresso border border-espresso/15 hover:bg-amber hover:text-espresso hover:border-amber'
           }`}
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.97 }}
-          aria-label={`Agendar ${service.name} por WhatsApp`}
+          aria-label={`Comenzar pedido de ${service.name}`}
         >
-          <WaIcon />
-          Agendar por WhatsApp
+          Comenzar pedido
         </motion.button>
       </div>
     </motion.article>
@@ -92,29 +131,29 @@ function ServiceCard({ service, index }) {
 }
 
 /* ── Category accordion ──────────────────────────────────────────────────────── */
-function CategoryAccordion({ cat, index }) {
+function CategoryAccordion({ cat, index, descriptions = {} }) {
   const [open, setOpen] = useState(index === 0)
   const [activeDish, setActiveDish] = useState(null)
   return (
     <motion.div
-      className="border border-white/10 rounded-2xl overflow-hidden"
+      className="border border-espresso/10 rounded-2xl overflow-hidden bg-background-surface"
       initial={{ opacity: 0, y: 20 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: '-40px' }}
       transition={{ duration: 0.5, delay: index * 0.06 }}
     >
       <button
-        className="w-full flex items-center justify-between p-4 md:p-5 text-left hover:bg-white/5 transition-colors duration-200"
+        className="w-full flex items-center justify-between p-4 md:p-5 text-left hover:bg-espresso/[0.04] transition-colors duration-200"
         onClick={() => setOpen(v => !v)}
         aria-expanded={open}
       >
         <div className="flex items-center gap-3">
           <span className="text-xl" aria-hidden="true">{cat.icon}</span>
-          <span className="font-display text-ivory text-base font-semibold">{cat.label}</span>
-          <span className="font-body text-warm-gray text-xs bg-white/8 px-2 py-0.5 rounded-full">{cat.items.length}</span>
+          <span className="font-display text-espresso text-base font-semibold">{cat.label}</span>
+          <span className="font-body text-warm-gray text-xs bg-espresso/[0.06] px-2 py-0.5 rounded-full">{cat.items.length}</span>
         </div>
         <motion.span
-          className="text-amber text-lg leading-none flex-shrink-0"
+          className="text-accent-600 text-lg leading-none flex-shrink-0"
           animate={{ rotate: open ? 45 : 0 }}
           transition={{ duration: 0.25 }}
           aria-hidden="true"
@@ -132,7 +171,7 @@ function CategoryAccordion({ cat, index }) {
             transition={{ duration: 0.3, ease: [0.19, 1, 0.22, 1] }}
             className="overflow-hidden"
           >
-            <div className="px-4 md:px-5 pb-5 border-t border-white/8 pt-4">
+            <div className="px-4 md:px-5 pb-5 border-t border-espresso/10 pt-4">
               <div className="flex flex-wrap gap-2">
                 {cat.items.map((item) => (
                   <button
@@ -142,8 +181,8 @@ function CategoryAccordion({ cat, index }) {
                     onClick={() => setActiveDish(v => v === item ? null : item)}
                     className={`font-body text-xs px-3 py-1.5 rounded-full border transition-all duration-200 ${
                       activeDish === item
-                        ? 'bg-amber/15 border-amber/50 text-amber'
-                        : 'text-ivory/70 bg-white/6 border-white/10 hover:border-amber/40 hover:text-amber'
+                        ? 'bg-amber/15 border-amber/50 text-accent-600'
+                        : 'text-warm-gray bg-espresso/[0.04] border-espresso/10 hover:border-amber/50 hover:text-accent-600'
                     }`}
                   >
                     {item}
@@ -153,19 +192,19 @@ function CategoryAccordion({ cat, index }) {
 
               {/* Panel de descripción */}
               <AnimatePresence>
-                {activeDish && DISH_DESCRIPTIONS[activeDish] && (
+                {activeDish && descriptions[activeDish] && (
                   <motion.div
                     key={activeDish}
                     initial={{ opacity: 0, y: 6 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: 4 }}
                     transition={{ duration: 0.18 }}
-                    className="mt-4 flex items-start gap-3 bg-white/5 border border-amber/20 rounded-xl px-4 py-3"
+                    className="mt-4 flex items-start gap-3 bg-amber/[0.06] border border-amber/30 rounded-xl px-4 py-3"
                   >
-                    <span className="text-amber text-base mt-0.5 flex-shrink-0">✦</span>
+                    <span className="text-accent-600 text-base mt-0.5 flex-shrink-0">✦</span>
                     <div>
-                      <p className="font-display text-ivory text-sm font-semibold mb-0.5">{activeDish}</p>
-                      <p className="font-body text-ivory/65 text-xs leading-relaxed">{DISH_DESCRIPTIONS[activeDish]}</p>
+                      <p className="font-display text-espresso text-sm font-semibold mb-0.5">{activeDish}</p>
+                      <p className="font-body text-warm-gray text-xs leading-relaxed">{descriptions[activeDish]}</p>
                     </div>
                   </motion.div>
                 )}
@@ -196,7 +235,7 @@ function DulceCard({ item, index }) {
       aria-label={`Pedir ${item.name}`}
     >
       {/* Image or gradient background */}
-      <div className={`h-32 relative overflow-hidden ${!item.image ? `bg-gradient-to-br ${item.gradient}` : 'bg-espresso'}`}>
+      <div className={`h-32 relative overflow-hidden ${!item.image ? `bg-gradient-to-br ${item.gradient}` : 'bg-wheat'}`}>
         {item.image ? (
           <img
             src={item.image}
@@ -220,8 +259,8 @@ function DulceCard({ item, index }) {
         </div>
       </div>
       {/* Info */}
-      <div className="bg-espresso p-3.5">
-        <h4 className="font-display text-ivory text-sm font-semibold leading-tight mb-0.5">{item.name}</h4>
+      <div className="bg-background-surface border-x border-b border-espresso/8 rounded-b-2xl p-3.5">
+        <h4 className="font-display text-espresso text-sm font-semibold leading-tight mb-0.5">{item.name}</h4>
         <p className="font-body text-warm-gray text-xs">{item.subtitle}</p>
       </div>
     </motion.article>
@@ -232,16 +271,37 @@ function DulceCard({ item, index }) {
 export default function MenuSection() {
   const titleRef = useScrollReveal({ selector: '.menu-title', stagger: 0.1, y: 30 })
 
+  // Platos desde la API (con fallback a los datos estáticos si el backend
+  // no responde o aún no tiene platos cargados).
+  const [categories, setCategories] = useState(DISH_CATEGORIES)
+  const [descriptions, setDescriptions] = useState(DISH_DESCRIPTIONS)
+
+  useEffect(() => {
+    let active = true
+    getPlatos()
+      .then((platos) => {
+        if (!active || !platos.length) return
+        setCategories(buildCategoriesFromApi(platos))
+        setDescriptions({ ...DISH_DESCRIPTIONS, ...buildDescriptionsFromApi(platos) })
+      })
+      .catch(() => {
+        /* Sin conexión / error → se mantienen los datos estáticos. */
+      })
+    return () => {
+      active = false
+    }
+  }, [])
+
   return (
     <section
       id="menu"
-      className="relative section-padding bg-bark overflow-hidden"
+      className="relative section-padding bg-background-soft overflow-hidden"
       aria-labelledby="menu-heading"
     >
       {/* Ambient */}
       <div
         className="absolute left-1/2 -translate-x-1/2 top-0 w-[900px] h-[500px] pointer-events-none"
-        style={{ background: 'radial-gradient(ellipse at 50% 0%, rgba(200,135,58,0.1) 0%, transparent 70%)' }}
+        style={{ background: 'radial-gradient(ellipse at 50% 0%, rgba(194,121,47,0.08) 0%, transparent 70%)' }}
         aria-hidden="true"
       />
 
@@ -255,7 +315,7 @@ export default function MenuSection() {
             <br />
             <span className="text-gradient-gold">a tu manera.</span>
           </h2>
-          <p className="section-subtitle text-ivory/55 mx-auto mt-5 menu-title">
+          <p className="section-subtitle text-warm-gray mx-auto mt-5 menu-title">
             Elige el servicio que mejor se adapta a tu semana.
             Tú pones los ingredientes, yo pongo el amor.
           </p>
@@ -272,19 +332,19 @@ export default function MenuSection() {
         <div className="mb-20">
           <div className="text-center mb-10">
             <SectionLabel light>Elige tus Platos</SectionLabel>
-            <h3 className="font-display text-ivory text-3xl md:text-4xl font-bold mt-3 leading-tight">
+            <h3 className="font-display text-espresso text-3xl md:text-4xl font-bold mt-3 leading-tight">
               Más de 60 preparaciones
               <br />
-              <span className="text-amber">para elegir.</span>
+              <span className="text-terracotta">para elegir.</span>
             </h3>
-            <p className="font-body text-ivory/50 text-sm mt-3 max-w-md mx-auto">
+            <p className="font-body text-warm-gray text-sm mt-3 max-w-md mx-auto">
               Selecciona hasta 5 preparaciones por servicio. Si tienes algo en mente que no está en la lista, ¡también lo hacemos!
             </p>
           </div>
 
           <div className="space-y-3 max-w-3xl mx-auto">
-            {DISH_CATEGORIES.map((cat, i) => (
-              <CategoryAccordion key={cat.id} cat={cat} index={i} />
+            {categories.map((cat, i) => (
+              <CategoryAccordion key={cat.id} cat={cat} index={i} descriptions={descriptions} />
             ))}
           </div>
         </div>
@@ -293,17 +353,17 @@ export default function MenuSection() {
         <div>
           <div className="text-center mb-10">
             <SectionLabel light>Dulces Saludables</SectionLabel>
-            <h3 className="font-display text-ivory text-3xl md:text-4xl font-bold mt-3">
+            <h3 className="font-display text-espresso text-3xl md:text-4xl font-bold mt-3">
               Hecho en casa,
-              <span className="text-amber"> con amor.</span>
+              <span className="text-terracotta"> con amor.</span>
             </h3>
-            <p className="font-body text-ivory/50 text-sm mt-3 max-w-md mx-auto">
+            <p className="font-body text-warm-gray text-sm mt-3 max-w-md mx-auto">
               Preparaciones dulces saludables elaboradas por mí, sin que necesites aportar ingredientes. Perfectas para complementar tu semana.
             </p>
           </div>
 
           {/* Familiar */}
-          <p className="font-body text-amber text-xs font-semibold tracking-[0.15em] uppercase text-center mb-4">
+          <p className="font-body text-accent-600 text-xs font-semibold tracking-[0.15em] uppercase text-center mb-4">
             Formato Familiar (Molde 20 cm) · 8 a 10 porciones
           </p>
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mb-8">
@@ -313,7 +373,7 @@ export default function MenuSection() {
           </div>
 
           {/* Snacks */}
-          <p className="font-body text-amber text-xs font-semibold tracking-[0.15em] uppercase text-center mb-4">
+          <p className="font-body text-accent-600 text-xs font-semibold tracking-[0.15em] uppercase text-center mb-4">
             Formato Snacks (Bolsas de 10 unidades) · 1 porción individual
           </p>
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mb-14">
@@ -324,7 +384,7 @@ export default function MenuSection() {
 
           {/* CTA */}
           <div className="text-center">
-            <p className="font-body text-ivory/40 text-sm mb-5">
+            <p className="font-body text-warm-gray text-sm mb-5">
               ¿Tienes dudas o quieres un menú personalizado?
             </p>
             <motion.a

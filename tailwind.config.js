@@ -4,16 +4,66 @@ export default {
   theme: {
     extend: {
       colors: {
-        espresso:    '#0A0604',
-        bark:        '#2C1810',
-        ember:       '#6B2D1E',
-        terracotta:  '#8B3A2C',
-        amber:       '#C8873A',
-        gold:        '#D4A853',
-        wheat:       '#E8C99A',
-        cream:       '#F5EDD6',
-        ivory:       '#FEFAF4',
-        'warm-gray': '#8A7F75',
+        /* ─────────────────────────────────────────────────────────────
+           SISTEMA DE TOKENS · Tema claro "comida casera" (light theme)
+           primary    → terracota cálido (marca / CTAs)
+           accent     → ámbar / miel (realces)
+           background → blanco roto y cremas claras (fondos)
+           text       → gris cálido oscuro, nunca negro puro (texto)
+           Contrastes verificados WCAG AA (≥ 4.5:1 texto normal).
+           ───────────────────────────────────────────────────────────── */
+        primary: {
+          DEFAULT: '#AE4C29',
+          50:  '#FBF1EC',
+          100: '#F6DDD0',
+          200: '#EBB79F',
+          300: '#DD8E6B',
+          400: '#CB6B43',
+          500: '#AE4C29',   // terracota (AA como texto sobre cremas claros)
+          600: '#9E4023',   // texto/CTA AA sobre fondo claro
+          700: '#83341E',
+          800: '#5E2618',
+          900: '#3C1810',
+        },
+        accent: {
+          DEFAULT: '#C2792F',
+          50:  '#FBF1DF',
+          100: '#F6E0B9',
+          200: '#EDC57E',
+          300: '#E0A547',
+          400: '#D08C2E',
+          500: '#C2792F',   // ámbar de fondo (con texto oscuro)
+          600: '#A8472A',   // ámbar/terracota tostado para TEXTO AA sobre claro
+          700: '#8A3C22',
+        },
+        background: {
+          DEFAULT: '#FBF6EE',  // fondo de página (blanco roto cálido)
+          base:    '#FBF6EE',
+          surface: '#FFFCF7',  // tarjetas / superficies elevadas
+          soft:    '#F7EFE2',  // secciones alternas (crema)
+          warm:    '#EFE3D0',  // panel cálido más profundo
+        },
+        text: {
+          DEFAULT: '#2A1C12',  // tinta principal (titulares)
+          strong:  '#241810',
+          base:    '#2A1C12',
+          muted:   '#6B5D4E',  // cuerpo legible (AA sobre claro)
+          soft:    '#8A7C6C',  // metadatos sutiles
+          inverse: '#FFFCF7',  // texto sobre superficies oscuras puntuales
+        },
+
+        /* ── Alias heredados, remapeados a la paleta clara para no
+           romper las clases existentes en los componentes ── */
+        espresso:    '#2A1C12',  // tinta oscura (texto / dark-on-accent)
+        bark:        '#4A3727',  // marrón secundario (bordes / tinta suave)
+        ember:       '#9E4023',  // ≈ primary-600
+        terracotta:  '#AE4C29',  // ≈ primary-500
+        amber:       '#C2792F',  // ámbar (fondo con texto oscuro / realce grande)
+        gold:        '#D99A3C',  // miel (decorativo / hover)
+        wheat:       '#EAD9BE',  // crema cálida (panel)
+        cream:       '#F7EFE2',  // crema clara (sección)
+        ivory:       '#FFFCF7',  // superficie casi blanca
+        'warm-gray': '#6B5D4E',  // gris cálido legible (AA)
       },
       fontFamily: {
         display: ['"Playfair Display"', 'Georgia', 'serif'],

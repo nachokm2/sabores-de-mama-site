@@ -193,7 +193,7 @@ export default function Nosotros() {
                 {/* Glow */}
                 <div
                   className="absolute inset-0 rounded-3xl pointer-events-none"
-                  style={{ background: 'radial-gradient(ellipse at 50% 50%, rgba(200,135,58,0.12) 0%, transparent 70%)' }}
+                  style={{ background: 'radial-gradient(ellipse at 50% 50%, rgba(194,121,47,0.12) 0%, transparent 70%)' }}
                   aria-hidden="true"
                 />
                 {/* Portrait */}
@@ -217,7 +217,7 @@ export default function Nosotros() {
                   transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
                 >
                   <p className="text-xl mb-1" aria-hidden="true">🥘</p>
-                  <p className="font-body text-ivory text-xs font-semibold">Receta de familia</p>
+                  <p className="font-body text-espresso text-xs font-semibold">Receta de familia</p>
                   <p className="font-body text-warm-gray text-2xs">Desde 2017</p>
                 </motion.div>
                 <motion.div
@@ -227,7 +227,7 @@ export default function Nosotros() {
                 >
                   <span className="text-2xl" aria-hidden="true">💚</span>
                   <div>
-                    <p className="font-body text-ivory text-xs font-semibold">Sin conservantes</p>
+                    <p className="font-body text-espresso text-xs font-semibold">Sin conservantes</p>
                     <p className="font-body text-warm-gray text-2xs">100% natural</p>
                   </div>
                 </motion.div>
@@ -329,7 +329,7 @@ export default function Nosotros() {
         </section>
 
         {/* ── Stats ── */}
-        <section className="py-16 bg-espresso">
+        <section className="py-16 bg-background-warm border-y border-espresso/10">
           <div className="container-site">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
               {[
@@ -345,8 +345,8 @@ export default function Nosotros() {
                   viewport={{ once: true }}
                   transition={{ duration: 0.7, delay: i * 0.1 }}
                 >
-                  <p className="font-display text-4xl md:text-5xl text-amber font-bold">{num}</p>
-                  <p className="font-body text-ivory/50 text-sm mt-1">{label}</p>
+                  <p className="font-display text-4xl md:text-5xl text-terracotta font-bold">{num}</p>
+                  <p className="font-body text-warm-gray text-sm mt-1">{label}</p>
                 </motion.div>
               ))}
             </div>

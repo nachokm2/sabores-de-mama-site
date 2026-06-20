@@ -28,7 +28,7 @@ function StatCard({ number, label, delay }) {
       viewport={{ once: true, margin: '-60px' }}
       transition={{ duration: 0.7, delay, ease: [0.19, 1, 0.22, 1] }}
     >
-      <p className="font-display text-5xl md:text-6xl font-bold text-amber">{number}</p>
+      <p className="font-display text-5xl md:text-6xl font-bold text-terracotta">{number}</p>
       <p className="font-body text-warm-gray text-sm mt-1 leading-tight">{label}</p>
     </motion.div>
   )
@@ -114,7 +114,7 @@ export default function Storytelling() {
               transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
             >
               <p className="text-2xl mb-1" aria-hidden="true">🥘</p>
-              <p className="font-display text-ivory text-sm font-semibold">Receta de abuela</p>
+              <p className="font-display text-espresso text-sm font-semibold">Receta de abuela</p>
               <p className="font-body text-warm-gray text-xs mt-0.5">Desde 1985</p>
             </motion.div>
 
@@ -126,7 +126,7 @@ export default function Storytelling() {
             >
               <span className="text-2xl" aria-hidden="true">💚</span>
               <div>
-                <p className="font-body text-ivory text-xs font-semibold">Sin conservantes</p>
+                <p className="font-body text-espresso text-xs font-semibold">Sin conservantes</p>
                 <p className="font-body text-warm-gray text-xs">100% natural</p>
               </div>
             </motion.div>
@@ -142,7 +142,7 @@ export default function Storytelling() {
               >
                 Cocinamos con el alma.
                 <br />
-                <em className="text-amber not-italic">Siempre lo hicimos.</em>
+                <em className="text-terracotta not-italic">Siempre lo hicimos.</em>
               </h2>
             </div>
 

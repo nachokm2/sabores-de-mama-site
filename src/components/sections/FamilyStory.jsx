@@ -33,8 +33,8 @@ function MomentCard({ moment, index }) {
         </div>
         {/* Text */}
         <div className="pt-1.5">
-          <h3 className="font-display text-ivory text-lg font-semibold mb-1">{moment.title}</h3>
-          <p className="font-body text-ivory/55 text-sm leading-relaxed">{moment.text}</p>
+          <h3 className="font-display text-espresso text-lg font-semibold mb-1">{moment.title}</h3>
+          <p className="font-body text-warm-gray text-sm leading-relaxed">{moment.text}</p>
         </div>
       </div>
     </motion.div>
@@ -56,7 +56,7 @@ export default function FamilyStory() {
     <section
       ref={sectionRef}
       className="relative section-padding overflow-hidden"
-      style={{ background: 'linear-gradient(160deg, #0A0604 0%, #1A0B06 50%, #2C1810 100%)' }}
+      style={{ background: 'linear-gradient(160deg, #FFFCF7 0%, #FBF6EE 50%, #F4EADB 100%)' }}
       aria-labelledby="family-story-heading"
     >
       {/* Grain overlay */}
@@ -71,7 +71,7 @@ export default function FamilyStory() {
       {/* Amber glow right */}
       <div
         className="absolute right-0 top-1/2 -translate-y-1/2 w-96 h-96 pointer-events-none"
-        style={{ background: 'radial-gradient(ellipse at right, rgba(200,135,58,0.12) 0%, transparent 70%)' }}
+        style={{ background: 'radial-gradient(ellipse at right, rgba(194,121,47,0.1) 0%, transparent 70%)' }}
         aria-hidden="true"
       />
 
@@ -91,13 +91,13 @@ export default function FamilyStory() {
               <em className="not-italic text-gradient-gold">nunca se olvida.</em>
             </h2>
 
-            <p className="font-body text-ivory/60 text-base md:text-lg leading-relaxed mb-8">
+            <p className="font-body text-warm-gray text-base md:text-lg leading-relaxed mb-8">
               Hay algo mágico en la comida casera. No es solo el sabor —
               es el recuerdo de una cocina llena de vapor, el sonido de la olla
               en el fuego, y la voz que dice "ya está lista la comida".
             </p>
 
-            <p className="font-body text-ivory/60 text-base leading-relaxed mb-10">
+            <p className="font-body text-warm-gray text-base leading-relaxed mb-10">
               En Sabores de Mamá recreamos esa magia. Cada plato que preparamos
               carga una historia familiar, un secreto culinario y una gran dosis
               de amor. Porque creemos que comer bien es también cuidarse,
@@ -105,8 +105,8 @@ export default function FamilyStory() {
             </p>
 
             {/* Pull quote */}
-            <div className="border-l-2 border-amber pl-5">
-              <p className="font-display text-xl text-ivory italic">
+            <div className="border-l-2 border-terracotta pl-5">
+              <p className="font-display text-xl text-espresso italic">
                 "No cocinamos para vender. Cocinamos para compartir."
               </p>
               <p className="font-body text-warm-gray text-sm mt-2">— Fundadora, Sabores de Mamá</p>
@@ -115,7 +115,7 @@ export default function FamilyStory() {
 
           {/* ── Right: Timeline moments ── */}
           <motion.div style={{ y: illustrY }} className="space-y-8">
-            <p className="font-body text-amber text-xs font-semibold tracking-[0.18em] uppercase mb-8">
+            <p className="font-body text-accent-600 text-xs font-semibold tracking-[0.18em] uppercase mb-8">
               Momentos que nos inspiran
             </p>
             {MOMENTS.map((moment, i) => (

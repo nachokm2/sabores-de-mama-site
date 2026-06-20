@@ -46,11 +46,11 @@ function FaqItem({ item, index }) {
         onClick={() => setOpen(v => !v)}
         aria-expanded={open}
       >
-        <span className="font-display text-espresso text-base font-semibold pr-6 group-hover:text-amber transition-colors duration-200">
+        <span className="font-display text-espresso text-base font-semibold pr-6 group-hover:text-terracotta transition-colors duration-200">
           {item.q}
         </span>
         <motion.span
-          className="flex-shrink-0 w-7 h-7 rounded-full border border-amber/30 flex items-center justify-center text-amber text-base leading-none"
+          className="flex-shrink-0 w-7 h-7 rounded-full border border-terracotta/30 flex items-center justify-center text-terracotta text-base leading-none"
           animate={{ rotate: open ? 45 : 0 }}
           transition={{ duration: 0.28 }}
           aria-hidden="true"
@@ -91,7 +91,7 @@ export default function FAQ() {
             <h2 id="faq-heading" className="section-title text-espresso mt-4 mb-6">
               Todo lo que
               <br />
-              <em className="not-italic text-amber">necesitas saber.</em>
+              <em className="not-italic text-terracotta">necesitas saber.</em>
             </h2>
             <p className="font-body text-warm-gray text-base leading-relaxed mb-8">
               ¿Tienes más dudas? Escríbenos directamente por WhatsApp y

@@ -17,7 +17,7 @@
     <meta name="keywords" content="comida casera, delivery comida, comida a domicilio, sabores de mamá, comida chilena, cazuela, empanadas, almuerzo casero" />
     <meta name="author" content="Sabores de Mamá" />
     <meta name="robots" content="index, follow" />
-    <meta name="theme-color" content="#C8873A" />
+    <meta name="theme-color" content="#AE4C29" />
 
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website" />
@@ -44,11 +44,19 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 
-    <!-- Google Fonts - Optimized load -->
+    <!-- Google Fonts - carga NO bloqueante (preload + swap) para mejorar FCP/LCP -->
     <link
+      rel="preload"
+      as="style"
       href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400;1,600&family=DM+Serif+Display:ital@0;1&family=Inter:wght@300;400;500;600&display=swap"
-      rel="stylesheet"
+      onload="this.onload=null;this.rel='stylesheet'"
     />
+    <noscript>
+      <link
+        rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400;1,600&family=DM+Serif+Display:ital@0;1&family=Inter:wght@300;400;500;600&display=swap"
+      />
+    </noscript>
 
     <!-- Performance hints -->
     <link rel="dns-prefetch" href="https://fonts.googleapis.com" />

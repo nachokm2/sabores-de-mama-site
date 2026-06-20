@@ -233,7 +233,7 @@ export default function Contacto() {
                 <h2 className="section-title text-espresso mt-4 mb-8">
                   Todo lo que
                   <br />
-                  <em className="not-italic text-amber">necesitas saber.</em>
+                  <em className="not-italic text-terracotta">necesitas saber.</em>
                 </h2>
                 <div className="divide-y-0">
                   {FAQ_ITEMS.map((item, i) => (
@@ -248,11 +248,11 @@ export default function Contacto() {
         {/* ── Big WhatsApp CTA ── */}
         <section
           className="relative section-padding overflow-hidden"
-          style={{ background: 'linear-gradient(160deg, #0A0604 0%, #2C1810 100%)' }}
+          style={{ background: 'linear-gradient(160deg, #FBF6EE 0%, #F4EADB 100%)' }}
         >
           <div
             className="absolute inset-0 pointer-events-none"
-            style={{ background: 'radial-gradient(ellipse at 50% 50%, rgba(37,211,102,0.08) 0%, transparent 60%)' }}
+            style={{ background: 'radial-gradient(ellipse at 50% 50%, rgba(37,211,102,0.1) 0%, transparent 60%)' }}
             aria-hidden="true"
           />
           <div className="container-narrow relative z-10 text-center">
@@ -262,7 +262,7 @@ export default function Contacto() {
             <h2 className="section-title-light mb-4">
               ¿Listo para pedir?
             </h2>
-            <p className="font-body text-ivory/55 text-base leading-relaxed mb-8 max-w-sm mx-auto">
+            <p className="font-body text-warm-gray text-base leading-relaxed mb-8 max-w-sm mx-auto">
               Un mensaje es todo lo que necesitas. Te respondemos en minutos.
             </p>
             <div className="flex flex-wrap justify-center gap-4">

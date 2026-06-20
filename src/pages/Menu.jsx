@@ -30,26 +30,26 @@ function CategoryAccordion({ cat, index, defaultOpen = false }) {
   const [open, setOpen] = useState(defaultOpen)
   return (
     <motion.div
-      className="border border-white/10 rounded-2xl overflow-hidden"
+      className="border border-espresso/10 rounded-2xl overflow-hidden bg-background-surface"
       initial={{ opacity: 0, y: 20 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: '-40px' }}
       transition={{ duration: 0.5, delay: index * 0.05 }}
     >
       <button
-        className="w-full flex items-center justify-between p-5 text-left hover:bg-white/5 transition-colors"
+        className="w-full flex items-center justify-between p-5 text-left hover:bg-espresso/[0.04] transition-colors"
         onClick={() => setOpen(v => !v)}
         aria-expanded={open}
       >
         <div className="flex items-center gap-3">
           <span className="text-2xl" aria-hidden="true">{cat.icon}</span>
-          <span className="font-display text-ivory text-lg font-semibold">{cat.label}</span>
-          <span className="font-body text-warm-gray text-xs bg-white/8 px-2.5 py-0.5 rounded-full">
+          <span className="font-display text-espresso text-lg font-semibold">{cat.label}</span>
+          <span className="font-body text-warm-gray text-xs bg-espresso/[0.06] px-2.5 py-0.5 rounded-full">
             {cat.items.length} platos
           </span>
         </div>
         <motion.span
-          className="text-amber text-xl leading-none flex-shrink-0"
+          className="text-accent-600 text-xl leading-none flex-shrink-0"
           animate={{ rotate: open ? 45 : 0 }}
           transition={{ duration: 0.25 }}
           aria-hidden="true"
@@ -66,7 +66,7 @@ function CategoryAccordion({ cat, index, defaultOpen = false }) {
             transition={{ duration: 0.3, ease: [0.19, 1, 0.22, 1] }}
             className="overflow-hidden"
           >
-            <div className="px-5 pb-5 border-t border-white/8 pt-4">
+            <div className="px-5 pb-5 border-t border-espresso/10 pt-4">
               <div className="flex flex-wrap gap-2">
                 {cat.items.map((item) => (
                   <a
@@ -74,7 +74,7 @@ function CategoryAccordion({ cat, index, defaultOpen = false }) {
                     href={waLink(`¡Hola! Me gustaría incluir ${item} en mi pedido. ¿Está disponible?`)}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="font-body text-ivory/70 text-sm bg-white/6 border border-white/10 px-3.5 py-1.5 rounded-full hover:border-amber/50 hover:text-amber hover:bg-amber/8 transition-all duration-200"
+                    className="font-body text-warm-gray text-sm bg-espresso/[0.04] border border-espresso/10 px-3.5 py-1.5 rounded-full hover:border-amber/50 hover:text-accent-600 hover:bg-amber/10 transition-all duration-200"
                   >
                     {item}
                   </a>
@@ -103,7 +103,7 @@ function DulceCard({ item, index }) {
       whileHover={{ y: -4 }}
       aria-label={`Pedir ${item.name}`}
     >
-      <div className={`h-32 relative overflow-hidden ${!item.image ? `bg-gradient-to-br ${item.gradient}` : 'bg-espresso'}`}>
+      <div className={`h-32 relative overflow-hidden ${!item.image ? `bg-gradient-to-br ${item.gradient}` : 'bg-wheat'}`}>
         {item.image ? (
           <img
             src={item.image}
@@ -122,8 +122,8 @@ function DulceCard({ item, index }) {
           {item.priceLabel}
         </div>
       </div>
-      <div className="bg-espresso p-3.5">
-        <h4 className="font-display text-ivory text-sm font-semibold leading-tight mb-0.5">{item.name}</h4>
+      <div className="bg-background-surface border-x border-b border-espresso/8 rounded-b-2xl p-3.5">
+        <h4 className="font-display text-espresso text-sm font-semibold leading-tight mb-0.5">{item.name}</h4>
         <p className="font-body text-warm-gray text-xs">{item.subtitle}</p>
       </div>
     </motion.a>
@@ -134,8 +134,9 @@ function DulceCard({ item, index }) {
 function ServiceSummary({ service, index }) {
   return (
     <motion.div
-      className={`rounded-2xl p-6 flex flex-col gap-4 ${service.highlight ? 'ring-2 ring-amber/40' : 'ring-1 ring-white/10'}`}
-      style={{ background: 'linear-gradient(160deg, #1A0B06 0%, #2C1810 100%)' }}
+      id={`servicio-${service.id}`}
+      className={`scroll-mt-28 rounded-2xl p-6 flex flex-col gap-4 shadow-[0_10px_40px_rgba(42,28,18,0.08)] ${service.highlight ? 'ring-2 ring-amber/40' : 'ring-1 ring-espresso/10'}`}
+      style={{ background: 'linear-gradient(160deg, #FFFCF7 0%, #F7EFE2 100%)' }}
       initial={{ opacity: 0, y: 30 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
@@ -145,15 +146,15 @@ function ServiceSummary({ service, index }) {
       <div className="flex items-center gap-3">
         <span className="text-3xl" aria-hidden="true">{service.icon}</span>
         <div>
-          <h3 className="font-display text-ivory text-xl font-bold">{service.name}</h3>
-          <p className="font-body text-amber text-sm font-semibold">{service.priceLabel} <span className="text-warm-gray font-normal">por servicio</span></p>
+          <h3 className="font-display text-espresso text-xl font-bold">{service.name}</h3>
+          <p className="font-body text-terracotta text-sm font-semibold">{service.priceLabel} <span className="text-warm-gray font-normal">por servicio</span></p>
         </div>
       </div>
       <ul className="space-y-2">
         {service.features.map((f) => (
           <li key={f} className="flex items-start gap-2">
-            <span className="text-amber flex-shrink-0 mt-0.5" aria-hidden="true">✓</span>
-            <span className="font-body text-ivory/65 text-sm">{f}</span>
+            <span className="text-accent-600 flex-shrink-0 mt-0.5" aria-hidden="true">✓</span>
+            <span className="font-body text-warm-gray text-sm">{f}</span>
           </li>
         ))}
       </ul>
@@ -164,7 +165,7 @@ function ServiceSummary({ service, index }) {
         className={`flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-semibold font-body transition-all duration-300 ${
           service.highlight
             ? 'bg-amber text-espresso hover:bg-gold'
-            : 'bg-white/8 text-ivory border border-white/15 hover:bg-amber hover:text-espresso hover:border-amber'
+            : 'bg-espresso/[0.05] text-espresso border border-espresso/15 hover:bg-amber hover:text-espresso hover:border-amber'
         }`}
       >
         <WaIcon />
@@ -201,10 +202,10 @@ export default function Menu() {
         </PageHero>
 
         {/* ── Services ── */}
-        <section className="section-padding bg-bark relative overflow-hidden" aria-labelledby="services-heading">
+        <section id="servicios" className="scroll-mt-20 section-padding bg-background-soft relative overflow-hidden" aria-labelledby="services-heading">
           <div
             className="absolute left-1/2 -translate-x-1/2 top-0 w-[900px] h-[500px] pointer-events-none"
-            style={{ background: 'radial-gradient(ellipse at 50% 0%, rgba(200,135,58,0.1) 0%, transparent 70%)' }}
+            style={{ background: 'radial-gradient(ellipse at 50% 0%, rgba(194,121,47,0.08) 0%, transparent 70%)' }}
             aria-hidden="true"
           />
           <div className="container-site relative">
@@ -222,7 +223,7 @@ export default function Menu() {
         </section>
 
         {/* ── Dish categories ── */}
-        <section className="section-padding bg-espresso" aria-labelledby="dishes-heading">
+        <section id="platos" className="scroll-mt-20 section-padding bg-background" aria-labelledby="dishes-heading">
           <div className="container-site">
             <div className="text-center mb-12">
               <SectionLabel light>Elige tus Platos</SectionLabel>
@@ -230,7 +231,7 @@ export default function Menu() {
                 Más de 60 platos
                 <span className="text-gradient-gold"> para elegir.</span>
               </h2>
-              <p className="font-body text-ivory/50 text-sm mt-4 max-w-md mx-auto">
+              <p className="font-body text-warm-gray text-sm mt-4 max-w-md mx-auto">
                 Haz clic en cualquier plato para pedirlo directamente por WhatsApp.
                 ¿Algo que no está en la lista? Sin problema, ¡lo hacemos igual!
               </p>
@@ -244,25 +245,25 @@ export default function Menu() {
 
             {/* Meal prep ready-to-cook */}
             <div className="max-w-3xl mx-auto">
-              <div className="bg-amber/5 border border-amber/20 rounded-2xl p-6 mb-6">
+              <div className="bg-amber/[0.07] border border-amber/25 rounded-2xl p-6 mb-6">
                 <div className="flex items-start gap-3 mb-5">
                   <span className="text-3xl" aria-hidden="true">🧊</span>
                   <div>
-                    <h3 className="font-display text-ivory text-xl font-bold">Preparaciones Listas para Cocinar</h3>
-                    <p className="font-body text-ivory/55 text-sm mt-1">
+                    <h3 className="font-display text-espresso text-xl font-bold">Preparaciones Listas para Cocinar</h3>
+                    <p className="font-body text-warm-gray text-sm mt-1">
                       Exclusivo Meal Prep · Crudas y listas para que cocines cuando quieras · 2 preparaciones = 1 plato
                     </p>
                   </div>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   {MEAL_PREP_READY.map((group) => (
-                    <div key={group.id} className="bg-white/5 rounded-xl p-4">
-                      <p className="font-body text-amber text-xs font-semibold uppercase tracking-wider mb-3 flex items-center gap-2">
+                    <div key={group.id} className="bg-background-surface border border-espresso/8 rounded-xl p-4">
+                      <p className="font-body text-accent-600 text-xs font-semibold uppercase tracking-wider mb-3 flex items-center gap-2">
                         <span aria-hidden="true">{group.icon}</span>{group.label}
                       </p>
                       <ul className="space-y-1.5">
                         {group.items.map((item) => (
-                          <li key={item} className="font-body text-ivory/65 text-sm">• {item}</li>
+                          <li key={item} className="font-body text-warm-gray text-sm">• {item}</li>
                         ))}
                       </ul>
                     </div>
@@ -274,28 +275,28 @@ export default function Menu() {
         </section>
 
         {/* ── Extras ── */}
-        <section className="section-padding-sm bg-bark" aria-labelledby="extras-heading">
+        <section id="extras" className="scroll-mt-20 section-padding-sm bg-background-soft" aria-labelledby="extras-heading">
           <div className="container-site">
             <div className="text-center mb-10">
               <SectionLabel light>Extras para tu Menú</SectionLabel>
-              <h2 id="extras-heading" className="font-display text-ivory text-3xl md:text-4xl font-bold mt-3">
+              <h2 id="extras-heading" className="font-display text-espresso text-3xl md:text-4xl font-bold mt-3">
                 Complementa tu pedido.
               </h2>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5 max-w-3xl mx-auto">
               {/* Ensaladas */}
-              <div className="bg-espresso/60 border border-white/10 rounded-2xl p-6">
+              <div className="bg-background-surface border border-espresso/10 rounded-2xl p-6 shadow-[0_8px_30px_rgba(42,28,18,0.06)]">
                 <div className="flex items-center gap-3 mb-4">
                   <span className="text-2xl" aria-hidden="true">🥗</span>
                   <div>
-                    <h3 className="font-display text-ivory text-lg font-bold">Ensaladas</h3>
-                    <p className="font-body text-amber text-sm font-semibold">{EXTRAS.ensaladas.priceLabel} · Hasta {EXTRAS.ensaladas.maxItems} opciones</p>
+                    <h3 className="font-display text-espresso text-lg font-bold">Ensaladas</h3>
+                    <p className="font-body text-terracotta text-sm font-semibold">{EXTRAS.ensaladas.priceLabel} · Hasta {EXTRAS.ensaladas.maxItems} opciones</p>
                   </div>
                 </div>
                 <ul className="space-y-3">
                   {EXTRAS.ensaladas.items.map((e) => (
-                    <li key={e.name} className="border-b border-white/8 pb-3 last:border-0 last:pb-0">
-                      <p className="font-display text-ivory text-sm font-semibold">{e.name}</p>
+                    <li key={e.name} className="border-b border-espresso/10 pb-3 last:border-0 last:pb-0">
+                      <p className="font-display text-espresso text-sm font-semibold">{e.name}</p>
                       <p className="font-body text-warm-gray text-xs mt-0.5">{e.desc}</p>
                     </li>
                   ))}
@@ -303,17 +304,17 @@ export default function Menu() {
               </div>
 
               {/* Postres */}
-              <div className="bg-espresso/60 border border-white/10 rounded-2xl p-6">
+              <div className="bg-background-surface border border-espresso/10 rounded-2xl p-6 shadow-[0_8px_30px_rgba(42,28,18,0.06)]">
                 <div className="flex items-center gap-3 mb-4">
                   <span className="text-2xl" aria-hidden="true">🍮</span>
                   <div>
-                    <h3 className="font-display text-ivory text-lg font-bold">Postres</h3>
-                    <p className="font-body text-amber text-sm font-semibold">{EXTRAS.postres.note}</p>
+                    <h3 className="font-display text-espresso text-lg font-bold">Postres</h3>
+                    <p className="font-body text-terracotta text-sm font-semibold">{EXTRAS.postres.note}</p>
                   </div>
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {EXTRAS.postres.items.map((p) => (
-                    <span key={p} className="font-body text-ivory/70 text-sm bg-white/6 border border-white/10 px-3 py-1.5 rounded-full">
+                    <span key={p} className="font-body text-warm-gray text-sm bg-espresso/[0.04] border border-espresso/10 px-3 py-1.5 rounded-full">
                       {p}
                     </span>
                   ))}
@@ -323,8 +324,8 @@ export default function Menu() {
           </div>
         </section>
 
-        {/* ── Dulces Saludables ── */}
-        <section className="section-padding bg-espresso" aria-labelledby="dulces-heading">
+        {/* ── Dulces Saludables / Horneados ── */}
+        <section id="dulces" className="scroll-mt-20 section-padding bg-background" aria-labelledby="dulces-heading">
           <div className="container-site">
             <div className="text-center mb-12">
               <SectionLabel light>Dulces Saludables</SectionLabel>
@@ -332,19 +333,19 @@ export default function Menu() {
                 Hecho en casa,
                 <span className="text-gradient-gold"> sin culpa.</span>
               </h2>
-              <p className="font-body text-ivory/50 text-sm mt-4 max-w-md mx-auto">
+              <p className="font-body text-warm-gray text-sm mt-4 max-w-md mx-auto">
                 No necesitas aportar ingredientes. Puedes agregarlos a cualquiera de tus servicios.
               </p>
             </div>
 
-            <p className="font-body text-amber text-xs font-semibold tracking-[0.15em] uppercase text-center mb-5">
+            <p className="font-body text-accent-600 text-xs font-semibold tracking-[0.15em] uppercase text-center mb-5">
               Formato Familiar (Molde 20 cm) · 8 a 10 porciones
             </p>
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mb-10">
               {DULCES_FAMILIAR.map((d, i) => <DulceCard key={d.name} item={d} index={i} />)}
             </div>
 
-            <p className="font-body text-amber text-xs font-semibold tracking-[0.15em] uppercase text-center mb-5">
+            <p className="font-body text-accent-600 text-xs font-semibold tracking-[0.15em] uppercase text-center mb-5">
               Formato Snacks (Bolsas de 10 unidades) · 1 porción individual
             </p>
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
@@ -354,28 +355,28 @@ export default function Menu() {
         </section>
 
         {/* ── Communes ── */}
-        <section className="section-padding-sm bg-bark" aria-labelledby="communes-heading">
+        <section className="section-padding-sm bg-background-soft" aria-labelledby="communes-heading">
           <div className="container-site">
             <div className="text-center mb-10">
               <SectionLabel light>Cobertura</SectionLabel>
-              <h2 id="communes-heading" className="font-display text-ivory text-3xl md:text-4xl font-bold mt-3">
+              <h2 id="communes-heading" className="font-display text-espresso text-3xl md:text-4xl font-bold mt-3">
                 Llegamos a tu hogar.
               </h2>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5 max-w-2xl mx-auto">
-              <div className="bg-espresso/60 border border-white/10 rounded-2xl p-6">
-                <p className="font-body text-amber text-xs font-semibold uppercase tracking-wider mb-4">📦 Meal Prep</p>
+              <div className="bg-background-surface border border-espresso/10 rounded-2xl p-6 shadow-[0_8px_30px_rgba(42,28,18,0.06)]">
+                <p className="font-body text-accent-600 text-xs font-semibold uppercase tracking-wider mb-4">📦 Meal Prep</p>
                 <div className="flex flex-wrap gap-2">
                   {COMMUNES.mealPrep.map((c) => (
-                    <span key={c} className="font-body text-ivory/70 text-sm bg-white/6 border border-white/10 px-3 py-1.5 rounded-full">{c}</span>
+                    <span key={c} className="font-body text-warm-gray text-sm bg-espresso/[0.04] border border-espresso/10 px-3 py-1.5 rounded-full">{c}</span>
                   ))}
                 </div>
               </div>
-              <div className="bg-espresso/60 border border-white/10 rounded-2xl p-6">
-                <p className="font-body text-amber text-xs font-semibold uppercase tracking-wider mb-4">🏠 Cocinera a Domicilio</p>
+              <div className="bg-background-surface border border-espresso/10 rounded-2xl p-6 shadow-[0_8px_30px_rgba(42,28,18,0.06)]">
+                <p className="font-body text-accent-600 text-xs font-semibold uppercase tracking-wider mb-4">🏠 Cocinera a Domicilio</p>
                 <div className="flex flex-wrap gap-2">
                   {COMMUNES.cocinera.map((c) => (
-                    <span key={c} className="font-body text-ivory/70 text-sm bg-white/6 border border-white/10 px-3 py-1.5 rounded-full">{c}</span>
+                    <span key={c} className="font-body text-warm-gray text-sm bg-espresso/[0.04] border border-espresso/10 px-3 py-1.5 rounded-full">{c}</span>
                   ))}
                 </div>
               </div>

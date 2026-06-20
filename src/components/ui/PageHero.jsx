@@ -19,7 +19,7 @@ export default function PageHero({
 
   return (
     <section
-      className="relative min-h-[52vh] flex flex-col justify-end overflow-hidden bg-espresso pt-20"
+      className="relative min-h-[52vh] flex flex-col justify-end overflow-hidden bg-background pt-20"
       aria-label={`Página: ${label || title}`}
     >
       {/* Background gradient */}
@@ -27,9 +27,9 @@ export default function PageHero({
         className="absolute inset-0"
         style={{
           background: `
-            radial-gradient(ellipse at 20% 60%, rgba(107,45,30,0.45) 0%, transparent 55%),
-            radial-gradient(ellipse at 80% 20%, rgba(200,135,58,0.18) 0%, transparent 50%),
-            linear-gradient(160deg, #0A0604 0%, #1A0B06 50%, #2C1810 100%)
+            radial-gradient(ellipse at 20% 60%, rgba(181,81,46,0.14) 0%, transparent 55%),
+            radial-gradient(ellipse at 80% 20%, rgba(194,121,47,0.14) 0%, transparent 50%),
+            linear-gradient(160deg, #FFFCF7 0%, #FBF6EE 50%, #F4EADB 100%)
           `,
         }}
         aria-hidden="true"
@@ -47,7 +47,7 @@ export default function PageHero({
       {/* Bottom fade */}
       <div
         className="absolute bottom-0 left-0 right-0 h-32 pointer-events-none"
-        style={{ background: 'linear-gradient(to top, rgba(10,6,4,0.4), transparent)' }}
+        style={{ background: 'linear-gradient(to top, rgba(251,246,238,0.7), transparent)' }}
         aria-hidden="true"
       />
 
@@ -66,9 +66,9 @@ export default function PageHero({
               <span key={crumb.href} className="flex items-center gap-2">
                 {i > 0 && <span aria-hidden="true" className="text-warm-gray/40">›</span>}
                 {i === breadcrumb.length - 1 ? (
-                  <span className="text-amber" aria-current="page">{crumb.label}</span>
+                  <span className="text-accent-600" aria-current="page">{crumb.label}</span>
                 ) : (
-                  <Link to={crumb.href} className="hover:text-ivory transition-colors duration-200">
+                  <Link to={crumb.href} className="hover:text-espresso transition-colors duration-200">
                     {crumb.label}
                   </Link>
                 )}
@@ -86,7 +86,7 @@ export default function PageHero({
 
         {/* Title */}
         <motion.h1
-          className={`font-display text-4xl sm:text-5xl md:text-6xl lg:text-7xl text-ivory leading-[1.05] tracking-tighter-display mb-5 ${isCenter ? 'mx-auto max-w-3xl' : 'max-w-2xl'}`}
+          className={`font-display text-4xl sm:text-5xl md:text-6xl lg:text-7xl text-espresso leading-[1.05] tracking-tighter-display mb-5 ${isCenter ? 'mx-auto max-w-3xl' : 'max-w-2xl'}`}
           initial={{ opacity: 0, y: 40 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.1, ease: [0.19, 1, 0.22, 1] }}
@@ -103,7 +103,7 @@ export default function PageHero({
         {/* Subtitle */}
         {subtitle && (
           <motion.p
-            className={`font-body text-ivory/55 text-base md:text-lg leading-relaxed ${isCenter ? 'max-w-xl mx-auto' : 'max-w-md'}`}
+            className={`font-body text-warm-gray text-base md:text-lg leading-relaxed ${isCenter ? 'max-w-xl mx-auto' : 'max-w-md'}`}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7, delay: 0.25 }}

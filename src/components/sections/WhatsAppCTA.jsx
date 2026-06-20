@@ -39,9 +39,9 @@ export default function WhatsAppCTA() {
         className="absolute inset-0"
         style={{
           background: `
-            radial-gradient(ellipse at 20% 50%, rgba(200,135,58,0.25) 0%, transparent 55%),
-            radial-gradient(ellipse at 80% 30%, rgba(107,45,30,0.3) 0%, transparent 55%),
-            linear-gradient(135deg, #0A0604 0%, #2C1810 100%)
+            radial-gradient(ellipse at 20% 50%, rgba(194,121,47,0.16) 0%, transparent 55%),
+            radial-gradient(ellipse at 80% 30%, rgba(181,81,46,0.12) 0%, transparent 55%),
+            linear-gradient(135deg, #FBF6EE 0%, #F7EFE2 100%)
           `,
         }}
         aria-hidden="true"
@@ -73,7 +73,7 @@ export default function WhatsAppCTA() {
         {/* Headline */}
         <motion.h2
           id="cta-heading"
-          className="font-display text-4xl md:text-5xl lg:text-6xl text-ivory leading-[1.05] tracking-tighter-display mb-6 text-balance"
+          className="font-display text-4xl md:text-5xl lg:text-6xl text-espresso leading-[1.05] tracking-tighter-display mb-6 text-balance"
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: '-60px' }}
@@ -81,12 +81,12 @@ export default function WhatsAppCTA() {
         >
           ¿Con hambre?
           <br />
-          <span className="text-[#25D366]">Escríbenos.</span>
+          <span className="text-[#15803D]">Escríbenos.</span>
         </motion.h2>
 
         {/* Sub */}
         <motion.p
-          className="font-body text-ivory/55 text-base md:text-lg leading-relaxed mb-10 max-w-md mx-auto"
+          className="font-body text-warm-gray text-base md:text-lg leading-relaxed mb-10 max-w-md mx-auto"
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: '-60px' }}
@@ -126,7 +126,7 @@ export default function WhatsAppCTA() {
 
         {/* Hours */}
         <motion.div
-          className="text-ivory/40 text-sm font-body space-y-1"
+          className="text-warm-gray text-sm font-body space-y-1"
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
           viewport={{ once: true }}
@@ -134,7 +134,7 @@ export default function WhatsAppCTA() {
         >
           <p>{SITE.hours.weekdays}</p>
           <p>{SITE.hours.weekend}</p>
-          <p className="mt-3 text-ivory/25 text-xs">📍 {SITE.address}</p>
+          <p className="mt-3 text-warm-gray/70 text-xs">📍 {SITE.address}</p>
         </motion.div>
       </div>
     </section>
