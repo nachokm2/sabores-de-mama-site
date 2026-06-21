@@ -6,6 +6,7 @@ import {
   getProductosHornear,
   guardarProductoHornear,
   eliminarProductoHornear,
+  subirImagen,
   ApiError,
 } from '../../lib/adminApi'
 
@@ -31,6 +32,7 @@ export default function AdminProductos() {
   const [error, setError] = useState('')
   const [msg, setMsg] = useState('')
   const [saving, setSaving] = useState(false)
+  const [subiendo, setSubiendo] = useState(false)
   const [form, setForm] = useState(VACIO)
   const editando = form.id != null
 
@@ -62,6 +64,27 @@ export default function AdminProductos() {
 
   const setCampo = (k, v) => setForm((f) => ({ ...f, [k]: v }))
   const resetForm = () => setForm(VACIO)
+
+  const onSubirFoto = async (e) => {
+    const file = e.target.files?.[0]
+    e.target.value = '' // permite re-subir el mismo archivo
+    if (!file) return
+    setSubiendo(true)
+    setError('')
+    try {
+      const url = await subirImagen(file, 'productos-hornear')
+      setCampo('imagen', url)
+      setMsg('Foto subida.')
+    } catch (err) {
+      if (err instanceof ApiError && err.status === 503) {
+        setError('La subida de imágenes no está configurada en el servidor. Pega una URL a mano por ahora.')
+      } else if (!handle401(err)) {
+        setError(err.message || 'No se pudo subir la imagen.')
+      }
+    } finally {
+      setSubiendo(false)
+    }
+  }
 
   const onGuardar = async (e) => {
     e.preventDefault()
@@ -169,10 +192,17 @@ export default function AdminProductos() {
             <textarea className={inputCls} rows={2} value={form.descripcion} onChange={(e) => setCampo('descripcion', e.target.value)} />
           </label>
 
-          <label className="block mb-3 text-sm">
-            <span className="block text-espresso font-medium mb-1">Foto (URL)</span>
+          <div className="block mb-3 text-sm">
+            <span className="block text-espresso font-medium mb-1">Foto</span>
+            <div className="flex items-center gap-2 mb-2">
+              <label className={`cursor-pointer text-xs font-semibold rounded-full px-3 py-2 border transition-colors ${subiendo ? 'opacity-50 cursor-wait' : ''} border-terracotta/40 text-terracotta hover:bg-amber/10`}>
+                {subiendo ? 'Subiendo…' : '⬆ Subir foto'}
+                <input type="file" accept="image/*" className="hidden" disabled={subiendo} onChange={onSubirFoto} />
+              </label>
+              <span className="text-xs text-warm-gray">o pega una URL:</span>
+            </div>
             <input className={inputCls} value={form.imagen} onChange={(e) => setCampo('imagen', e.target.value)} placeholder="https://… o /assets/images/…" />
-          </label>
+          </div>
           {form.imagen.trim() && (
             <img
               src={form.imagen}

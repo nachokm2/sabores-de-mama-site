@@ -167,6 +167,31 @@ export function eliminarCupo(id) {
   return apiFetch(`/cupos/${id}`, { method: 'DELETE' })
 }
 
+// Subida de imágenes (presigned URL → PUT directo al bucket)
+export function presignUpload(body) {
+  return apiFetch('/uploads/presign', { method: 'POST', body })
+}
+/** Sube un archivo y devuelve su URL pública. */
+export async function subirImagen(file, prefix = 'productos-hornear') {
+  const { uploadUrl, publicUrl } = await presignUpload({
+    filename: file.name,
+    contentType: file.type || 'application/octet-stream',
+    prefix,
+  })
+  let put
+  try {
+    put = await fetch(uploadUrl, {
+      method: 'PUT',
+      headers: { 'Content-Type': file.type || 'application/octet-stream' },
+      body: file,
+    })
+  } catch {
+    throw new ApiError('No se pudo conectar con el almacenamiento.', 0)
+  }
+  if (!put.ok) throw new ApiError(`No se pudo subir la imagen (HTTP ${put.status}).`, put.status)
+  return publicUrl
+}
+
 // Productos para hornear
 export function getProductosHornear({ todos = false } = {}) {
   const qs = todos ? '?todos=true' : ''

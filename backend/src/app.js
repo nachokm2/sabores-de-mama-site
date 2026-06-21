@@ -10,6 +10,7 @@ import pedidosRouter from './routes/pedidos.js'
 import platosRouter from './routes/platos.js'
 import cuposRouter from './routes/cupos.js'
 import comunasRouter from './routes/comunas.js'
+import uploadsRouter from './routes/uploads.js'
 import correosRouter from './routes/correos.js'
 import productosHornearRouter from './routes/productosHornear.js'
 
@@ -73,6 +74,7 @@ app.use('/api/pedidos', pedidosRateLimiter, pedidosRouter)
 app.use('/api/platos', platosRouter)
 app.use('/api/cupos', cuposRouter)
 app.use('/api/comunas', comunasRouter)
+app.use('/api/uploads', uploadsRouter)
 app.use('/api/correos', correosRouter)
 app.use('/api/productos-hornear', productosHornearRouter)
 
