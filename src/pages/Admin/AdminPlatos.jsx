@@ -184,6 +184,10 @@ export default function AdminPlatos() {
 
   const inputCls =
     'w-full rounded-xl border border-espresso/15 bg-background px-3 py-2 text-sm text-espresso focus:outline-none focus:border-terracotta/60'
+  // Variante SIN `w-full` para las filas de ingredientes: el ancho lo controla
+  // flex (evita el conflicto w-full vs w-20/flex-1 que colapsaba el campo nombre).
+  const ingInputCls =
+    'rounded-xl border border-espresso/15 bg-background px-3 py-2 text-sm text-espresso focus:outline-none focus:border-terracotta/60'
 
   return (
     <AdminLayout title="Platos">
@@ -250,19 +254,19 @@ export default function AdminPlatos() {
               {form.ingredientes.map((ing, i) => (
                 <div key={i} className="flex gap-2">
                   <input
-                    className={inputCls + ' flex-1'}
+                    className={ingInputCls + ' flex-1 min-w-0'}
                     placeholder="Ingrediente"
                     value={ing.nombre}
                     onChange={(e) => setIngrediente(i, 'nombre', e.target.value)}
                   />
                   <input
-                    className={inputCls + ' w-20'}
+                    className={ingInputCls + ' w-20 shrink-0'}
                     placeholder="Cant."
                     value={ing.cantidad}
                     onChange={(e) => setIngrediente(i, 'cantidad', e.target.value)}
                   />
                   <input
-                    className={inputCls + ' w-20'}
+                    className={ingInputCls + ' w-24 shrink-0'}
                     placeholder="Unidad"
                     value={ing.unidad}
                     onChange={(e) => setIngrediente(i, 'unidad', e.target.value)}
