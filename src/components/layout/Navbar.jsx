@@ -12,7 +12,7 @@ import { openChatBot } from '../../lib/openChatBot'
 const NAV_LINKS = [
   { label: 'Inicio',               href: '/' },
   { label: 'Meal Prep',            href: '/meal-prep-en-casa' },
-  { label: 'Cocinera a Domicilio', href: '/menu#servicio-cocinera' },
+  { label: 'Cocinera a Domicilio', href: '/cocinera' },
   { label: 'Hornear en Casa',      href: '/menu#servicios' },
   { label: 'Horneados',            href: '/menu#dulces' },
   { label: 'Nosotros',             href: '/nosotros' },

@@ -7,6 +7,7 @@ import Home from './pages/Home' // landing (LCP) → eager para no diferir el pr
 const Nosotros      = lazy(() => import('./pages/Nosotros'))
 const Menu          = lazy(() => import('./pages/Menu'))
 const MealPrep      = lazy(() => import('./pages/MealPrep'))
+const Cocinera      = lazy(() => import('./pages/Cocinera'))
 const Galeria       = lazy(() => import('./pages/Galeria'))
 const Contacto      = lazy(() => import('./pages/Contacto'))
 const NotFound      = lazy(() => import('./pages/NotFound'))
@@ -84,6 +85,7 @@ function AppContent({ lenisRef }) {
         <Route path="/nosotros"  element={<Nosotros />} />
         <Route path="/menu"      element={<Menu />} />
         <Route path="/meal-prep-en-casa" element={<MealPrep />} />
+        <Route path="/cocinera"  element={<Cocinera />} />
         <Route path="/galeria"   element={<Galeria />} />
         <Route path="/contacto"  element={<Contacto />} />
 
