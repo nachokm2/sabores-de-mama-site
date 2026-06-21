@@ -20,18 +20,18 @@ const TEAM = [
     highlight: true,
   },
   {
-    name:     'Bárbara Palma',
-    role:     'Ideas creativas & operaciones',
-    text:     'Aporta la creatividad detrás de cada nuevo plato y mantiene la operación corriendo sin tropiezos.',
-    emoji:    '✨',
-    gradient: 'from-terracotta via-ember to-amber',
-  },
-  {
     name:     'Rodrigo Palma',
     role:     'Planificación & digitalización',
     text:     'Impulsa el proyecto hacia adelante, gestionando la logística y llevando el negocio al mundo digital.',
     emoji:    '🚀',
     gradient: 'from-bark via-ember to-terracotta',
+  },
+  {
+    name:     'Bárbara Palma',
+    role:     'Ideas creativas & operaciones',
+    text:     'Aporta la creatividad detrás de cada nuevo plato y mantiene la operación corriendo sin tropiezos.',
+    emoji:    '✨',
+    gradient: 'from-terracotta via-ember to-amber',
   },
   {
     name:     'Escarlet Palma',
