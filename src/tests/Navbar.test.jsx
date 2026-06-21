@@ -6,14 +6,14 @@ import Navbar from '../components/layout/Navbar'
 /**
  * R-02 · Test del Navbar.
  *
- * Verifica que el menú de navegación contiene EXACTAMENTE los 7 ítems
+ * Verifica que el menú de navegación contiene EXACTAMENTE los 6 ítems
  * especificados por el cliente, en el orden correcto, que cada uno apunta a su
  * destino (ruta o ancla de sección), que el menú de escritorio está configurado
  * para mostrarse en desktop y ocultarse en móvil, y que el menú hamburguesa
- * móvil contiene los mismos 7 ítems.
+ * móvil contiene los mismos 6 ítems.
  *
  * Nota sobre el breakpoint: el menú de escritorio usa `lg` (≥1024px) en lugar de
- * `md` (≥768px) para que los 7 ítems quepan sin solaparse. El test verifica el
+ * `md` (≥768px) para que los 6 ítems quepan sin solaparse. El test verifica el
  * patrón "oculto en móvil / visible en desktop" sin fijar un px concreto.
  */
 
@@ -22,7 +22,6 @@ const EXPECTED_LABELS = [
   'Meal Prep',
   'Cocinera a Domicilio',
   'Hornear en Casa',
-  'Horneados',
   'Nosotros',
   'Contacto',
 ]
@@ -32,7 +31,6 @@ const EXPECTED_HREFS = {
   'Meal Prep': '/meal-prep-en-casa',
   'Cocinera a Domicilio': '/cocinera',
   'Hornear en Casa': '/hornear-en-casa',
-  Horneados: '/menu#dulces',
   Nosotros: '/nosotros',
   Contacto: '/contacto',
 }
@@ -58,13 +56,13 @@ describe('Navbar', () => {
     expect(screen.getByText('Mamá')).toBeInTheDocument()
   })
 
-  it('muestra exactamente 7 ítems de navegación en el menú de escritorio', () => {
+  it('muestra exactamente 6 ítems de navegación en el menú de escritorio', () => {
     renderNavbar()
     const items = within(getDesktopNavList()).getAllByRole('listitem')
-    expect(items).toHaveLength(7)
+    expect(items).toHaveLength(6)
   })
 
-  it('muestra los 7 ítems con los nombres exactos y en el orden correcto', () => {
+  it('muestra los 6 ítems con los nombres exactos y en el orden correcto', () => {
     renderNavbar()
     const labels = within(getDesktopNavList())
       .getAllByRole('listitem')
@@ -76,15 +74,6 @@ describe('Navbar', () => {
     renderNavbar()
     const link = within(getDesktopNavList()).getByRole('link', { name: label })
     expect(link).toHaveAttribute('href', EXPECTED_HREFS[label])
-  })
-
-  it('los enlaces a servicios/productos usan anclas dentro de /menu (scroll a sección)', () => {
-    renderNavbar()
-    const list = getDesktopNavList()
-    for (const label of ['Horneados']) {
-      const href = within(list).getByRole('link', { name: label }).getAttribute('href')
-      expect(href).toMatch(/^\/menu#/)
-    }
   })
 
   it('el menú de escritorio está oculto en móvil y se muestra en viewport desktop', () => {
@@ -101,7 +90,7 @@ describe('Navbar', () => {
     expect(burger.className).toMatch(/(md|lg|xl):hidden/)
   })
 
-  it('el menú hamburguesa móvil muestra los mismos 7 ítems en el mismo orden', () => {
+  it('el menú hamburguesa móvil muestra los mismos 6 ítems en el mismo orden', () => {
     renderNavbar()
     fireEvent.click(screen.getByRole('button', { name: /abrir menú/i }))
 

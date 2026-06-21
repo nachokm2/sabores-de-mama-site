@@ -5,18 +5,17 @@ const ITEMS = [
   { label: 'Meal Prep', href: '/meal-prep-en-casa' },
   { label: 'Cocinera a Domicilio', href: '/cocinera' },
   { label: 'Hornear en Casa', href: '/hornear-en-casa' },
-  { label: 'Horneados', href: '/menu#dulces' },
   { label: 'Nosotros', href: '/nosotros' },
   { label: 'Contacto', href: '/contacto' },
 ]
 
 test.describe('Navbar', () => {
-  test('tiene exactamente los 7 ítems correctos (R-02), en orden y con su destino', async ({ page }) => {
+  test('tiene exactamente los 6 ítems correctos (R-02), en orden y con su destino', async ({ page }) => {
     await page.goto('/')
     const nav = page.getByRole('navigation', { name: 'Navegación principal' })
     const items = nav.getByRole('listitem')
 
-    await expect(items).toHaveCount(7)
+    await expect(items).toHaveCount(6)
     await expect(items).toHaveText(ITEMS.map((i) => i.label))
 
     for (const { label, href } of ITEMS) {
@@ -35,7 +34,7 @@ test.describe('Navbar', () => {
     }
   })
 
-  test('en móvil (375x812) el hamburguesa abre el menú con los 7 ítems', async ({ page }) => {
+  test('en móvil (375x812) el hamburguesa abre el menú con los 6 ítems', async ({ page }) => {
     await page.setViewportSize({ width: 375, height: 812 })
     await page.goto('/')
 

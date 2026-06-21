@@ -14,7 +14,6 @@ const NAV_LINKS = [
   { label: 'Meal Prep',            href: '/meal-prep-en-casa' },
   { label: 'Cocinera a Domicilio', href: '/cocinera' },
   { label: 'Hornear en Casa',      href: '/hornear-en-casa' },
-  { label: 'Horneados',            href: '/menu#dulces' },
   { label: 'Nosotros',             href: '/nosotros' },
   { label: 'Contacto',             href: '/contacto' },
 ]
