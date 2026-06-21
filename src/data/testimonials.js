@@ -16,7 +16,7 @@ export const TESTIMONIALS = [
     role: 'Trabajador de oficina',
     location: 'Providencia',
     rating: 5,
-    text: 'Almuerzo todos los miércoles acá. El pastel de choclo es una obra de arte. Llegó caliente, bien presentado y en tiempo récord. Muy recomendable.',
+    text: 'Pido todas las semanas para organizarme la comida. Viene todo sellado al vacío, lo guardo y voy comiendo rico y saludable sin tener que cocinar. El pastel de choclo quedó tal cual recién hecho. Muy recomendable.',
     avatar: 'RA',
     avatarGradient: 'from-terracotta to-amber',
     featured: false,
