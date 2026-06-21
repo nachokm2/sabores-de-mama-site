@@ -92,11 +92,14 @@ router.post('/', async (req, res, next) => {
       return insert.rows[0]
     })
 
-    // 3) Disparar el correo de "solicitud_recibida" (no bloquea ni rompe la
-    //    respuesta si el correo falla).
-    const emailStatus = await sendEstadoEmail(pedido, 'solicitud_recibida')
+    // 3) Disparar el correo de "solicitud_recibida" en SEGUNDO PLANO: el pedido
+    //    ya está guardado, así que el correo nunca debe bloquear ni demorar la
+    //    confirmación (si SMTP cuelga, el cliente quedaría esperando para siempre).
+    sendEstadoEmail(pedido, 'solicitud_recibida').catch((e) =>
+      console.error('[mail] no se pudo enviar "solicitud_recibida":', e?.message || e)
+    )
 
-    return res.status(201).json({ pedido, email: emailStatus })
+    return res.status(201).json({ pedido })
   } catch (err) {
     if (err.status === 409) {
       return res.status(409).json({ error: err.message })

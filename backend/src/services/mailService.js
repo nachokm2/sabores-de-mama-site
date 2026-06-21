@@ -27,6 +27,11 @@ function getTransporter() {
     port: Number(SMTP_PORT) || 587,
     secure: process.env.SMTP_SECURE === 'true', // true para 465
     auth: { user: SMTP_USER, pass: SMTP_PASS },
+    // Fallar rápido si el SMTP no responde (p. ej. puerto bloqueado en el host):
+    // así el envío en segundo plano no queda colgado indefinidamente.
+    connectionTimeout: 10_000,
+    greetingTimeout: 10_000,
+    socketTimeout: 15_000,
   })
   return transporter
 }
