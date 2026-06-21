@@ -1,12 +1,13 @@
 import { motion } from 'framer-motion'
+import { Link } from 'react-router-dom'
 import { SITE, getWhatsAppLink } from '../../data/siteConfig'
 
 const FOOTER_LINKS = [
-  { label: 'Inicio',    href: '#inicio' },
-  { label: 'Menú',      href: '#menu' },
-  { label: 'Nosotros',  href: '#nosotros' },
-  { label: 'Galería',   href: '#galeria' },
-  { label: 'Contacto',  href: '#contacto' },
+  { label: 'Inicio',    to: '/' },
+  { label: 'Menú',      to: '/menu' },
+  { label: 'Nosotros',  to: '/nosotros' },
+  { label: 'Galería',   to: '/galeria' },
+  { label: 'Contacto',  to: '/contacto' },
 ]
 
 const InstagramIcon = () => (
@@ -99,13 +100,13 @@ export default function Footer() {
             </h3>
             <ul className="flex flex-col gap-3" role="list">
               {FOOTER_LINKS.map((link) => (
-                <li key={link.href}>
-                  <a
-                    href={link.href}
+                <li key={link.to}>
+                  <Link
+                    to={link.to}
                     className="text-warm-gray text-sm hover:text-espresso transition-colors duration-200 link-underline"
                   >
                     {link.label}
-                  </a>
+                  </Link>
                 </li>
               ))}
             </ul>

@@ -4,7 +4,7 @@ export const SITE = {
   description: 'Sabores auténticos que te devuelven a la mesa familiar. Comida casera preparada con ingredientes frescos y mucho cariño, lista para disfrutar en tu hogar.',
   url:         import.meta.env.VITE_SITE_URL || 'https://saboresdemama.com',
   whatsapp:    import.meta.env.VITE_WHATSAPP_NUMBER || '56966705821',
-  email:       'hola@saboresdemama.com',
+  email:       'estela.zavalla@saboresdemama.com',
   address:     'Santiago, Chile',
   hours: {
     weekdays: 'Lunes a Viernes: 11:00 – 20:00',
