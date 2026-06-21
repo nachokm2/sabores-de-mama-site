@@ -8,6 +8,7 @@ const Nosotros      = lazy(() => import('./pages/Nosotros'))
 const Menu          = lazy(() => import('./pages/Menu'))
 const MealPrep      = lazy(() => import('./pages/MealPrep'))
 const Cocinera      = lazy(() => import('./pages/Cocinera'))
+const HornearEnCasa = lazy(() => import('./pages/HornearEnCasa'))
 const Galeria       = lazy(() => import('./pages/Galeria'))
 const Contacto      = lazy(() => import('./pages/Contacto'))
 const NotFound      = lazy(() => import('./pages/NotFound'))
@@ -86,6 +87,7 @@ function AppContent({ lenisRef }) {
         <Route path="/menu"      element={<Menu />} />
         <Route path="/meal-prep-en-casa" element={<MealPrep />} />
         <Route path="/cocinera"  element={<Cocinera />} />
+        <Route path="/hornear-en-casa" element={<HornearEnCasa />} />
         <Route path="/galeria"   element={<Galeria />} />
         <Route path="/contacto"  element={<Contacto />} />
 
