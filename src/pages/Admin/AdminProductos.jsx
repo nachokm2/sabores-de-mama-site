@@ -9,6 +9,7 @@ import {
   subirImagen,
   ApiError,
 } from '../../lib/adminApi'
+import { imagenUrl } from '../../lib/publicApi'
 
 const VACIO = {
   id: null,
@@ -205,7 +206,7 @@ export default function AdminProductos() {
           </div>
           {form.imagen.trim() && (
             <img
-              src={form.imagen}
+              src={imagenUrl(form.imagen)}
               alt="Vista previa"
               className="w-full h-32 object-cover rounded-xl border border-espresso/10 mb-3"
               onError={(e) => { e.currentTarget.style.display = 'none' }}
@@ -247,7 +248,7 @@ export default function AdminProductos() {
                 <div key={p.id} className="bg-background-surface border border-espresso/10 rounded-2xl overflow-hidden flex flex-col">
                   <div className="h-28 bg-espresso/[0.04] flex items-center justify-center overflow-hidden">
                     {p.imagen ? (
-                      <img src={p.imagen} alt={p.nombre} className="w-full h-full object-cover" onError={(e) => { e.currentTarget.style.display = 'none' }} />
+                      <img src={imagenUrl(p.imagen)} alt={p.nombre} className="w-full h-full object-cover" onError={(e) => { e.currentTarget.style.display = 'none' }} />
                     ) : (
                       <span className="text-3xl" aria-hidden="true">🧁</span>
                     )}

@@ -5,6 +5,24 @@
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:4000/api'
 
+/**
+ * Resuelve la URL de una imagen guardada en un producto:
+ * - URL absoluta (http) o ruta local (/assets/…): se usa tal cual.
+ * - key del bucket (ej. "productos-hornear/…"): se sirve por el proxy del
+ *   backend, que redirige a una URL firmada (bucket privado).
+ */
+export function imagenUrl(imagen) {
+  if (!imagen) return ''
+  // URL pública de Tigris (bucket privado → servir por el proxy firmado).
+  const tigris = imagen.match(/^https?:\/\/[^/]+\.tigris(?:files|bucket|blob)\.io\/(.+)$/i)
+  if (tigris) {
+    const key = decodeURIComponent(tigris[1])
+    return `${API_BASE}/uploads/file?key=${encodeURIComponent(key)}`
+  }
+  if (/^https?:\/\//i.test(imagen) || imagen.startsWith('/')) return imagen
+  return `${API_BASE}/uploads/file?key=${encodeURIComponent(imagen)}`
+}
+
 export class ApiError extends Error {
   constructor(message, status, data) {
     super(message)

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { getProductosHornear } from '../../lib/publicApi'
+import { getProductosHornear, imagenUrl } from '../../lib/publicApi'
 import { computeTotal, fmtCLP } from '../../lib/flowConfig'
 
 /**
@@ -62,7 +62,7 @@ export default function BakingAddon({ data, update }) {
                 <input type="checkbox" checked={sel} onChange={() => toggle(p)} className="mt-0.5 accent-terracotta w-4 h-4 flex-shrink-0" />
                 {p.imagen && (
                   <img
-                    src={p.imagen}
+                    src={imagenUrl(p.imagen)}
                     alt=""
                     className="w-12 h-12 rounded-lg object-cover flex-shrink-0"
                     onError={(e) => { e.currentTarget.style.display = 'none' }}

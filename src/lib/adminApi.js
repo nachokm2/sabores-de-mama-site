@@ -171,9 +171,13 @@ export function eliminarCupo(id) {
 export function presignUpload(body) {
   return apiFetch('/uploads/presign', { method: 'POST', body })
 }
-/** Sube un archivo y devuelve su URL pública. */
+/**
+ * Sube un archivo al bucket y devuelve su KEY (no una URL pública). La key se
+ * guarda en el producto; para mostrarla se usa imagenUrl() (publicApi), que la
+ * sirve por el proxy del backend con una URL firmada.
+ */
 export async function subirImagen(file, prefix = 'productos-hornear') {
-  const { uploadUrl, publicUrl } = await presignUpload({
+  const { uploadUrl, key } = await presignUpload({
     filename: file.name,
     contentType: file.type || 'application/octet-stream',
     prefix,
@@ -189,7 +193,7 @@ export async function subirImagen(file, prefix = 'productos-hornear') {
     throw new ApiError('No se pudo conectar con el almacenamiento.', 0)
   }
   if (!put.ok) throw new ApiError(`No se pudo subir la imagen (HTTP ${put.status}).`, put.status)
-  return publicUrl
+  return key
 }
 
 // Productos para hornear

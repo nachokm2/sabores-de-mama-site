@@ -1,4 +1,9 @@
-import { S3Client, PutObjectCommand, PutBucketCorsCommand, PutBucketAclCommand } from '@aws-sdk/client-s3'
+import {
+  S3Client,
+  PutObjectCommand,
+  GetObjectCommand,
+  PutBucketCorsCommand,
+} from '@aws-sdk/client-s3'
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
 
 /**
@@ -81,29 +86,6 @@ function sanitize(name) {
   return clean.slice(-80) || 'archivo'
 }
 
-// Intenta dejar el bucket como public-read (para que las fotos se vean sin
-// firmar). Idempotente; si Tigris exige verificación de pago o las credenciales
-// no tienen permiso, se registra y hay que activarlo manualmente.
-let publicPromise = null
-export function ensureBucketPublic() {
-  if (publicPromise) return publicPromise
-  publicPromise = (async () => {
-    const s3 = getClient()
-    if (!s3) return
-    try {
-      await s3.send(new PutBucketAclCommand({ Bucket: process.env.S3_BUCKET, ACL: 'public-read' }))
-      console.log('[storage] Bucket configurado como public-read.')
-    } catch (e) {
-      console.error(
-        '[storage] No se pudo hacer el bucket público automáticamente ' +
-          '(actívalo en Tigris → Settings → public-read):',
-        e.message
-      )
-    }
-  })()
-  return publicPromise
-}
-
 /**
  * Genera una URL firmada para subir (PUT) y la URL pública para leer el objeto.
  */
@@ -114,8 +96,9 @@ export async function presignUpload({ filename, contentType, prefix = 'uploads' 
     err.status = 503
     throw err
   }
-  // Configura el bucket (CORS para el PUT + lectura pública) la primera vez.
-  await Promise.all([ensureBucketCors(), ensureBucketPublic()])
+  // Configura el CORS del bucket la primera vez (para el PUT del navegador).
+  // La lectura no necesita bucket público: se sirve por presigned GET (Plan B).
+  await ensureBucketCors()
   const key = `${prefix}/${Date.now()}-${sanitize(filename)}`
   const cmd = new PutObjectCommand({
     Bucket: process.env.S3_BUCKET,
@@ -126,4 +109,19 @@ export async function presignUpload({ filename, contentType, prefix = 'uploads' 
   const base = (process.env.S3_PUBLIC_BASE_URL || '').replace(/\/$/, '')
   const publicUrl = base ? `${base}/${key}` : uploadUrl.split('?')[0]
   return { key, uploadUrl, publicUrl }
+}
+
+/**
+ * URL firmada para LEER un objeto (Plan B: el bucket no es público).
+ * Se re-firma en cada lectura, así nunca caduca de cara al usuario.
+ */
+export async function presignGet(key, expiresIn = 3600) {
+  const s3 = getClient()
+  if (!s3) {
+    const err = new Error('Almacenamiento de imágenes no configurado.')
+    err.status = 503
+    throw err
+  }
+  const cmd = new GetObjectCommand({ Bucket: process.env.S3_BUCKET, Key: key })
+  return getSignedUrl(s3, cmd, { expiresIn })
 }
