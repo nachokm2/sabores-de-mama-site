@@ -33,7 +33,7 @@ function ScrollIndicator() {
       transition={{ delay: 2.5, duration: 0.8 }}
       aria-hidden="true"
     >
-      <span className="text-warm-gray text-2xs font-body tracking-[0.2em] uppercase">
+      <span className="text-accent-600 text-2xs font-semibold font-body tracking-[0.2em] uppercase">
         Descubrir
       </span>
       <div className="w-px h-10 bg-gradient-to-b from-amber/50 to-transparent" />
