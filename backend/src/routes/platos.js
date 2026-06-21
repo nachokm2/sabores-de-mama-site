@@ -20,7 +20,7 @@ function hasValidToken(req) {
 // SELECT de platos con sus ingredientes agregados como JSON.
 function selectPlatosSQL(whereSql = '') {
   return `
-    SELECT p.id, p.nombre, p.descripcion, p.categoria, p.activo, p.created_at,
+    SELECT p.id, p.nombre, p.descripcion, p.categoria, p.imagen, p.activo, p.created_at,
            COALESCE(
              json_agg(
                json_build_object(
@@ -118,14 +118,14 @@ router.get('/ingredientes', async (req, res, next) => {
  */
 router.post('/', authJWT, async (req, res, next) => {
   try {
-    const { nombre, descripcion, categoria, activo, ingredientes } = req.body || {}
+    const { nombre, descripcion, categoria, imagen, activo, ingredientes } = req.body || {}
     if (!nombre) return res.status(400).json({ error: 'El nombre del plato es obligatorio.' })
 
     const plato = await withTransaction(async (client) => {
       const ins = await client.query(
-        `INSERT INTO platos (nombre, descripcion, categoria, activo)
-         VALUES ($1, $2, $3, $4) RETURNING id`,
-        [nombre, descripcion || null, categoria || null, activo !== false]
+        `INSERT INTO platos (nombre, descripcion, categoria, imagen, activo)
+         VALUES ($1, $2, $3, $4, $5) RETURNING id`,
+        [nombre, descripcion || null, categoria || null, imagen || null, activo !== false]
       )
       const platoId = ins.rows[0].id
 
@@ -156,7 +156,7 @@ router.post('/', authJWT, async (req, res, next) => {
 router.put('/:id', authJWT, async (req, res, next) => {
   try {
     const { id } = req.params
-    const { nombre, descripcion, categoria, activo, ingredientes } = req.body || {}
+    const { nombre, descripcion, categoria, imagen, activo, ingredientes } = req.body || {}
 
     const ok = await withTransaction(async (client) => {
       const upd = await client.query(
@@ -164,10 +164,11 @@ router.put('/:id', authJWT, async (req, res, next) => {
             SET nombre      = COALESCE($1, nombre),
                 descripcion = COALESCE($2, descripcion),
                 categoria   = COALESCE($3, categoria),
-                activo      = COALESCE($4, activo)
-          WHERE id = $5
+                imagen      = COALESCE($4, imagen),
+                activo      = COALESCE($5, activo)
+          WHERE id = $6
         RETURNING id`,
-        [nombre ?? null, descripcion ?? null, categoria ?? null, activo ?? null, id]
+        [nombre ?? null, descripcion ?? null, categoria ?? null, imagen ?? null, activo ?? null, id]
       )
       if (upd.rowCount === 0) return false
 

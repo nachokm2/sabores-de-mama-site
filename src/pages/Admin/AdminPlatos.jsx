@@ -6,14 +6,17 @@ import {
   crearPlato,
   editarPlato,
   eliminarPlato,
+  subirImagen,
   ApiError,
 } from '../../lib/adminApi'
+import { imagenUrl } from '../../lib/publicApi'
 
 const FORM_VACIO = {
   id: null,
   nombre: '',
   descripcion: '',
   categoria: '',
+  imagen: '',
   activo: true,
   ingredientes: [{ nombre: '', cantidad: '', unidad: '' }],
 }
@@ -60,6 +63,7 @@ export default function AdminPlatos() {
   const [error, setError] = useState('')
   const [msg, setMsg] = useState('')
   const [saving, setSaving] = useState(false)
+  const [subiendo, setSubiendo] = useState(false)
   const [form, setForm] = useState(FORM_VACIO)
   // Categorías colapsadas (un set; por defecto todas abiertas).
   const [colapsadas, setColapsadas] = useState(() => new Set())
@@ -94,6 +98,27 @@ export default function AdminPlatos() {
 
   const setField = (k, v) => setForm((f) => ({ ...f, [k]: v }))
 
+  const onSubirFoto = async (e) => {
+    const file = e.target.files?.[0]
+    e.target.value = ''
+    if (!file) return
+    setSubiendo(true)
+    setError('')
+    try {
+      const key = await subirImagen(file, 'platos')
+      setField('imagen', key)
+      setMsg('Foto subida.')
+    } catch (err) {
+      if (err instanceof ApiError && err.status === 503) {
+        setError('La subida de imágenes no está configurada en el servidor. Pega una URL a mano por ahora.')
+      } else if (!handle401(err)) {
+        setError(err.message || 'No se pudo subir la imagen.')
+      }
+    } finally {
+      setSubiendo(false)
+    }
+  }
+
   const setIngrediente = (i, k, v) =>
     setForm((f) => ({
       ...f,
@@ -114,6 +139,7 @@ export default function AdminPlatos() {
       nombre: p.nombre || '',
       descripcion: p.descripcion || '',
       categoria: p.categoria || '',
+      imagen: p.imagen || '',
       activo: p.activo,
       ingredientes:
         p.ingredientes && p.ingredientes.length
@@ -132,6 +158,7 @@ export default function AdminPlatos() {
       nombre: form.nombre.trim(),
       descripcion: form.descripcion.trim() || null,
       categoria: form.categoria.trim() || null,
+      imagen: form.imagen.trim() || null,
       activo: form.activo,
       ingredientes: form.ingredientes
         .filter((i) => i.nombre.trim())
@@ -237,6 +264,26 @@ export default function AdminPlatos() {
             <span className="block text-espresso font-medium mb-1">Descripción</span>
             <textarea className={inputCls} rows={2} value={form.descripcion} onChange={(e) => setField('descripcion', e.target.value)} />
           </label>
+
+          <div className="block mb-3 text-sm">
+            <span className="block text-espresso font-medium mb-1">Foto</span>
+            <div className="flex items-center gap-2 mb-2">
+              <label className={`cursor-pointer text-xs font-semibold rounded-full px-3 py-2 border transition-colors ${subiendo ? 'opacity-50 cursor-wait' : ''} border-terracotta/40 text-terracotta hover:bg-amber/10`}>
+                {subiendo ? 'Subiendo…' : '⬆ Subir foto'}
+                <input type="file" accept="image/*" className="hidden" disabled={subiendo} onChange={onSubirFoto} />
+              </label>
+              <span className="text-xs text-warm-gray">o pega una URL:</span>
+            </div>
+            <input className={inputCls} value={form.imagen} onChange={(e) => setField('imagen', e.target.value)} placeholder="https://… o /assets/images/…" />
+            {form.imagen.trim() && (
+              <img
+                src={imagenUrl(form.imagen)}
+                alt="Vista previa"
+                className="w-full h-32 object-cover rounded-xl border border-espresso/10 mt-2"
+                onError={(e) => { e.currentTarget.style.display = 'none' }}
+              />
+            )}
+          </div>
 
           <label className="flex items-center gap-2 mb-4 text-sm text-espresso">
             <input type="checkbox" checked={form.activo} onChange={(e) => setField('activo', e.target.checked)} />
@@ -362,7 +409,16 @@ export default function AdminPlatos() {
                               key={p.id}
                               className="bg-background border border-espresso/8 rounded-xl p-3 flex items-start justify-between gap-4"
                             >
-                              <div className="min-w-0">
+                              <div className="flex items-start gap-3 min-w-0">
+                                {p.imagen && (
+                                  <img
+                                    src={imagenUrl(p.imagen)}
+                                    alt=""
+                                    className="w-12 h-12 rounded-lg object-cover flex-shrink-0"
+                                    onError={(e) => { e.currentTarget.style.display = 'none' }}
+                                  />
+                                )}
+                                <div className="min-w-0">
                                 <div className="flex items-center gap-2 flex-wrap">
                                   <h3 className="font-display font-semibold text-espresso text-sm">{p.nombre}</h3>
                                   {!p.activo && (
@@ -378,6 +434,7 @@ export default function AdminPlatos() {
                                     {p.ingredientes.map((i) => i.nombre).join(', ')}
                                   </p>
                                 )}
+                                </div>
                               </div>
                               <div className="flex flex-col items-end gap-1.5 shrink-0">
                                 <button onClick={() => onEditar(p)} className="text-sm text-terracotta hover:underline">

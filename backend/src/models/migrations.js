@@ -27,6 +27,7 @@ CREATE TABLE IF NOT EXISTS platos (
   nombre      VARCHAR(150) NOT NULL,
   descripcion TEXT,
   categoria   VARCHAR(100),
+  imagen      TEXT,
   activo      BOOLEAN NOT NULL DEFAULT true,
   created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
 );
@@ -120,6 +121,8 @@ ALTER TABLE comunas ADD COLUMN IF NOT EXISTS cocinera  BOOLEAN NOT NULL DEFAULT 
 ALTER TABLE productos_hornear ADD COLUMN IF NOT EXISTS imagen    TEXT;
 ALTER TABLE productos_hornear ADD COLUMN IF NOT EXISTS formato   VARCHAR(120);
 ALTER TABLE productos_hornear ADD COLUMN IF NOT EXISTS porciones VARCHAR(80);
+-- Foto del plato.
+ALTER TABLE platos ADD COLUMN IF NOT EXISTS imagen TEXT;
 `
 
 // Comunas del Gran Santiago (lista inicial de cobertura). El costo de despacho

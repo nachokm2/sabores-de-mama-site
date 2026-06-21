@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { getPlatos } from '../../lib/publicApi'
+import { getPlatos, imagenUrl } from '../../lib/publicApi'
 
 const MAX = 5
 
@@ -105,6 +105,14 @@ export default function StepDishes({ data, update, onNext, onBack }) {
                         >
                           {sel ? '✓' : ''}
                         </span>
+                        {p.imagen && (
+                          <img
+                            src={imagenUrl(p.imagen)}
+                            alt=""
+                            className="w-12 h-12 rounded-lg object-cover flex-shrink-0"
+                            onError={(e) => { e.currentTarget.style.display = 'none' }}
+                          />
+                        )}
                         <div className="min-w-0">
                           <p className="text-sm font-semibold text-espresso">{p.nombre}</p>
                           {p.descripcion && <p className="text-xs text-warm-gray mt-0.5">{p.descripcion}</p>}
