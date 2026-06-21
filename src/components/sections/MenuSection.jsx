@@ -64,6 +64,8 @@ function ServiceCard({ service, index }) {
     }
     navigate(SERVICE_ROUTES[service.id] || '/meal-prep')
   }
+  // Cocinera se coordina por WhatsApp → "Agendar servicio"; el resto, checkout.
+  const ctaLabel = service.id === 'cocinera' ? 'Agendar servicio' : 'Comenzar pedido'
   return (
     <motion.article
       className={`relative rounded-3xl overflow-hidden flex flex-col shadow-[0_10px_40px_rgba(42,28,18,0.08)] ${service.highlight ? 'ring-2 ring-amber/50' : 'ring-1 ring-espresso/10'}`}
@@ -129,9 +131,9 @@ function ServiceCard({ service, index }) {
           }`}
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.97 }}
-          aria-label={`Comenzar pedido de ${service.name}`}
+          aria-label={`${ctaLabel} de ${service.name}`}
         >
-          Comenzar pedido
+          {ctaLabel}
         </motion.button>
       </div>
     </motion.article>
