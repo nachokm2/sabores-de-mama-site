@@ -11,3 +11,4 @@ lh-report.json
 .lhtmp/
 test-results/
 playwright-report/
+snap.mjs
