@@ -5,6 +5,7 @@ import { SERVICES, DISH_CATEGORIES, DULCES_FAMILIAR, DULCES_SNACKS, DISH_DESCRIP
 import SectionLabel from '../ui/SectionLabel'
 import { getPlatos } from '../../lib/publicApi'
 import { useScrollReveal } from '../../hooks/useScrollAnimation'
+import { WHATSAPP, getWhatsAppLink } from '../../data/siteConfig'
 
 // Cada servicio inicia su propio flujo de pedido.
 const SERVICE_ROUTES = {
@@ -55,7 +56,14 @@ function WaIcon({ className = 'w-4 h-4' }) {
 /* ── Service card ────────────────────────────────────────────────────────────── */
 function ServiceCard({ service, index }) {
   const navigate = useNavigate()
-  const irAlFlujo = () => navigate(SERVICE_ROUTES[service.id] || '/meal-prep')
+  const irAlFlujo = () => {
+    // Cocinera a Domicilio se coordina por WhatsApp; el resto usa su flujo.
+    if (service.id === 'cocinera') {
+      window.open(getWhatsAppLink(WHATSAPP.cocineraMessage), '_blank', 'noopener')
+      return
+    }
+    navigate(SERVICE_ROUTES[service.id] || '/meal-prep')
+  }
   return (
     <motion.article
       className={`relative rounded-3xl overflow-hidden flex flex-col shadow-[0_10px_40px_rgba(42,28,18,0.08)] ${service.highlight ? 'ring-2 ring-amber/50' : 'ring-1 ring-espresso/10'}`}

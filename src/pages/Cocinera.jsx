@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { Helmet } from 'react-helmet-async'
 import Navbar from '../components/layout/Navbar'
@@ -8,6 +7,7 @@ import PageHero from '../components/ui/PageHero'
 import SectionLabel from '../components/ui/SectionLabel'
 import { getComunas } from '../lib/publicApi'
 import { fmtCLP } from '../lib/flowConfig'
+import { WHATSAPP, getWhatsAppLink } from '../data/siteConfig'
 
 /* ── Cómo funciona ───────────────────────────────────────────────────────── */
 const PASOS = [
@@ -66,7 +66,6 @@ function PasoCard({ paso, index }) {
 }
 
 export default function Cocinera() {
-  const navigate = useNavigate()
   const [comunas, setComunas] = useState([])
 
   useEffect(() => {
@@ -84,7 +83,8 @@ export default function Cocinera() {
     }
   }, [])
 
-  const agendar = () => navigate('/cocinera-a-domicilio')
+  // La Cocinera a Domicilio se coordina por WhatsApp (horario, visita, detalles).
+  const agendar = () => window.open(getWhatsAppLink(WHATSAPP.cocineraMessage), '_blank', 'noopener')
 
   return (
     <>
@@ -107,8 +107,8 @@ export default function Cocinera() {
           subtitle="Estela llega a tu hogar y cocina hasta 5 preparaciones con tus ingredientes. Eliges los platos, recibes tu lista de compras y disfrutas de comida casera lista para la semana — sin mover un dedo."
           breadcrumb={[{ label: 'Inicio', href: '/' }, { label: 'Cocinera a Domicilio', href: '/cocinera' }]}
         >
-          <button onClick={agendar} className="btn-primary text-sm">
-            Agendar Cocinera a Domicilio
+          <button onClick={agendar} className="btn-whatsapp text-sm">
+            Agendar por WhatsApp
           </button>
         </PageHero>
 
@@ -237,10 +237,10 @@ export default function Cocinera() {
               ¿Lista para que mamá cocine en tu casa?
             </h2>
             <p className="font-body text-warm-gray text-base mb-8">
-              Elige tus platos, agenda la fecha y prepárate para disfrutar comida casera sin esfuerzo.
+              Escríbenos por WhatsApp y coordinamos tus platos, la fecha y la visita de mamá a tu hogar.
             </p>
-            <button onClick={agendar} className="btn-primary">
-              Agendar Cocinera a Domicilio
+            <button onClick={agendar} className="btn-whatsapp">
+              Agendar por WhatsApp
             </button>
           </div>
         </section>
