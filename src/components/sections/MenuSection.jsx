@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { SERVICES, DISH_CATEGORIES, DULCES_FAMILIAR, DULCES_SNACKS, DISH_DESCRIPTIONS } from '../../data/menu'
 import SectionLabel from '../ui/SectionLabel'
-import { getPlatos, getComunas } from '../../lib/publicApi'
+import { getPlatos, getComunas, imagenUrl } from '../../lib/publicApi'
 import { useScrollReveal } from '../../hooks/useScrollAnimation'
 import { WHATSAPP, getWhatsAppLink } from '../../data/siteConfig'
 
@@ -48,6 +48,12 @@ function buildDescriptionsFromApi(platos) {
   const d = {}
   for (const p of platos) if (p.descripcion) d[p.nombre] = p.descripcion
   return d
+}
+
+function buildImagesFromApi(platos) {
+  const m = {}
+  for (const p of platos) if (p.imagen) m[p.nombre] = p.imagen
+  return m
 }
 
 /* ── WhatsApp icon ───────────────────────────────────────────────────────────── */
@@ -171,7 +177,7 @@ function ServiceCard({ service, index }) {
 }
 
 /* ── Category accordion ──────────────────────────────────────────────────────── */
-function CategoryAccordion({ cat, index, descriptions = {} }) {
+function CategoryAccordion({ cat, index, descriptions = {}, images = {} }) {
   const [open, setOpen] = useState(index === 0)
   const [activeDish, setActiveDish] = useState(null)
   return (
@@ -232,7 +238,7 @@ function CategoryAccordion({ cat, index, descriptions = {} }) {
 
               {/* Panel de descripción */}
               <AnimatePresence>
-                {activeDish && descriptions[activeDish] && (
+                {activeDish && (descriptions[activeDish] || images[activeDish]) && (
                   <motion.div
                     key={activeDish}
                     initial={{ opacity: 0, y: 6 }}
@@ -241,10 +247,21 @@ function CategoryAccordion({ cat, index, descriptions = {} }) {
                     transition={{ duration: 0.18 }}
                     className="mt-4 flex items-start gap-3 bg-amber/[0.06] border border-amber/30 rounded-xl px-4 py-3"
                   >
-                    <span className="text-accent-600 text-base mt-0.5 flex-shrink-0">✦</span>
+                    {images[activeDish] ? (
+                      <img
+                        src={imagenUrl(images[activeDish])}
+                        alt={activeDish}
+                        className="w-16 h-16 rounded-lg object-cover flex-shrink-0"
+                        onError={(e) => { e.currentTarget.style.display = 'none' }}
+                      />
+                    ) : (
+                      <span className="text-accent-600 text-base mt-0.5 flex-shrink-0">✦</span>
+                    )}
                     <div>
                       <p className="font-display text-espresso text-sm font-semibold mb-0.5">{activeDish}</p>
-                      <p className="font-body text-warm-gray text-xs leading-relaxed">{descriptions[activeDish]}</p>
+                      {descriptions[activeDish] && (
+                        <p className="font-body text-warm-gray text-xs leading-relaxed">{descriptions[activeDish]}</p>
+                      )}
                     </div>
                   </motion.div>
                 )}
@@ -315,6 +332,7 @@ export default function MenuSection() {
   // no responde o aún no tiene platos cargados).
   const [categories, setCategories] = useState(DISH_CATEGORIES)
   const [descriptions, setDescriptions] = useState(DISH_DESCRIPTIONS)
+  const [images, setImages] = useState({})
 
   useEffect(() => {
     let active = true
@@ -323,6 +341,7 @@ export default function MenuSection() {
         if (!active || !platos.length) return
         setCategories(buildCategoriesFromApi(platos))
         setDescriptions({ ...DISH_DESCRIPTIONS, ...buildDescriptionsFromApi(platos) })
+        setImages(buildImagesFromApi(platos))
       })
       .catch(() => {
         /* Sin conexión / error → se mantienen los datos estáticos. */
@@ -384,7 +403,7 @@ export default function MenuSection() {
 
           <div className="space-y-3 max-w-3xl mx-auto">
             {categories.map((cat, i) => (
-              <CategoryAccordion key={cat.id} cat={cat} index={i} descriptions={descriptions} />
+              <CategoryAccordion key={cat.id} cat={cat} index={i} descriptions={descriptions} images={images} />
             ))}
           </div>
         </div>
