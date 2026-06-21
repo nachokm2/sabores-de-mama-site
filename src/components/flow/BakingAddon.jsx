@@ -58,10 +58,21 @@ export default function BakingAddon({ data, update }) {
                 sel ? 'border-terracotta bg-amber/10' : 'border-espresso/15 bg-background-surface hover:border-terracotta/40'
               }`}
             >
-              <div className="flex items-start gap-2 min-w-0">
-                <input type="checkbox" checked={sel} onChange={() => toggle(p)} className="mt-0.5 accent-terracotta w-4 h-4" />
+              <div className="flex items-start gap-2.5 min-w-0">
+                <input type="checkbox" checked={sel} onChange={() => toggle(p)} className="mt-0.5 accent-terracotta w-4 h-4 flex-shrink-0" />
+                {p.imagen && (
+                  <img
+                    src={p.imagen}
+                    alt=""
+                    className="w-12 h-12 rounded-lg object-cover flex-shrink-0"
+                    onError={(e) => { e.currentTarget.style.display = 'none' }}
+                  />
+                )}
                 <div className="min-w-0">
                   <p className="text-sm font-semibold text-espresso">{p.nombre}</p>
+                  {(p.formato || p.porciones) && (
+                    <p className="text-2xs text-warm-gray">{[p.formato, p.porciones].filter(Boolean).join(' · ')}</p>
+                  )}
                   {p.descripcion && <p className="text-xs text-warm-gray">{p.descripcion}</p>}
                 </div>
               </div>

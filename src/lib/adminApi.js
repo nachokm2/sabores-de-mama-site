@@ -167,6 +167,18 @@ export function eliminarCupo(id) {
   return apiFetch(`/cupos/${id}`, { method: 'DELETE' })
 }
 
+// Productos para hornear
+export function getProductosHornear({ todos = false } = {}) {
+  const qs = todos ? '?todos=true' : ''
+  return apiFetch(`/productos-hornear${qs}`)
+}
+export function guardarProductoHornear(data) {
+  return apiFetch('/productos-hornear', { method: 'POST', body: data })
+}
+export function eliminarProductoHornear(id) {
+  return apiFetch(`/productos-hornear/${id}`, { method: 'DELETE' })
+}
+
 // Comunas
 export function getComunas({ todos = false } = {}) {
   const qs = todos ? '?todos=true' : ''

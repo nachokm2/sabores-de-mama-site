@@ -24,6 +24,7 @@ const AdminPedidos   = lazy(() => import('./pages/Admin/AdminPedidos'))
 const AdminPlatos    = lazy(() => import('./pages/Admin/AdminPlatos'))
 const AdminCupos     = lazy(() => import('./pages/Admin/AdminCupos'))
 const AdminComunas   = lazy(() => import('./pages/Admin/AdminComunas'))
+const AdminProductos = lazy(() => import('./pages/Admin/AdminProductos'))
 import { isTokenValid } from './lib/adminApi'
 
 // /admin → dashboard si hay sesión válida; si no, al login.
@@ -105,6 +106,7 @@ function AppContent({ lenisRef }) {
           <Route path="/admin/platos"    element={<AdminPlatos />} />
           <Route path="/admin/cupos"     element={<AdminCupos />} />
           <Route path="/admin/comunas"   element={<AdminComunas />} />
+          <Route path="/admin/productos" element={<AdminProductos />} />
         </Route>
 
         <Route path="*"          element={<NotFound />} />

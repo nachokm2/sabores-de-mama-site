@@ -68,6 +68,9 @@ CREATE TABLE IF NOT EXISTS productos_hornear (
   nombre      VARCHAR(150) NOT NULL,
   descripcion TEXT,
   precio      NUMERIC(10,2) NOT NULL DEFAULT 0,
+  imagen      TEXT,
+  formato     VARCHAR(120),
+  porciones   VARCHAR(80),
   activo      BOOLEAN NOT NULL DEFAULT true
 );
 
@@ -113,6 +116,10 @@ ALTER TABLE pedidos ADD COLUMN IF NOT EXISTS lista_compras JSONB NOT NULL DEFAUL
 -- Disponibilidad de cada comuna por servicio (para tablas ya existentes).
 ALTER TABLE comunas ADD COLUMN IF NOT EXISTS meal_prep BOOLEAN NOT NULL DEFAULT true;
 ALTER TABLE comunas ADD COLUMN IF NOT EXISTS cocinera  BOOLEAN NOT NULL DEFAULT true;
+-- Productos para hornear: foto, formato/cantidad y porciones (para tablas existentes).
+ALTER TABLE productos_hornear ADD COLUMN IF NOT EXISTS imagen    TEXT;
+ALTER TABLE productos_hornear ADD COLUMN IF NOT EXISTS formato   VARCHAR(120);
+ALTER TABLE productos_hornear ADD COLUMN IF NOT EXISTS porciones VARCHAR(80);
 `
 
 // Comunas del Gran Santiago (lista inicial de cobertura). El costo de despacho
