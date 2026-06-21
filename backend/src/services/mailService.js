@@ -36,6 +36,41 @@ function getTransporter() {
   return transporter
 }
 
+// Remitente: RESEND_FROM > MAIL_FROM > SMTP_FROM > SMTP_USER.
+// Con Resend sin dominio propio verificado, usa "onboarding@resend.dev".
+function mailFrom() {
+  return (
+    process.env.RESEND_FROM ||
+    process.env.MAIL_FROM ||
+    process.env.SMTP_FROM ||
+    process.env.SMTP_USER ||
+    'Sabores de Mamá <onboarding@resend.dev>'
+  )
+}
+
+/**
+ * Envío por la API HTTP de Resend (puerto 443). Funciona en hosts que bloquean
+ * el SMTP saliente (Railway, Render, etc.). Usa fetch nativo (Node 18+), sin
+ * dependencias extra, con timeout propio para no quedar colgado.
+ */
+async function sendViaResend({ apiKey, from, to, subject, html }) {
+  const controller = new AbortController()
+  const timer = setTimeout(() => controller.abort(), 15_000)
+  try {
+    const res = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ from, to: [to], subject, html }),
+      signal: controller.signal,
+    })
+    const data = await res.json().catch(() => ({}))
+    if (!res.ok) throw new Error(data?.message || data?.name || `Resend HTTP ${res.status}`)
+    return data?.id
+  } finally {
+    clearTimeout(timer)
+  }
+}
+
 // ── Formato ─────────────────────────────────────────────────────────────────
 const BRAND = '#AE4C29'
 const INK = '#2A1C12'
@@ -323,25 +358,35 @@ export async function sendEstadoEmail(pedido, estado) {
   if (estado === 'pagado') extra.platosConIng = await getPlatosConIngredientes(pedido)
 
   const { subject, html } = builder(pedido, extra)
-  const tx = getTransporter()
+  const from = mailFrom()
 
+  // 1) Preferir Resend (API HTTP) si está configurado: imprescindible en hosts
+  //    que bloquean el SMTP saliente (p. ej. Railway → "Connection timeout").
+  if (process.env.RESEND_API_KEY) {
+    try {
+      const id = await sendViaResend({ apiKey: process.env.RESEND_API_KEY, from, to: pedido.email, subject, html })
+      console.log(`[mail] Enviado "${estado}" → ${pedido.email} (resend id: ${id})`)
+      return { ok: true, messageId: id, provider: 'resend' }
+    } catch (err) {
+      console.error(`[mail] Error (Resend) enviando "${estado}" → ${pedido.email}:`, err.message)
+      return { ok: false, error: err.message, provider: 'resend' }
+    }
+  }
+
+  // 2) Fallback: SMTP (útil en desarrollo local, donde el puerto no está bloqueado).
+  const tx = getTransporter()
   if (!tx) {
-    console.log(`[mail] SMTP no configurado. Omitiendo "${estado}" → ${pedido.email} (asunto: ${subject})`)
-    return { ok: false, skipped: true, reason: 'smtp_no_configurado' }
+    console.log(`[mail] Sin proveedor de correo (ni RESEND_API_KEY ni SMTP). Omitiendo "${estado}" → ${pedido.email} (asunto: ${subject})`)
+    return { ok: false, skipped: true, reason: 'sin_proveedor' }
   }
 
   try {
-    const info = await tx.sendMail({
-      from: process.env.SMTP_FROM || process.env.MAIL_FROM || process.env.SMTP_USER,
-      to: pedido.email,
-      subject,
-      html,
-    })
+    const info = await tx.sendMail({ from, to: pedido.email, subject, html })
     console.log(`[mail] Enviado "${estado}" → ${pedido.email} (id: ${info.messageId})`)
-    return { ok: true, messageId: info.messageId }
+    return { ok: true, messageId: info.messageId, provider: 'smtp' }
   } catch (err) {
     console.error(`[mail] Error enviando "${estado}" → ${pedido.email}:`, err.message)
-    return { ok: false, error: err.message }
+    return { ok: false, error: err.message, provider: 'smtp' }
   }
 }
 
