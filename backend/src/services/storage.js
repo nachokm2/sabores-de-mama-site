@@ -1,4 +1,4 @@
-import { S3Client, PutObjectCommand, PutBucketCorsCommand } from '@aws-sdk/client-s3'
+import { S3Client, PutObjectCommand, PutBucketCorsCommand, PutBucketAclCommand } from '@aws-sdk/client-s3'
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
 
 /**
@@ -81,6 +81,29 @@ function sanitize(name) {
   return clean.slice(-80) || 'archivo'
 }
 
+// Intenta dejar el bucket como public-read (para que las fotos se vean sin
+// firmar). Idempotente; si Tigris exige verificación de pago o las credenciales
+// no tienen permiso, se registra y hay que activarlo manualmente.
+let publicPromise = null
+export function ensureBucketPublic() {
+  if (publicPromise) return publicPromise
+  publicPromise = (async () => {
+    const s3 = getClient()
+    if (!s3) return
+    try {
+      await s3.send(new PutBucketAclCommand({ Bucket: process.env.S3_BUCKET, ACL: 'public-read' }))
+      console.log('[storage] Bucket configurado como public-read.')
+    } catch (e) {
+      console.error(
+        '[storage] No se pudo hacer el bucket público automáticamente ' +
+          '(actívalo en Tigris → Settings → public-read):',
+        e.message
+      )
+    }
+  })()
+  return publicPromise
+}
+
 /**
  * Genera una URL firmada para subir (PUT) y la URL pública para leer el objeto.
  */
@@ -91,7 +114,8 @@ export async function presignUpload({ filename, contentType, prefix = 'uploads' 
     err.status = 503
     throw err
   }
-  await ensureBucketCors() // garantiza que el navegador pueda hacer el PUT
+  // Configura el bucket (CORS para el PUT + lectura pública) la primera vez.
+  await Promise.all([ensureBucketCors(), ensureBucketPublic()])
   const key = `${prefix}/${Date.now()}-${sanitize(filename)}`
   const cmd = new PutObjectCommand({
     Bucket: process.env.S3_BUCKET,
