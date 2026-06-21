@@ -107,3 +107,9 @@ export async function getPedidoResumen(id) {
   const data = await request(`/pedidos/${id}/resumen`)
   return data?.pedido
 }
+
+/** Consulta un pedido del cliente con número + email (verificación simple). */
+export async function consultarPedido({ id, email }) {
+  const data = await request('/pedidos/consultar', { method: 'POST', body: { id, email } })
+  return data?.pedido
+}

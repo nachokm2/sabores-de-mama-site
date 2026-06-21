@@ -109,6 +109,35 @@ router.post('/', async (req, res, next) => {
 })
 
 /**
+ * POST /api/pedidos/consultar  (público)
+ * El cliente consulta SU pedido con número + email (verificación simple). Devuelve
+ * un subconjunto seguro: estado, fecha, platos, lista de compras, etc. (sin
+ * dirección/teléfono completos de otras personas).
+ */
+router.post('/consultar', async (req, res, next) => {
+  try {
+    const { id, email } = req.body || {}
+    const idNum = Number(id)
+    if (!Number.isInteger(idNum) || idNum <= 0 || !email) {
+      return res.status(400).json({ error: 'Ingresa el número de pedido y el email con el que pediste.' })
+    }
+    const { rows } = await query(
+      `SELECT id, estado, fecha_entrega, total, servicio, tipo_entrega, comuna,
+              costo_despacho, platos, lista_compras, productos_hornear, observaciones, created_at
+         FROM pedidos
+        WHERE id = $1 AND lower(email) = lower($2)`,
+      [idNum, String(email).trim()]
+    )
+    if (!rows[0]) {
+      return res.status(404).json({ error: 'No encontramos un pedido con ese número y email.' })
+    }
+    return res.json({ pedido: rows[0] })
+  } catch (err) {
+    next(err)
+  }
+})
+
+/**
  * GET /api/pedidos  (protegido)
  * Lista pedidos. Filtros opcionales: ?estado=&fecha=&desde=&hasta=&limit=&offset=
  */
