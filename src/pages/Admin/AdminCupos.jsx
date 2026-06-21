@@ -2,12 +2,44 @@ import { useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import AdminLayout from '../../components/admin/AdminLayout'
 import { fmtFecha, todayStr } from '../../components/admin/adminHelpers'
-import { getCupos, guardarCupo, ApiError } from '../../lib/adminApi'
+import {
+  getCupos,
+  guardarCupo,
+  guardarCuposBulk,
+  eliminarCupo,
+  ApiError,
+} from '../../lib/adminApi'
+
+const DIAS = [
+  { dow: 1, label: 'Lun' }, { dow: 2, label: 'Mar' }, { dow: 3, label: 'Mié' },
+  { dow: 4, label: 'Jue' }, { dow: 5, label: 'Vie' }, { dow: 6, label: 'Sáb' }, { dow: 0, label: 'Dom' },
+]
+
+function ymd(d) {
+  const y = d.getFullYear()
+  const m = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${y}-${m}-${day}`
+}
+
+// Genera las fechas entre desde y hasta (inclusive), filtradas por días de semana.
+function generarFechas(desde, hasta, dias) {
+  if (!desde) return []
+  const out = []
+  const d = new Date(desde + 'T00:00:00')
+  const end = new Date((hasta || desde) + 'T00:00:00')
+  let guard = 0
+  while (d <= end && guard < 366) {
+    if (!dias.size || dias.has(d.getDay())) out.push(ymd(d))
+    d.setDate(d.getDate() + 1)
+    guard++
+  }
+  return out
+}
 
 /**
- * AdminCupos · configurar fechas y capacidades máximas.
- * Formulario de alta/edición (upsert por fecha) + tabla de todas las fechas con
- * su ocupación. Hacer clic en una fila la carga en el formulario para editarla.
+ * AdminCupos · crea fechas (una o en lote por rango + días de semana), edita la
+ * capacidad/estado en la misma fila y permite eliminar fechas.
  */
 export default function AdminCupos() {
   const navigate = useNavigate()
@@ -16,9 +48,12 @@ export default function AdminCupos() {
   const [error, setError] = useState('')
   const [msg, setMsg] = useState('')
   const [saving, setSaving] = useState(false)
-  const [fecha, setFecha] = useState('')
+
+  // Formulario de creación
+  const [desde, setDesde] = useState('')
+  const [hasta, setHasta] = useState('')
   const [capacidad, setCapacidad] = useState(5)
-  const [activo, setActivo] = useState(true)
+  const [dias, setDias] = useState(new Set())
 
   const handle401 = (err) => {
     if (err instanceof ApiError && err.status === 401) {
@@ -33,7 +68,7 @@ export default function AdminCupos() {
     setError('')
     try {
       const data = await getCupos({ todos: true })
-      setCupos(data.cupos || [])
+      setCupos((data.cupos || []).map((c) => ({ ...c, _dirty: false })))
     } catch (err) {
       if (!handle401(err)) setError(err.message || 'No se pudieron cargar los cupos.')
     } finally {
@@ -46,40 +81,82 @@ export default function AdminCupos() {
     cargar()
   }, [cargar])
 
-  const onGuardar = async (e) => {
+  const toggleDia = (dow) => {
+    setDias((prev) => {
+      const next = new Set(prev)
+      next.has(dow) ? next.delete(dow) : next.add(dow)
+      return next
+    })
+  }
+
+  const onCrear = async (e) => {
     e.preventDefault()
-    setSaving(true)
     setError('')
     setMsg('')
+    const fechas = generarFechas(desde, hasta, dias)
+    if (!fechas.length) {
+      setError('Selecciona al menos una fecha válida.')
+      return
+    }
+    setSaving(true)
     try {
-      await guardarCupo({
-        fecha,
-        capacidad_maxima: Number(capacidad),
-        activo,
-      })
-      setMsg(`Cupo del ${fmtFecha(fecha)} guardado.`)
-      setFecha('')
+      if (fechas.length === 1) {
+        await guardarCupo({ fecha: fechas[0], capacidad_maxima: Number(capacidad), activo: true })
+        setMsg(`Cupo del ${fmtFecha(fechas[0])} guardado.`)
+      } else {
+        await guardarCuposBulk({ fechas, capacidad_maxima: Number(capacidad), activo: true })
+        setMsg(`${fechas.length} fechas creadas/actualizadas.`)
+      }
+      setDesde('')
+      setHasta('')
       setCapacidad(5)
-      setActivo(true)
+      setDias(new Set())
       await cargar()
     } catch (err) {
-      if (!handle401(err)) setError(err.message || 'No se pudo guardar el cupo.')
+      if (!handle401(err)) setError(err.message || 'No se pudieron crear los cupos.')
     } finally {
       setSaving(false)
     }
   }
 
-  const onEditar = (c) => {
-    setFecha(String(c.fecha).slice(0, 10))
-    setCapacidad(c.capacidad_maxima)
-    setActivo(c.activo)
-    window.scrollTo({ top: 0, behavior: 'smooth' })
+  const setCampo = (id, campo, valor) => {
+    setCupos((prev) => prev.map((c) => (c.id === id ? { ...c, [campo]: valor, _dirty: true } : c)))
+  }
+
+  const onGuardarFila = async (c) => {
+    setError('')
+    setMsg('')
+    try {
+      await guardarCupo({
+        fecha: String(c.fecha).slice(0, 10),
+        capacidad_maxima: Number(c.capacidad_maxima),
+        activo: c.activo,
+      })
+      setCupos((prev) => prev.map((x) => (x.id === c.id ? { ...x, _dirty: false } : x)))
+      setMsg(`Cupo del ${fmtFecha(c.fecha)} actualizado.`)
+    } catch (err) {
+      if (!handle401(err)) setError(err.message || 'No se pudo actualizar el cupo.')
+    }
+  }
+
+  const onEliminar = async (c) => {
+    if (!window.confirm(`¿Eliminar la fecha ${fmtFecha(c.fecha)}?`)) return
+    setError('')
+    setMsg('')
+    try {
+      await eliminarCupo(c.id)
+      setCupos((prev) => prev.filter((x) => x.id !== c.id))
+      setMsg(`Fecha ${fmtFecha(c.fecha)} eliminada.`)
+    } catch (err) {
+      if (!handle401(err)) setError(err.message || 'No se pudo eliminar el cupo.')
+    }
   }
 
   const inputCls =
     'rounded-xl border border-espresso/15 bg-background px-3 py-2 text-sm text-espresso focus:outline-none focus:border-terracotta/60'
 
   const hoy = todayStr()
+  const previstas = generarFechas(desde, hasta, dias).length
 
   return (
     <AdminLayout title="Cupos">
@@ -94,37 +171,53 @@ export default function AdminCupos() {
         </div>
       )}
 
-      {/* Formulario */}
-      <form
-        onSubmit={onGuardar}
-        className="bg-background-surface border border-espresso/10 rounded-2xl p-5 mb-6 flex flex-wrap items-end gap-4"
-      >
-        <label className="text-sm">
-          <span className="block text-espresso font-medium mb-1">Fecha</span>
-          <input type="date" className={inputCls} value={fecha} onChange={(e) => setFecha(e.target.value)} required />
-        </label>
-        <label className="text-sm">
-          <span className="block text-espresso font-medium mb-1">Capacidad máxima</span>
-          <input
-            type="number"
-            min={0}
-            className={inputCls + ' w-32'}
-            value={capacidad}
-            onChange={(e) => setCapacidad(e.target.value)}
-            required
-          />
-        </label>
-        <label className="flex items-center gap-2 text-sm text-espresso pb-2">
-          <input type="checkbox" checked={activo} onChange={(e) => setActivo(e.target.checked)} />
-          Activo
-        </label>
-        <button
-          type="submit"
-          disabled={saving}
-          className="bg-terracotta text-ivory font-semibold rounded-full px-5 py-2.5 text-sm hover:bg-ember transition-colors disabled:opacity-50"
-        >
-          {saving ? 'Guardando…' : 'Guardar cupo'}
-        </button>
+      {/* Crear (una o varias fechas) */}
+      <form onSubmit={onCrear} className="bg-background-surface border border-espresso/10 rounded-2xl p-5 mb-6">
+        <div className="flex flex-wrap items-end gap-4">
+          <label className="text-sm">
+            <span className="block text-espresso font-medium mb-1">Desde</span>
+            <input type="date" className={inputCls} value={desde} onChange={(e) => setDesde(e.target.value)} required />
+          </label>
+          <label className="text-sm">
+            <span className="block text-espresso font-medium mb-1">Hasta (opcional)</span>
+            <input type="date" className={inputCls} value={hasta} min={desde} onChange={(e) => setHasta(e.target.value)} />
+          </label>
+          <label className="text-sm">
+            <span className="block text-espresso font-medium mb-1">Capacidad</span>
+            <input type="number" min={0} className={inputCls + ' w-28'} value={capacidad} onChange={(e) => setCapacidad(e.target.value)} required />
+          </label>
+          <button
+            type="submit"
+            disabled={saving}
+            className="bg-terracotta text-ivory font-semibold rounded-full px-5 py-2.5 text-sm hover:bg-ember transition-colors disabled:opacity-50"
+          >
+            {saving ? 'Guardando…' : previstas > 1 ? `Crear ${previstas} fechas` : 'Crear fecha'}
+          </button>
+        </div>
+
+        {/* Días de la semana (sólo aplica si hay un rango "hasta") */}
+        {hasta && (
+          <div className="mt-4 flex flex-wrap items-center gap-2">
+            <span className="text-sm text-warm-gray mr-1">Días:</span>
+            {DIAS.map((d) => (
+              <button
+                key={d.dow}
+                type="button"
+                onClick={() => toggleDia(d.dow)}
+                className={`text-xs font-medium rounded-full px-3 py-1.5 border transition-colors ${
+                  dias.has(d.dow)
+                    ? 'bg-terracotta text-ivory border-terracotta'
+                    : 'border-espresso/15 text-warm-gray hover:border-terracotta/40'
+                }`}
+              >
+                {d.label}
+              </button>
+            ))}
+            <span className="text-xs text-warm-gray ml-1">
+              {dias.size ? '' : '(todos los días si no eliges ninguno)'}
+            </span>
+          </div>
+        )}
       </form>
 
       {/* Tabla */}
@@ -142,7 +235,7 @@ export default function AdminCupos() {
                   <th className="px-5 py-3 font-medium">Capacidad</th>
                   <th className="px-5 py-3 font-medium">Confirmados</th>
                   <th className="px-5 py-3 font-medium">Disponibles</th>
-                  <th className="px-5 py-3 font-medium">Estado</th>
+                  <th className="px-5 py-3 font-medium">Activo</th>
                   <th className="px-5 py-3 font-medium"></th>
                 </tr>
               </thead>
@@ -150,33 +243,54 @@ export default function AdminCupos() {
                 {cupos.map((c) => {
                   const fechaStr = String(c.fecha).slice(0, 10)
                   const pasada = fechaStr <= hoy
-                  const lleno = c.disponibles <= 0
+                  const disponibles = Number(c.capacidad_maxima) - Number(c.pedidos_confirmados)
+                  const lleno = disponibles <= 0
                   return (
                     <tr key={c.id} className="border-b border-espresso/5 last:border-0">
-                      <td className="px-5 py-3 text-espresso font-medium">
+                      <td className="px-5 py-2.5 text-espresso font-medium">
                         {fmtFecha(c.fecha)}
                         {pasada && <span className="ml-2 text-xs text-warm-gray">(pasada)</span>}
                       </td>
-                      <td className="px-5 py-3 text-warm-gray">{c.capacidad_maxima}</td>
-                      <td className="px-5 py-3 text-warm-gray">{c.pedidos_confirmados}</td>
-                      <td className={`px-5 py-3 font-semibold ${lleno ? 'text-primary-600' : 'text-[#15803D]'}`}>
-                        {c.disponibles}
+                      <td className="px-5 py-2.5">
+                        <input
+                          type="number"
+                          min={0}
+                          className={inputCls + ' w-24'}
+                          value={c.capacidad_maxima}
+                          onChange={(e) => setCampo(c.id, 'capacidad_maxima', e.target.value)}
+                        />
                       </td>
-                      <td className="px-5 py-3">
-                        {c.activo ? (
-                          <span className="text-xs text-[#15803D] bg-[#15803D]/10 border border-[#15803D]/30 px-2 py-0.5 rounded-full">
-                            Activo
-                          </span>
-                        ) : (
-                          <span className="text-xs text-warm-gray bg-espresso/[0.06] px-2 py-0.5 rounded-full">
-                            Inactivo
-                          </span>
-                        )}
+                      <td className="px-5 py-2.5 text-warm-gray">{c.pedidos_confirmados}</td>
+                      <td className={`px-5 py-2.5 font-semibold ${lleno ? 'text-primary-600' : 'text-[#15803D]'}`}>
+                        {disponibles}
                       </td>
-                      <td className="px-5 py-3">
-                        <button onClick={() => onEditar(c)} className="text-sm text-terracotta hover:underline">
-                          Editar
-                        </button>
+                      <td className="px-5 py-2.5">
+                        <label className="inline-flex items-center gap-2">
+                          <input
+                            type="checkbox"
+                            checked={c.activo}
+                            onChange={(e) => setCampo(c.id, 'activo', e.target.checked)}
+                          />
+                          <span className="text-xs text-warm-gray">{c.activo ? 'Sí' : 'No'}</span>
+                        </label>
+                      </td>
+                      <td className="px-5 py-2.5">
+                        <div className="flex items-center gap-3 justify-end">
+                          <button
+                            onClick={() => onGuardarFila(c)}
+                            disabled={!c._dirty}
+                            className="text-sm font-medium text-terracotta hover:underline disabled:text-warm-gray disabled:no-underline disabled:cursor-default"
+                          >
+                            Guardar
+                          </button>
+                          <button
+                            onClick={() => onEliminar(c)}
+                            className="text-sm text-warm-gray hover:text-primary-600"
+                            aria-label={`Eliminar ${fmtFecha(c.fecha)}`}
+                          >
+                            Eliminar
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   )

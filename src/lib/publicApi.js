@@ -53,6 +53,12 @@ export async function getCupos() {
   return data?.cupos || []
 }
 
+/** Comunas activas con su costo de despacho. Devuelve [] si algo falla. */
+export async function getComunas() {
+  const data = await request('/comunas')
+  return data?.comunas || []
+}
+
 /** Crea un pedido (reserva cupo + dispara correo en el backend). */
 export async function createPedido(payload) {
   const data = await request('/pedidos', { method: 'POST', body: payload })

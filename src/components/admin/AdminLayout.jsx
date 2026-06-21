@@ -7,6 +7,7 @@ const NAV = [
   { to: '/admin/pedidos', label: 'Pedidos', icon: '🧾' },
   { to: '/admin/platos', label: 'Platos', icon: '🍽️' },
   { to: '/admin/cupos', label: 'Cupos', icon: '📅' },
+  { to: '/admin/comunas', label: 'Comunas', icon: '📍' },
 ]
 
 /**

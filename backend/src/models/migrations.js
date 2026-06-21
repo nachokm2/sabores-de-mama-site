@@ -51,6 +51,15 @@ CREATE TABLE IF NOT EXISTS cupos (
   CONSTRAINT cupos_no_negativos CHECK (pedidos_confirmados >= 0)
 );
 
+-- ── comunas (cobertura + costo de despacho por comuna) ──
+CREATE TABLE IF NOT EXISTS comunas (
+  id             SERIAL PRIMARY KEY,
+  nombre         VARCHAR(120) NOT NULL UNIQUE,
+  costo_despacho INTEGER NOT NULL DEFAULT 0,
+  activo         BOOLEAN NOT NULL DEFAULT true,
+  created_at     TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
 -- ── productos_hornear ──
 CREATE TABLE IF NOT EXISTS productos_hornear (
   id          SERIAL PRIMARY KEY,
@@ -101,6 +110,32 @@ CREATE INDEX IF NOT EXISTS idx_cupos_fecha           ON cupos(fecha);
 ALTER TABLE pedidos ADD COLUMN IF NOT EXISTS lista_compras JSONB NOT NULL DEFAULT '[]'::jsonb;
 `
 
+// Comunas del Gran Santiago (lista inicial de cobertura). El costo de despacho
+// por defecto es configurable con COMUNA_COSTO_DEFAULT (la admin lo ajusta luego
+// por comuna desde el panel).
+const COMUNAS_INICIALES = [
+  'Cerrillos', 'Cerro Navia', 'Conchalí', 'El Bosque', 'Estación Central', 'Huechuraba',
+  'Independencia', 'La Cisterna', 'La Florida', 'La Granja', 'La Pintana', 'La Reina',
+  'Las Condes', 'Lo Barnechea', 'Lo Espejo', 'Lo Prado', 'Macul', 'Maipú', 'Ñuñoa',
+  'Pedro Aguirre Cerda', 'Peñalolén', 'Providencia', 'Pudahuel', 'Puente Alto', 'Quilicura',
+  'Quinta Normal', 'Recoleta', 'Renca', 'San Joaquín', 'San Miguel', 'San Ramón',
+  'Santiago', 'Vitacura',
+]
+
+async function seedComunas(client) {
+  const { rows } = await client.query('SELECT COUNT(*)::int AS n FROM comunas')
+  if (rows[0].n > 0) return // ya hay comunas: no re-sembrar
+  const costo = Number(process.env.COMUNA_COSTO_DEFAULT) || 3000
+  for (const nombre of COMUNAS_INICIALES) {
+    await client.query(
+      `INSERT INTO comunas (nombre, costo_despacho, activo) VALUES ($1, $2, true)
+       ON CONFLICT (nombre) DO NOTHING`,
+      [nombre, costo]
+    )
+  }
+  console.log(`[migrate] ${COMUNAS_INICIALES.length} comunas sembradas (costo por defecto: ${costo}).`)
+}
+
 async function seedAdmin(client) {
   const email = process.env.ADMIN_EMAIL
   const password = process.env.ADMIN_PASSWORD
@@ -123,6 +158,7 @@ export async function runMigrations() {
   const client = await pool.connect()
   try {
     await client.query(SQL)
+    await seedComunas(client)
     await seedAdmin(client)
     console.log('[migrate] Migraciones aplicadas correctamente.')
   } finally {

@@ -9,9 +9,11 @@ export default function StepDelivery({ data, update, onNext, onBack }) {
 
   const base = data.base ?? MEAL_PREP_BASE
   const serviceLabel = data.serviceLabel || 'Meal Prep (5 platos)'
+  // Costo de despacho de la comuna elegida (fallback al valor por defecto).
+  const deliveryCost = data.comunaCosto ?? DELIVERY_COST
 
   const seleccionar = (nuevoTipo) => {
-    const costo_despacho = nuevoTipo === 'delivery' ? DELIVERY_COST : 0
+    const costo_despacho = nuevoTipo === 'delivery' ? deliveryCost : 0
     update({
       tipo_entrega: nuevoTipo,
       costo_despacho,
@@ -20,7 +22,7 @@ export default function StepDelivery({ data, update, onNext, onBack }) {
   }
 
   const opciones = [
-    { value: 'delivery', titulo: 'Delivery a domicilio', desc: 'Te lo llevamos a tu dirección.', costo: DELIVERY_COST },
+    { value: 'delivery', titulo: 'Delivery a domicilio', desc: `Te lo llevamos${data.comuna ? ` a ${data.comuna}` : ''}.`, costo: deliveryCost },
     { value: 'retiro', titulo: 'Retiro', desc: 'Pasas a buscarlo. Sin costo adicional.', costo: 0 },
   ]
 

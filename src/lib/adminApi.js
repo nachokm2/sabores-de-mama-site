@@ -130,6 +130,9 @@ export function getPedido(id) {
 export function cambiarEstadoPedido(id, estado) {
   return apiFetch(`/pedidos/${id}/estado`, { method: 'PATCH', body: { estado } })
 }
+export function editarPedido(id, data) {
+  return apiFetch(`/pedidos/${id}`, { method: 'PATCH', body: data })
+}
 export function reenviarCorreo(pedidoId, estado) {
   return apiFetch(`/correos/pedido/${pedidoId}`, { method: 'POST', body: { estado } })
 }
@@ -156,6 +159,27 @@ export function getCupos({ todos = false } = {}) {
 }
 export function guardarCupo(data) {
   return apiFetch('/cupos', { method: 'POST', body: data })
+}
+export function guardarCuposBulk({ fechas, capacidad_maxima, activo }) {
+  return apiFetch('/cupos/bulk', { method: 'POST', body: { fechas, capacidad_maxima, activo } })
+}
+export function eliminarCupo(id) {
+  return apiFetch(`/cupos/${id}`, { method: 'DELETE' })
+}
+
+// Comunas
+export function getComunas({ todos = false } = {}) {
+  const qs = todos ? '?todos=true' : ''
+  return apiFetch(`/comunas${qs}`)
+}
+export function crearComuna(data) {
+  return apiFetch('/comunas', { method: 'POST', body: data })
+}
+export function editarComuna(id, data) {
+  return apiFetch(`/comunas/${id}`, { method: 'PUT', body: data })
+}
+export function eliminarComuna(id) {
+  return apiFetch(`/comunas/${id}`, { method: 'DELETE' })
 }
 
 // Etiquetas de estado para la UI.

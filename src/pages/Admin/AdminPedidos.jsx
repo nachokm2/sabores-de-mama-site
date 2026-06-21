@@ -1,11 +1,14 @@
-import { useCallback, useEffect, useState } from 'react'
+import { Fragment, useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import AdminLayout from '../../components/admin/AdminLayout'
 import { EstadoBadge, fmtCLP, fmtFecha } from '../../components/admin/adminHelpers'
+import PedidoDetalle from '../../components/admin/PedidoDetalle'
 import {
   getPedidos,
   cambiarEstadoPedido,
   reenviarCorreo,
+  getPlatos,
+  getComunas,
   ESTADOS,
   SERVICIOS,
   ApiError,
@@ -24,6 +27,11 @@ export default function AdminPedidos() {
   const [filtroEstado, setFiltroEstado] = useState('')
   const [filtroFecha, setFiltroFecha] = useState('')
   const [savingId, setSavingId] = useState(null)
+  const [expandedId, setExpandedId] = useState(null)
+  const [catalogo, setCatalogo] = useState([])
+  const [comunas, setComunas] = useState([])
+
+  const goLogin = useCallback(() => navigate('/admin/login', { replace: true }), [navigate])
 
   const cargar = useCallback(async () => {
     setLoading(true)
@@ -45,6 +53,21 @@ export default function AdminPedidos() {
   useEffect(() => {
     cargar()
   }, [cargar])
+
+  // Catálogo de platos + comunas para el formulario de edición (una sola vez).
+  useEffect(() => {
+    getPlatos({ incluirInactivos: true })
+      .then((d) => setCatalogo(d.platos || []))
+      .catch(() => {})
+    getComunas({ todos: true })
+      .then((d) => setComunas(d.comunas || []))
+      .catch(() => {})
+  }, [])
+
+  const onPedidoEditado = (actualizado) => {
+    setPedidos((prev) => prev.map((p) => (p.id === actualizado.id ? actualizado : p)))
+    setMsg(`Pedido #${actualizado.id} actualizado.`)
+  }
 
   const onCambiarEstado = async (pedido, estado) => {
     if (estado === pedido.estado) return
@@ -165,7 +188,8 @@ export default function AdminPedidos() {
               </thead>
               <tbody>
                 {pedidos.map((p) => (
-                  <tr key={p.id} className="border-b border-espresso/5 last:border-0 align-top">
+                  <Fragment key={p.id}>
+                  <tr className="border-b border-espresso/5 last:border-0 align-top">
                     <td className="px-4 py-3 text-warm-gray">{p.id}</td>
                     <td className="px-4 py-3">
                       <p className="text-espresso font-medium">{p.nombre}</p>
@@ -194,15 +218,38 @@ export default function AdminPedidos() {
                       </select>
                     </td>
                     <td className="px-4 py-3">
-                      <button
-                        onClick={() => onReenviar(p)}
-                        className="text-xs text-terracotta hover:underline whitespace-nowrap"
-                        title="Reenviar el correo del estado actual"
-                      >
-                        ✉ Reenviar
-                      </button>
+                      <div className="flex flex-col gap-1.5 items-start">
+                        <button
+                          onClick={() => setExpandedId((id) => (id === p.id ? null : p.id))}
+                          className="text-xs text-espresso hover:text-terracotta hover:underline whitespace-nowrap"
+                        >
+                          {expandedId === p.id ? '▾ Ocultar' : '▸ Detalle'}
+                        </button>
+                        <button
+                          onClick={() => onReenviar(p)}
+                          className="text-xs text-terracotta hover:underline whitespace-nowrap"
+                          title="Reenviar el correo del estado actual"
+                        >
+                          ✉ Reenviar
+                        </button>
+                      </div>
                     </td>
                   </tr>
+                  {expandedId === p.id && (
+                    <tr className="border-b border-espresso/5">
+                      <td colSpan={9} className="px-4 pb-4 bg-background-warm/40">
+                        <PedidoDetalle
+                          pedido={p}
+                          platosCatalogo={catalogo}
+                          comunas={comunas}
+                          onSaved={onPedidoEditado}
+                          onError={setError}
+                          on401={goLogin}
+                        />
+                      </td>
+                    </tr>
+                  )}
+                  </Fragment>
                 ))}
               </tbody>
             </table>

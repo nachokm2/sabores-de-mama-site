@@ -81,4 +81,52 @@ router.post('/', authJWT, async (req, res, next) => {
   }
 })
 
+/**
+ * POST /api/cupos/bulk  (protegido)
+ * Crea/edita varias fechas de una vez (upsert por fecha).
+ * Body: { fechas: ['2026-07-01', ...], capacidad_maxima, activo }
+ */
+router.post('/bulk', authJWT, async (req, res, next) => {
+  try {
+    const { fechas, capacidad_maxima, activo } = req.body || {}
+    if (!Array.isArray(fechas) || fechas.length === 0) {
+      return res.status(400).json({ error: 'Debes enviar al menos una fecha.' })
+    }
+    const capacidad = Number(capacidad_maxima)
+    if (!Number.isInteger(capacidad) || capacidad < 0) {
+      return res.status(400).json({ error: 'capacidad_maxima debe ser un entero >= 0.' })
+    }
+
+    const creados = []
+    for (const fecha of fechas) {
+      const { rows } = await query(
+        `INSERT INTO cupos (fecha, capacidad_maxima, activo)
+         VALUES ($1, $2, $3)
+         ON CONFLICT (fecha) DO UPDATE
+           SET capacidad_maxima = EXCLUDED.capacidad_maxima, activo = EXCLUDED.activo
+         RETURNING id, fecha, capacidad_maxima, pedidos_confirmados, activo,
+                   (capacidad_maxima - pedidos_confirmados) AS disponibles`,
+        [fecha, capacidad, activo !== false]
+      )
+      creados.push(rows[0])
+    }
+    return res.status(201).json({ cupos: creados, count: creados.length })
+  } catch (err) {
+    next(err)
+  }
+})
+
+/**
+ * DELETE /api/cupos/:id  (protegido) — elimina una fecha por completo.
+ */
+router.delete('/:id', authJWT, async (req, res, next) => {
+  try {
+    const { rowCount } = await query('DELETE FROM cupos WHERE id = $1', [req.params.id])
+    if (!rowCount) return res.status(404).json({ error: 'Cupo no encontrado.' })
+    return res.json({ ok: true })
+  } catch (err) {
+    next(err)
+  }
+})
+
 export default router

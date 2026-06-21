@@ -210,4 +210,54 @@ router.patch('/:id/estado', authJWT, async (req, res, next) => {
   }
 })
 
+/**
+ * PATCH /api/pedidos/:id  (protegido)
+ * Edición general del pedido desde el panel admin (datos, entrega y platos).
+ * Sólo actualiza los campos presentes en el body. No reajusta cupos.
+ */
+router.patch('/:id', authJWT, async (req, res, next) => {
+  try {
+    const b = req.body || {}
+    const sets = []
+    const params = []
+    const add = (col, val, cast = '') => {
+      params.push(val)
+      sets.push(`${col} = $${params.length}${cast}`)
+    }
+
+    if (b.nombre !== undefined) add('nombre', String(b.nombre).trim())
+    if (b.email !== undefined) add('email', String(b.email).trim())
+    if (b.telefono !== undefined) add('telefono', b.telefono || null)
+    if (b.direccion !== undefined) add('direccion', b.direccion || null)
+    if (b.comuna !== undefined) add('comuna', b.comuna || null)
+    if (b.fecha_entrega !== undefined) add('fecha_entrega', b.fecha_entrega)
+    if (b.tipo_entrega !== undefined) add('tipo_entrega', b.tipo_entrega || null)
+    if (b.observaciones !== undefined) add('observaciones', b.observaciones || null)
+    if (b.costo_despacho !== undefined) add('costo_despacho', Number(b.costo_despacho) || 0)
+    if (b.total !== undefined) add('total', Number(b.total) || 0)
+    if (b.servicio !== undefined) {
+      if (!SERVICIOS_VALIDOS.includes(b.servicio)) {
+        return res.status(400).json({ error: 'servicio inválido (meal_prep|cocinera).' })
+      }
+      add('servicio', b.servicio)
+    }
+    if (b.platos !== undefined) add('platos', JSON.stringify(asArray(b.platos)), '::jsonb')
+    if (b.restricciones !== undefined) add('restricciones', JSON.stringify(asArray(b.restricciones)), '::jsonb')
+    if (b.productos_hornear !== undefined) add('productos_hornear', JSON.stringify(asArray(b.productos_hornear)), '::jsonb')
+    if (b.lista_compras !== undefined) add('lista_compras', JSON.stringify(asArray(b.lista_compras)), '::jsonb')
+
+    if (!sets.length) return res.status(400).json({ error: 'No hay campos para actualizar.' })
+
+    params.push(req.params.id)
+    const { rows } = await query(
+      `UPDATE pedidos SET ${sets.join(', ')} WHERE id = $${params.length} RETURNING *`,
+      params
+    )
+    if (!rows[0]) return res.status(404).json({ error: 'Pedido no encontrado.' })
+    return res.json({ pedido: rows[0] })
+  } catch (err) {
+    next(err)
+  }
+})
+
 export default router

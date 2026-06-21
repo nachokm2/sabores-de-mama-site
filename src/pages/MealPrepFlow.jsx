@@ -19,6 +19,7 @@ const initialState = {
   // Paso 1
   direccion: '',
   comuna: '',
+  comunaCosto: DELIVERY_COST, // costo de despacho de la comuna elegida
   // Paso 2
   fecha_entrega: '',
   // Paso 3

@@ -1,24 +1,54 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { getComunas } from '../../lib/publicApi'
+import { DELIVERY_COST, computeTotal } from '../../lib/flowConfig'
 
-// Comunas del Gran Santiago (lista de cobertura).
-const COMUNAS_SANTIAGO = [
+// Lista de respaldo si la API de comunas no responde (mismo costo para todas).
+const COMUNAS_FALLBACK = [
   'Cerrillos', 'Cerro Navia', 'Conchalí', 'El Bosque', 'Estación Central', 'Huechuraba',
   'Independencia', 'La Cisterna', 'La Florida', 'La Granja', 'La Pintana', 'La Reina',
   'Las Condes', 'Lo Barnechea', 'Lo Espejo', 'Lo Prado', 'Macul', 'Maipú', 'Ñuñoa',
   'Pedro Aguirre Cerda', 'Peñalolén', 'Providencia', 'Pudahuel', 'Puente Alto', 'Quilicura',
   'Quinta Normal', 'Recoleta', 'Renca', 'San Joaquín', 'San Miguel', 'San Ramón',
   'Santiago', 'Vitacura',
-]
+].map((nombre) => ({ nombre, costo_despacho: DELIVERY_COST }))
 
 const inputCls =
   'w-full rounded-xl border border-espresso/15 bg-background px-3.5 py-2.5 text-sm text-espresso focus:outline-none focus:border-terracotta/60'
 
 /**
- * Paso 1 · Dirección y comuna. Ambos campos son obligatorios para avanzar.
+ * Paso 1 · Dirección y comuna. La comuna define el costo de despacho.
  */
 export default function StepAddress({ data, update, onNext }) {
   const [touched, setTouched] = useState(false)
+  const [comunas, setComunas] = useState(COMUNAS_FALLBACK)
   const valido = data.direccion.trim() !== '' && data.comuna !== ''
+
+  useEffect(() => {
+    let active = true
+    ;(async () => {
+      try {
+        const lista = await getComunas()
+        if (active && Array.isArray(lista) && lista.length) setComunas(lista)
+      } catch {
+        /* se mantiene el fallback */
+      }
+    })()
+    return () => {
+      active = false
+    }
+  }, [])
+
+  const onComuna = (nombre) => {
+    const c = comunas.find((x) => x.nombre === nombre)
+    const comunaCosto = c ? Number(c.costo_despacho) : DELIVERY_COST
+    const patch = { comuna: nombre, comunaCosto }
+    // Si ya había elegido delivery, reflejar el nuevo costo en el total.
+    if (data.tipo_entrega === 'delivery') {
+      patch.costo_despacho = comunaCosto
+      patch.total = computeTotal({ base: data.base, costo_despacho: comunaCosto, bakingTotal: data.bakingTotal })
+    }
+    update(patch)
+  }
 
   const continuar = () => {
     setTouched(true)
@@ -45,11 +75,11 @@ export default function StepAddress({ data, update, onNext }) {
 
       <label className="block mb-6 text-sm">
         <span className="block text-espresso font-medium mb-1.5">Comuna *</span>
-        <select className={inputCls} value={data.comuna} onChange={(e) => update({ comuna: e.target.value })}>
+        <select className={inputCls} value={data.comuna} onChange={(e) => onComuna(e.target.value)}>
           <option value="">Selecciona tu comuna…</option>
-          {COMUNAS_SANTIAGO.map((c) => (
-            <option key={c} value={c}>
-              {c}
+          {comunas.map((c) => (
+            <option key={c.nombre} value={c.nombre}>
+              {c.nombre}
             </option>
           ))}
         </select>
