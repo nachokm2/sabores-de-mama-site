@@ -27,7 +27,7 @@ export default function StepAddress({ data, update, onNext }) {
     let active = true
     ;(async () => {
       try {
-        const lista = await getComunas()
+        const lista = await getComunas(data.servicio)
         if (active && Array.isArray(lista) && lista.length) setComunas(lista)
       } catch {
         /* se mantiene el fallback */
@@ -36,7 +36,7 @@ export default function StepAddress({ data, update, onNext }) {
     return () => {
       active = false
     }
-  }, [])
+  }, [data.servicio])
 
   const onComuna = (nombre) => {
     const c = comunas.find((x) => x.nombre === nombre)

@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { SERVICES, DISH_CATEGORIES, DULCES_FAMILIAR, DULCES_SNACKS, DISH_DESCRIPTIONS } from '../../data/menu'
 import SectionLabel from '../ui/SectionLabel'
-import { getPlatos } from '../../lib/publicApi'
+import { getPlatos, getComunas } from '../../lib/publicApi'
 import { useScrollReveal } from '../../hooks/useScrollAnimation'
 import { WHATSAPP, getWhatsAppLink } from '../../data/siteConfig'
 
@@ -11,6 +11,12 @@ import { WHATSAPP, getWhatsAppLink } from '../../data/siteConfig'
 const SERVICE_ROUTES = {
   mealprep: '/meal-prep',
   cocinera: '/cocinera-a-domicilio',
+}
+
+// Mapeo del id de la card al valor de servicio de la API de comunas.
+const SERVICE_KEY = {
+  mealprep: 'meal_prep',
+  cocinera: 'cocinera',
 }
 
 // Iconos por categoría (la BD guarda la categoría como texto libre).
@@ -56,6 +62,30 @@ function WaIcon({ className = 'w-4 h-4' }) {
 /* ── Service card ────────────────────────────────────────────────────────────── */
 function ServiceCard({ service, index }) {
   const navigate = useNavigate()
+  const [comunasSrv, setComunasSrv] = useState([])
+
+  // Comunas habilitadas para ESTE servicio (administradas en el panel).
+  useEffect(() => {
+    const key = SERVICE_KEY[service.id]
+    if (!key) return
+    let active = true
+    ;(async () => {
+      try {
+        const lista = await getComunas(key)
+        if (active && Array.isArray(lista) && lista.length) {
+          setComunasSrv(lista.map((c) => c.nombre))
+        }
+      } catch {
+        /* se mantiene el fallback estático */
+      }
+    })()
+    return () => {
+      active = false
+    }
+  }, [service.id])
+
+  const comunasMostrar = comunasSrv.length ? comunasSrv : service.communes
+
   const irAlFlujo = () => {
     // Cocinera a Domicilio se coordina por WhatsApp; el resto usa su flujo.
     if (service.id === 'cocinera') {
@@ -118,7 +148,7 @@ function ServiceCard({ service, index }) {
         {/* Communes */}
         <div className="mb-7 p-3.5 rounded-xl bg-espresso/[0.04] border border-espresso/10">
           <p className="font-body text-warm-gray text-xs font-semibold uppercase tracking-wider mb-2">📍 Comunas disponibles</p>
-          <p className="font-body text-warm-gray text-xs leading-relaxed">{service.communes.join(' · ')}</p>
+          <p className="font-body text-warm-gray text-xs leading-relaxed">{comunasMostrar.join(' · ')}</p>
         </div>
 
         {/* CTA → inicia el flujo del servicio */}

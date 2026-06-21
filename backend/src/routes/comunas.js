@@ -21,17 +21,26 @@ function parseCosto(v) {
   return Number.isInteger(n) && n >= 0 ? n : null
 }
 
+const COLS = 'id, nombre, costo_despacho, activo, meal_prep, cocinera'
+
 /**
  * GET /api/comunas  (público)
- * Devuelve sólo comunas ACTIVAS (para el flujo de pedido).
+ * Devuelve sólo comunas ACTIVAS (para el flujo de pedido). Filtra por servicio
+ * con ?servicio=meal_prep | cocinera (devuelve las habilitadas para ese servicio).
  * Con Bearer token válido + ?todos=true devuelve TODAS (para el panel admin).
  */
 router.get('/', async (req, res, next) => {
   try {
     const verTodos = req.query.todos === 'true' && hasValidToken(req)
-    const sql = verTodos
-      ? `SELECT id, nombre, costo_despacho, activo FROM comunas ORDER BY nombre ASC`
-      : `SELECT id, nombre, costo_despacho, activo FROM comunas WHERE activo = true ORDER BY nombre ASC`
+    let sql
+    if (verTodos) {
+      sql = `SELECT ${COLS} FROM comunas ORDER BY nombre ASC`
+    } else {
+      const cond = ['activo = true']
+      if (req.query.servicio === 'meal_prep') cond.push('meal_prep = true')
+      else if (req.query.servicio === 'cocinera') cond.push('cocinera = true')
+      sql = `SELECT ${COLS} FROM comunas WHERE ${cond.join(' AND ')} ORDER BY nombre ASC`
+    }
     const { rows } = await query(sql)
     return res.json({ comunas: rows, count: rows.length })
   } catch (err) {
@@ -45,19 +54,20 @@ router.get('/', async (req, res, next) => {
  */
 router.post('/', authJWT, async (req, res, next) => {
   try {
-    const { nombre, costo_despacho, activo } = req.body || {}
+    const { nombre, costo_despacho, activo, meal_prep, cocinera } = req.body || {}
     const nom = String(nombre || '').trim()
     if (!nom) return res.status(400).json({ error: 'El nombre de la comuna es obligatorio.' })
     const costo = parseCosto(costo_despacho)
     if (costo === null) return res.status(400).json({ error: 'costo_despacho debe ser un entero >= 0.' })
 
     const { rows } = await query(
-      `INSERT INTO comunas (nombre, costo_despacho, activo)
-       VALUES ($1, $2, $3)
+      `INSERT INTO comunas (nombre, costo_despacho, activo, meal_prep, cocinera)
+       VALUES ($1, $2, $3, $4, $5)
        ON CONFLICT (nombre) DO UPDATE
-         SET costo_despacho = EXCLUDED.costo_despacho, activo = EXCLUDED.activo
-       RETURNING id, nombre, costo_despacho, activo`,
-      [nom, costo, activo !== false]
+         SET costo_despacho = EXCLUDED.costo_despacho, activo = EXCLUDED.activo,
+             meal_prep = EXCLUDED.meal_prep, cocinera = EXCLUDED.cocinera
+       RETURNING ${COLS}`,
+      [nom, costo, activo !== false, meal_prep !== false, cocinera !== false]
     )
     return res.status(201).json({ comuna: rows[0] })
   } catch (err) {
@@ -70,7 +80,7 @@ router.post('/', authJWT, async (req, res, next) => {
  */
 router.put('/:id', authJWT, async (req, res, next) => {
   try {
-    const { nombre, costo_despacho, activo } = req.body || {}
+    const { nombre, costo_despacho, activo, meal_prep, cocinera } = req.body || {}
     const sets = []
     const params = []
     if (nombre !== undefined) {
@@ -89,12 +99,20 @@ router.put('/:id', authJWT, async (req, res, next) => {
       params.push(activo !== false)
       sets.push(`activo = $${params.length}`)
     }
+    if (meal_prep !== undefined) {
+      params.push(meal_prep !== false)
+      sets.push(`meal_prep = $${params.length}`)
+    }
+    if (cocinera !== undefined) {
+      params.push(cocinera !== false)
+      sets.push(`cocinera = $${params.length}`)
+    }
     if (!sets.length) return res.status(400).json({ error: 'No hay campos para actualizar.' })
 
     params.push(req.params.id)
     const { rows } = await query(
       `UPDATE comunas SET ${sets.join(', ')} WHERE id = $${params.length}
-       RETURNING id, nombre, costo_despacho, activo`,
+       RETURNING ${COLS}`,
       params
     )
     if (!rows[0]) return res.status(404).json({ error: 'Comuna no encontrada.' })

@@ -53,9 +53,14 @@ export async function getCupos() {
   return data?.cupos || []
 }
 
-/** Comunas activas con su costo de despacho. Devuelve [] si algo falla. */
-export async function getComunas() {
-  const data = await request('/comunas')
+/**
+ * Comunas activas con su costo de despacho. Devuelve [] si algo falla.
+ * `servicio` (opcional: 'meal_prep' | 'cocinera') filtra por las habilitadas
+ * para ese servicio.
+ */
+export async function getComunas(servicio) {
+  const qs = servicio ? `?servicio=${encodeURIComponent(servicio)}` : ''
+  const data = await request(`/comunas${qs}`)
   return data?.comunas || []
 }
 

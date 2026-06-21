@@ -57,6 +57,8 @@ CREATE TABLE IF NOT EXISTS comunas (
   nombre         VARCHAR(120) NOT NULL UNIQUE,
   costo_despacho INTEGER NOT NULL DEFAULT 0,
   activo         BOOLEAN NOT NULL DEFAULT true,
+  meal_prep      BOOLEAN NOT NULL DEFAULT true,
+  cocinera       BOOLEAN NOT NULL DEFAULT true,
   created_at     TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
@@ -108,6 +110,9 @@ CREATE INDEX IF NOT EXISTS idx_cupos_fecha           ON cupos(fecha);
 -- ── Columnas añadidas (idempotente) ──
 -- Lista de compras editable del flujo Cocinera a Domicilio.
 ALTER TABLE pedidos ADD COLUMN IF NOT EXISTS lista_compras JSONB NOT NULL DEFAULT '[]'::jsonb;
+-- Disponibilidad de cada comuna por servicio (para tablas ya existentes).
+ALTER TABLE comunas ADD COLUMN IF NOT EXISTS meal_prep BOOLEAN NOT NULL DEFAULT true;
+ALTER TABLE comunas ADD COLUMN IF NOT EXISTS cocinera  BOOLEAN NOT NULL DEFAULT true;
 `
 
 // Comunas del Gran Santiago (lista inicial de cobertura). El costo de despacho

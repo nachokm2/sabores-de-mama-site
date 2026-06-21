@@ -25,6 +25,8 @@ export default function AdminComunas() {
   // Formulario de alta
   const [nombre, setNombre] = useState('')
   const [costo, setCosto] = useState(3000)
+  const [mealPrep, setMealPrep] = useState(true)
+  const [cocinera, setCocinera] = useState(true)
 
   const handle401 = (err) => {
     if (err instanceof ApiError && err.status === 401) {
@@ -58,10 +60,18 @@ export default function AdminComunas() {
     setError('')
     setMsg('')
     try {
-      await crearComuna({ nombre, costo_despacho: Number(costo), activo: true })
+      await crearComuna({
+        nombre,
+        costo_despacho: Number(costo),
+        activo: true,
+        meal_prep: mealPrep,
+        cocinera: cocinera,
+      })
       setMsg(`Comuna "${nombre.trim()}" guardada.`)
       setNombre('')
       setCosto(3000)
+      setMealPrep(true)
+      setCocinera(true)
       await cargar()
     } catch (err) {
       if (!handle401(err)) setError(err.message || 'No se pudo guardar la comuna.')
@@ -85,6 +95,8 @@ export default function AdminComunas() {
         nombre: c.nombre,
         costo_despacho: Number(c.costo_despacho),
         activo: c.activo,
+        meal_prep: c.meal_prep,
+        cocinera: c.cocinera,
       })
       setComunas((prev) => prev.map((x) => (x.id === c.id ? { ...x, _dirty: false } : x)))
       setMsg(`Comuna "${c.nombre}" actualizada.`)
@@ -149,6 +161,19 @@ export default function AdminComunas() {
             required
           />
         </label>
+        <div className="text-sm">
+          <span className="block text-espresso font-medium mb-1">Disponible en</span>
+          <div className="flex items-center gap-4 h-[42px]">
+            <label className="inline-flex items-center gap-2 text-warm-gray">
+              <input type="checkbox" checked={mealPrep} onChange={(e) => setMealPrep(e.target.checked)} />
+              Meal Prep
+            </label>
+            <label className="inline-flex items-center gap-2 text-warm-gray">
+              <input type="checkbox" checked={cocinera} onChange={(e) => setCocinera(e.target.checked)} />
+              Cocinera
+            </label>
+          </div>
+        </div>
         <button
           type="submit"
           disabled={saving}
@@ -171,6 +196,8 @@ export default function AdminComunas() {
                 <tr className="text-left text-warm-gray border-b border-espresso/10">
                   <th className="px-5 py-3 font-medium">Comuna</th>
                   <th className="px-5 py-3 font-medium">Costo despacho</th>
+                  <th className="px-5 py-3 font-medium">Meal Prep</th>
+                  <th className="px-5 py-3 font-medium">Cocinera</th>
                   <th className="px-5 py-3 font-medium">Activa</th>
                   <th className="px-5 py-3 font-medium"></th>
                 </tr>
@@ -197,6 +224,22 @@ export default function AdminComunas() {
                         />
                         <span className="text-xs text-warm-gray">{fmtCLP(c.costo_despacho)}</span>
                       </div>
+                    </td>
+                    <td className="px-5 py-2.5">
+                      <input
+                        type="checkbox"
+                        checked={c.meal_prep}
+                        onChange={(e) => setCampo(c.id, 'meal_prep', e.target.checked)}
+                        aria-label={`${c.nombre} disponible en Meal Prep`}
+                      />
+                    </td>
+                    <td className="px-5 py-2.5">
+                      <input
+                        type="checkbox"
+                        checked={c.cocinera}
+                        onChange={(e) => setCampo(c.id, 'cocinera', e.target.checked)}
+                        aria-label={`${c.nombre} disponible en Cocinera`}
+                      />
                     </td>
                     <td className="px-5 py-2.5">
                       <label className="inline-flex items-center gap-2">
