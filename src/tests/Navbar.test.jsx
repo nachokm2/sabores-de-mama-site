@@ -29,7 +29,7 @@ const EXPECTED_LABELS = [
 
 const EXPECTED_HREFS = {
   Inicio: '/',
-  'Meal Prep': '/menu#servicio-mealprep',
+  'Meal Prep': '/meal-prep-en-casa',
   'Cocinera a Domicilio': '/menu#servicio-cocinera',
   'Hornear en Casa': '/menu#servicios',
   Horneados: '/menu#dulces',
@@ -81,7 +81,7 @@ describe('Navbar', () => {
   it('los enlaces a servicios/productos usan anclas dentro de /menu (scroll a sección)', () => {
     renderNavbar()
     const list = getDesktopNavList()
-    for (const label of ['Meal Prep', 'Cocinera a Domicilio', 'Hornear en Casa', 'Horneados']) {
+    for (const label of ['Cocinera a Domicilio', 'Hornear en Casa', 'Horneados']) {
       const href = within(list).getByRole('link', { name: label }).getAttribute('href')
       expect(href).toMatch(/^\/menu#/)
     }

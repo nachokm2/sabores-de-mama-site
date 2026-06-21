@@ -11,7 +11,7 @@ import { openChatBot } from '../../lib/openChatBot'
 // de Servicios (/menu#servicios); crear su sección dedicada en la fase de contenido.
 const NAV_LINKS = [
   { label: 'Inicio',               href: '/' },
-  { label: 'Meal Prep',            href: '/menu#servicio-mealprep' },
+  { label: 'Meal Prep',            href: '/meal-prep-en-casa' },
   { label: 'Cocinera a Domicilio', href: '/menu#servicio-cocinera' },
   { label: 'Hornear en Casa',      href: '/menu#servicios' },
   { label: 'Horneados',            href: '/menu#dulces' },
