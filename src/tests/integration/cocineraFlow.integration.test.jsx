@@ -75,12 +75,13 @@ describe('Integración · flujo completo Cocinera a Domicilio', () => {
     DISH_NAMES.forEach((n) => fireEvent.click(screen.getByRole('button', { name: new RegExp(n) })))
     fireEvent.click(continuar())
 
-    // Paso 4 · Lista de compras generada a partir de los 5 platos
+    // Paso 4 · Lista de compras generada a partir de los 5 platos. Por defecto
+    // 2 comensales → cada cantidad (por persona) se multiplica por 2.
     await screen.findByText('Tu lista de compras')
     expect(getIngredientesDePlatos).toHaveBeenCalledWith([1, 2, 3, 4, 5])
-    expect(screen.getByLabelText('Cantidad de Arroz')).toHaveValue(350)
+    await waitFor(() => expect(screen.getByLabelText('Cantidad de Arroz')).toHaveValue(700))
 
-    // → Edición de cantidad por el cliente: Arroz 350 → 999
+    // → Edición de cantidad por el cliente: Arroz 700 → 999
     fireEvent.change(screen.getByLabelText('Cantidad de Arroz'), { target: { value: '999' } })
     fireEvent.click(continuar())
 
@@ -101,8 +102,10 @@ describe('Integración · flujo completo Cocinera a Domicilio', () => {
     expect(pedido.servicio).toBe('cocinera')
     expect(pedido.nombre).toBe('Carla Soto')
     expect(pedido.platos).toHaveLength(5)
+    expect(pedido.personas).toBe(2)
     // La lista_compras editada viaja en el pedido (Arroz con la cantidad editada).
     expect(pedido.lista_compras).toContainEqual({ nombre: 'Arroz', cantidad: '999', unidad: 'g' })
-    expect(pedido.lista_compras).toContainEqual({ nombre: 'Cebolla', cantidad: 3, unidad: 'u' })
+    // Cebolla sin editar: 3 por persona × 2 comensales = 6.
+    expect(pedido.lista_compras).toContainEqual({ nombre: 'Cebolla', cantidad: 6, unidad: 'u' })
   })
 })

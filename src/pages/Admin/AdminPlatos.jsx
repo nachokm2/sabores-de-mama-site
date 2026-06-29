@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 import AdminLayout from '../../components/admin/AdminLayout'
 import {
   getPlatos,
@@ -58,6 +58,10 @@ function agruparPorCategoria(platos) {
  */
 export default function AdminPlatos() {
   const navigate = useNavigate()
+  const { servicio } = useParams()
+  // En Cocinera a Domicilio las cantidades de ingredientes son POR PERSONA: el
+  // flujo las multiplica por el nº de comensales que elija el cliente.
+  const esCocinera = servicio === 'cocinera'
   const [platos, setPlatos] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -292,11 +296,19 @@ export default function AdminPlatos() {
 
           <div className="mb-4">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-espresso font-medium text-sm">Ingredientes</span>
+              <span className="text-espresso font-medium text-sm">
+                Ingredientes{esCocinera ? ' (por persona)' : ''}
+              </span>
               <button type="button" onClick={addIngrediente} className="text-xs text-terracotta hover:underline">
                 + Añadir
               </button>
             </div>
+            {esCocinera && (
+              <p className="text-xs text-warm-gray mb-2">
+                Indica la cantidad <strong>por persona</strong>. El sistema la multiplica
+                automáticamente por el número de comensales que elija el cliente.
+              </p>
+            )}
             <div className="space-y-2">
               {form.ingredientes.map((ing, i) => (
                 <div key={i} className="flex gap-2">
@@ -308,7 +320,8 @@ export default function AdminPlatos() {
                   />
                   <input
                     className={ingInputCls + ' w-20 shrink-0'}
-                    placeholder="Cant."
+                    placeholder={esCocinera ? 'x pers.' : 'Cant.'}
+                    title={esCocinera ? 'Cantidad por persona' : 'Cantidad'}
                     value={ing.cantidad}
                     onChange={(e) => setIngrediente(i, 'cantidad', e.target.value)}
                   />

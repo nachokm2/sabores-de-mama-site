@@ -109,6 +109,11 @@ export default function PedidoDetalle({ pedido, platosCatalogo = [], comunas = [
             <p className="text-warm-gray">{pedido.direccion || '—'}{pedido.comuna ? `, ${pedido.comuna}` : ''}</p>
             <p className="text-warm-gray">Despacho: {fmtCLP(pedido.costo_despacho)}</p>
             <p className="text-warm-gray">Entrega: {fmtFecha(pedido.fecha_entrega)}</p>
+            {pedido.personas > 0 && (
+              <p className="text-warm-gray">
+                Personas: {pedido.personas} {pedido.personas === 1 ? 'comensal' : 'comensales'}
+              </p>
+            )}
           </Bloque>
 
           {restricciones.length > 0 && (

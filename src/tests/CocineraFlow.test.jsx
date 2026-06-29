@@ -118,9 +118,28 @@ describe('CocineraFlow (7 pasos)', () => {
     await waitFor(() => expect(createPedido).toHaveBeenCalledTimes(1))
     const payload = createPedido.mock.calls[0][0]
     expect(payload.servicio).toBe('cocinera')
+    // Por defecto el flujo asume 2 comensales: las cantidades (por persona) se
+    // multiplican por 2.
+    expect(payload.personas).toBe(2)
     expect(payload.lista_compras).toEqual([
-      { nombre: 'Arroz', cantidad: 350, unidad: 'g' },
-      { nombre: 'Cebolla', cantidad: 3, unidad: 'u' },
+      { nombre: 'Arroz', cantidad: 700, unidad: 'g' },
+      { nombre: 'Cebolla', cantidad: 6, unidad: 'u' },
     ])
+  })
+
+  it('cambiar el número de personas re-escala la lista de compras', async () => {
+    renderFlow()
+    await step1to2()
+    await step2to3()
+    await selectDishes()
+    fireEvent.click(continuar()) // 3 → 4 (ShoppingList)
+    await screen.findByText('Tu lista de compras')
+
+    // Por defecto 2 personas → Arroz 700 g.
+    await waitFor(() => expect(screen.getByLabelText('Cantidad de Arroz')).toHaveValue(700))
+
+    // Elegir 5 personas → Arroz 350 × 5 = 1750 g.
+    fireEvent.click(screen.getByRole('button', { name: '5' }))
+    await waitFor(() => expect(screen.getByLabelText('Cantidad de Arroz')).toHaveValue(1750))
   })
 })

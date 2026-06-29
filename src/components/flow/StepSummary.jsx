@@ -65,6 +65,8 @@ export default function StepSummary({ data, update, onBack }) {
         productos_hornear: baking.map((p) => ({ id: p.id, nombre: p.nombre, precio: p.precio })),
         // Lista de compras editable (flujo Cocinera); vacío en Meal Prep.
         lista_compras: data.lista_compras || [],
+        // Nº de comensales (flujo Cocinera); null en Meal Prep.
+        personas: data.personas || null,
       })
       // replace: true → evita volver atrás al resumen una vez en la página de pago.
       navigate(`/pago/${pedido.id}`, { replace: true, state: { total: pedido.total } })
@@ -107,6 +109,11 @@ export default function StepSummary({ data, update, onBack }) {
             ))}
           </ul>
         </div>
+        {data.personas > 0 && (
+          <Fila label="Personas">
+            {data.personas} {data.personas === 1 ? 'persona' : 'personas'}
+          </Fila>
+        )}
         {(data.lista_compras || []).length > 0 && (
           <Fila label="Lista de compras">{data.lista_compras.length} ingredientes</Fila>
         )}

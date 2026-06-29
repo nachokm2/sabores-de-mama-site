@@ -126,6 +126,8 @@ CREATE INDEX IF NOT EXISTS idx_cupos_fecha           ON cupos(fecha);
 -- ── Columnas añadidas (idempotente) ──
 -- Lista de compras editable del flujo Cocinera a Domicilio.
 ALTER TABLE pedidos ADD COLUMN IF NOT EXISTS lista_compras JSONB NOT NULL DEFAULT '[]'::jsonb;
+-- Número de comensales (flujo Cocinera): escala ingredientes y porciones.
+ALTER TABLE pedidos ADD COLUMN IF NOT EXISTS personas INTEGER;
 -- Disponibilidad de cada comuna por servicio (para tablas ya existentes).
 ALTER TABLE comunas ADD COLUMN IF NOT EXISTS meal_prep BOOLEAN NOT NULL DEFAULT true;
 ALTER TABLE comunas ADD COLUMN IF NOT EXISTS cocinera  BOOLEAN NOT NULL DEFAULT true;

@@ -66,11 +66,11 @@ router.post('/', async (req, res, next) => {
         `INSERT INTO pedidos
            (nombre, email, telefono, direccion, comuna, fecha_entrega,
             platos, restricciones, observaciones, tipo_entrega,
-            costo_despacho, total, servicio, productos_hornear, lista_compras, usuario_id)
+            costo_despacho, total, servicio, productos_hornear, lista_compras, personas, usuario_id)
          VALUES
            ($1,$2,$3,$4,$5,$6,
             $7::jsonb,$8::jsonb,$9,$10,
-            $11,$12,$13,$14::jsonb,$15::jsonb,$16)
+            $11,$12,$13,$14::jsonb,$15::jsonb,$16,$17)
          RETURNING *`,
         [
           b.nombre,
@@ -88,6 +88,7 @@ router.post('/', async (req, res, next) => {
           b.servicio,
           JSON.stringify(asArray(b.productos_hornear)),
           JSON.stringify(asArray(b.lista_compras)),
+          Number.isInteger(Number(b.personas)) && Number(b.personas) > 0 ? Number(b.personas) : null,
           optionalUserId(req),
         ]
       )
@@ -125,7 +126,7 @@ router.post('/consultar', async (req, res, next) => {
     }
     const { rows } = await query(
       `SELECT id, estado, fecha_entrega, total, servicio, tipo_entrega, comuna,
-              costo_despacho, platos, lista_compras, productos_hornear, observaciones, created_at
+              costo_despacho, platos, lista_compras, productos_hornear, personas, observaciones, created_at
          FROM pedidos
         WHERE id = $1 AND lower(email) = lower($2)`,
       [idNum, String(email).trim()]
@@ -195,7 +196,7 @@ router.get('/mis', authJWT, async (req, res, next) => {
   try {
     const { rows } = await query(
       `SELECT id, estado, fecha_entrega, total, servicio, tipo_entrega, comuna,
-              costo_despacho, platos, lista_compras, productos_hornear, observaciones, created_at
+              costo_despacho, platos, lista_compras, productos_hornear, personas, observaciones, created_at
          FROM pedidos
         WHERE usuario_id = $1
         ORDER BY fecha_entrega DESC, created_at DESC`,
@@ -291,6 +292,9 @@ router.patch('/:id', requireAdmin, async (req, res, next) => {
     if (b.observaciones !== undefined) add('observaciones', b.observaciones || null)
     if (b.costo_despacho !== undefined) add('costo_despacho', Number(b.costo_despacho) || 0)
     if (b.total !== undefined) add('total', Number(b.total) || 0)
+    if (b.personas !== undefined) {
+      add('personas', Number.isInteger(Number(b.personas)) && Number(b.personas) > 0 ? Number(b.personas) : null)
+    }
     if (b.servicio !== undefined) {
       if (!SERVICIOS_VALIDOS.includes(b.servicio)) {
         return res.status(400).json({ error: 'servicio inválido (meal_prep|cocinera).' })

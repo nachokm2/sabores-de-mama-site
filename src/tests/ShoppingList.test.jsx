@@ -71,4 +71,23 @@ describe('ShoppingList', () => {
     await screen.findByText('Arroz')
     expect(screen.getByRole('button', { name: /Descargar lista/i })).toBeInTheDocument()
   })
+
+  it('permite elegir el número de personas (1 a 5)', async () => {
+    render(<Wrapper />)
+    await screen.findByText('Arroz')
+    for (const n of [1, 2, 3, 4, 5]) {
+      expect(screen.getByRole('button', { name: String(n) })).toBeInTheDocument()
+    }
+  })
+
+  it('escala las cantidades por el número de personas (cantidad por persona × comensales)', async () => {
+    render(<Wrapper />)
+    // Por defecto (1 persona) el total por persona se muestra tal cual.
+    expect(await screen.findByLabelText('Cantidad de Arroz')).toHaveValue(350)
+
+    // Al elegir 4 personas, cada cantidad se multiplica por 4.
+    fireEvent.click(screen.getByRole('button', { name: '4' }))
+    await waitFor(() => expect(screen.getByLabelText('Cantidad de Arroz')).toHaveValue(1400))
+    expect(screen.getByLabelText('Cantidad de Cebolla')).toHaveValue(8)
+  })
 })

@@ -187,14 +187,16 @@ describe('POST /api/pedidos servicio=cocinera + lista_compras', () => {
     ]
     const res = await request(app)
       .post('/api/pedidos')
-      .send(pedidoValido({ fecha_entrega: '2026-12-20', servicio: 'cocinera', lista_compras: listaEditada }))
+      .send(pedidoValido({ fecha_entrega: '2026-12-20', servicio: 'cocinera', lista_compras: listaEditada, personas: 4 }))
 
     expect(res.status).toBe(201)
     expect(res.body.pedido.servicio).toBe('cocinera')
+    expect(res.body.pedido.personas).toBe(4)
 
     // Verificar la persistencia leyendo directamente de la BD.
-    const { rows } = await pool.query('SELECT servicio, lista_compras FROM pedidos WHERE id = $1', [res.body.pedido.id])
+    const { rows } = await pool.query('SELECT servicio, lista_compras, personas FROM pedidos WHERE id = $1', [res.body.pedido.id])
     expect(rows[0].servicio).toBe('cocinera')
     expect(rows[0].lista_compras).toEqual(listaEditada)
+    expect(rows[0].personas).toBe(4)
   })
 })

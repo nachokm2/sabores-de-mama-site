@@ -32,7 +32,8 @@ const initialState = {
   // Paso 3
   platos: [],
   platosDetalle: [],
-  // Paso 4 (exclusivo Cocinera)
+  // Paso 4 (exclusivo Cocinera): nº de comensales + lista de compras escalada
+  personas: 2,
   lista_compras: [],
   // Paso 5
   restricciones: [],
