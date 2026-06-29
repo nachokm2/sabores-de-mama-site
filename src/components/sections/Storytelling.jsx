@@ -146,16 +146,20 @@ export default function Storytelling() {
               </h2>
             </div>
 
+            <p className="font-body text-espresso text-lg md:text-xl font-medium leading-relaxed reveal-item">
+              Más que cocinar, queremos devolverte tiempo.
+            </p>
+
             <p className="font-body text-warm-gray text-base md:text-lg leading-relaxed reveal-item">
-              Sabores de Mamá nació de una cocina pequeña y un corazón grande.
-              Creemos que la comida casera tiene el poder de transportarte a casa,
-              a los domingos en familia, a los olores que nunca se olvidan.
+              Porque cocinar con dedicación también significa que tú puedas dedicar ese
+              tiempo a descansar, compartir con tu familia o simplemente disfrutar de
+              llegar a casa y tener la comida lista.
             </p>
 
             <p className="font-body text-warm-gray text-base leading-relaxed reveal-item">
-              Cada plato es preparado con ingredientes frescos seleccionados,
-              sin atajos y sin conservantes. Solo sabor auténtico, tal como lo
-              prepararía tu mamá.
+              Cada preparación se hace con ingredientes frescos, recetas caseras y el
+              cuidado de quien entiende que una buena comida también es una forma de
+              cuidar a las personas.
             </p>
 
             <div className="space-y-5 pt-2 reveal-item">
