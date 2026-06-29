@@ -68,7 +68,7 @@ describe('BakingAddon', () => {
     expect(await screen.findByText('Brownie Nuez')).toBeInTheDocument()
     expect(screen.getByText('Pie de Limón')).toBeInTheDocument()
     expect(screen.getByText('$9.000')).toBeInTheDocument()
-    expect(screen.getByText(/¿Quieres agregar algo para hornear en casa\?/)).toBeInTheDocument()
+    expect(screen.getByText(/¿Quieres agregar algo saludable\?/)).toBeInTheDocument()
   })
 
   it('es opcional: el flujo avanza aunque no se seleccione ningún producto', async () => {

@@ -44,7 +44,7 @@ export default function BakingAddon({ data, update }) {
   return (
     <div className="rounded-2xl border border-amber/30 bg-amber/[0.05] p-4">
       <h3 className="font-display text-base font-bold text-espresso mb-1">
-        ¿Quieres agregar algo para hornear en casa?
+        ¿Quieres agregar algo saludable?
       </h3>
       <p className="text-xs text-warm-gray mb-3">Totalmente opcional.</p>
 
