@@ -66,12 +66,11 @@ const VALUES = [
   },
 ]
 
-/* ── Timeline ────────────────────────────────────────────────────────────── */
+/* ── Hitos ───────────────────────────────────────────────────────────────── */
 const TIMELINE = [
-  { year: '2017', title: 'Los primeros pedidos', text: 'Todo comenzó con vecinos y amigos que pedían "una cazuela para el fin de semana". La voz se corrió sola.' },
-  { year: '2019', title: 'Menú fijo y WhatsApp',  text: 'Formalizamos el menú semanal y empezamos a recibir pedidos por WhatsApp. La respuesta fue increíble.' },
-  { year: '2021', title: 'Expansión del menú',   text: 'Incorporamos empanadas, postres caseros y la once familiar. Los clientes nos pedían "más de lo bueno".' },
-  { year: '2025', title: 'Hoy y siempre',        text: 'Más de 2.000 pedidos felices. Misma receta, mismo amor, mismo compromiso con el sabor de casa.' },
+  { icon: '🍲', title: 'El primer pedido', text: 'Cocinamos para personas cercanas que buscaban una alternativa casera cuando no tenían tiempo para cocinar.' },
+  { icon: '❤️', title: 'Llegaron las primeras recomendaciones', text: 'Nuestros propios clientes comenzaron a recomendarnos a sus familiares y amigos. Ahí entendimos que íbamos por el camino correcto.' },
+  { icon: '🏡', title: 'Hoy cocinamos para muchas familias', text: 'Cada semana ayudamos a personas que quieren comer casero, ahorrar tiempo y disfrutar más de su hogar.' },
 ]
 
 function TeamCard({ member, index }) {
@@ -137,7 +136,11 @@ function TimelineItem({ item, index }) {
     >
       <div className="flex flex-col items-center flex-shrink-0">
         <div className="w-14 h-14 rounded-full bg-amber/10 border-2 border-amber/30 flex items-center justify-center">
-          <span className="font-display text-amber text-xs font-bold">{item.year}</span>
+          {item.icon ? (
+            <span className="text-2xl" aria-hidden="true">{item.icon}</span>
+          ) : (
+            <span className="font-display text-amber text-xs font-bold">{item.year}</span>
+          )}
         </div>
         {index < TIMELINE.length - 1 && (
           <div className="w-px flex-1 mt-3 bg-gradient-to-b from-amber/30 to-transparent min-h-[3rem]" aria-hidden="true" />
@@ -311,18 +314,25 @@ export default function Nosotros() {
               <div>
                 <SectionLabel>Nuestra historia</SectionLabel>
                 <h2 id="timeline-heading" className="section-title text-espresso mt-4 mb-6">
-                  De vecinos a familia.
+                  Todo comenzó con una cocina y muchas ganas de ayudar.
                 </h2>
+                <p className="font-body text-warm-gray text-base leading-relaxed mb-4">
+                  Lo que empezó cocinando para familiares y amigos se convirtió en Sabores
+                  de Mamá, un servicio pensado para quienes quieren volver a disfrutar comida
+                  casera sin tener que cocinar.
+                </p>
                 <p className="font-body text-warm-gray text-base leading-relaxed">
-                  Lo que comenzó como favores entre amigos creció hasta convertirse en
-                  algo que nunca imaginamos: una comunidad de personas que confían en
-                  nuestra cocina para sus momentos importantes.
+                  Hoy seguimos haciendo lo mismo que el primer día: preparar cada plato con
+                  dedicación, ingredientes frescos y el cariño de una comida hecha en casa.
                 </p>
               </div>
-              <div className="space-y-0">
-                {TIMELINE.map((item, i) => (
-                  <TimelineItem key={item.year} item={item} index={i} />
-                ))}
+              <div>
+                <h3 className="font-display text-espresso text-xl font-bold mb-6">Tres hitos</h3>
+                <div className="space-y-0">
+                  {TIMELINE.map((item, i) => (
+                    <TimelineItem key={item.title} item={item} index={i} />
+                  ))}
+                </div>
               </div>
             </div>
           </div>
