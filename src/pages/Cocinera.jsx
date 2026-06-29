@@ -105,9 +105,9 @@ export default function Cocinera() {
         {/* ── Hero ── */}
         <PageHero
           label="Cocinera a Domicilio"
-          title="La cocina de mamá,"
-          titleHighlight="en tu propia casa."
-          subtitle="Estela llega a tu hogar y cocina hasta 5 preparaciones con tus ingredientes. Eliges los platos, recibes tu lista de compras y disfrutas de comida casera lista para la semana — sin mover un dedo."
+          title="Tu cocina,"
+          titleHighlight="lista para toda la semana."
+          subtitle="Llegamos a tu hogar, cocinamos por ti y dejamos cada preparación lista para disfrutar."
           breadcrumb={[{ label: 'Inicio', href: '/' }, { label: 'Cocinera a Domicilio', href: '/cocinera' }]}
         >
           <button onClick={agendar} className="btn-whatsapp text-sm">
