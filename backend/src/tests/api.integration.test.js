@@ -182,6 +182,38 @@ describe('POST /api/pedidos', () => {
   })
 })
 
+describe('POST /api/pedidos/admin (alta manual)', () => {
+  it('sin token devuelve 401', async () => {
+    const res = await request(app).post('/api/pedidos/admin').send(pedidoValido())
+    expect(res.status).toBe(401)
+  })
+
+  it('crea la reserva aunque NO haya cupo configurado (override del admin)', async () => {
+    const token = await login()
+    const res = await request(app)
+      .post('/api/pedidos/admin')
+      .set('Authorization', `Bearer ${token}`)
+      .send(pedidoValido({ fecha_entrega: '2026-12-25', servicio: 'cocinera', personas: 3 }))
+    expect(res.status).toBe(201)
+    expect(res.body.pedido.servicio).toBe('cocinera')
+    expect(res.body.pedido.personas).toBe(3)
+    // No envía correo si no se pide explícitamente.
+    expect(sendEstadoEmail).not.toHaveBeenCalled()
+  })
+
+  it('descuenta el cupo del servicio si existe (best-effort)', async () => {
+    await seedCupo('2026-12-26', 5)
+    const token = await login()
+    const res = await request(app)
+      .post('/api/pedidos/admin')
+      .set('Authorization', `Bearer ${token}`)
+      .send(pedidoValido({ fecha_entrega: '2026-12-26', servicio: 'meal_prep' }))
+    expect(res.status).toBe(201)
+    const { rows } = await pool.query('SELECT confirmados_meal_prep FROM cupos WHERE fecha = $1', ['2026-12-26'])
+    expect(rows[0].confirmados_meal_prep).toBe(1)
+  })
+})
+
 describe('PATCH /api/pedidos/:id/estado', () => {
   async function crearPedidoDirecto() {
     const { rows } = await pool.query(

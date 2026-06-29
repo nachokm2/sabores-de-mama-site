@@ -124,6 +124,87 @@ router.post('/', async (req, res, next) => {
 })
 
 /**
+ * POST /api/pedidos/admin  (admin) — alta MANUAL de una reserva con todos los
+ * campos. A diferencia del alta pública, NO bloquea por cupo (override del
+ * admin): si existe un cupo para la fecha/servicio, suma 1 (best-effort) para
+ * mantener la disponibilidad al día, pero igual crea la reserva si no hay cupo o
+ * está lleno. Si el email coincide con una cuenta de cliente, la vincula para
+ * que aparezca en su portal. El correo al cliente sólo se envía si se pide.
+ */
+router.post('/admin', requireAdmin, async (req, res, next) => {
+  try {
+    const b = req.body || {}
+    const errores = []
+    if (!b.nombre) errores.push('nombre')
+    if (!b.email) errores.push('email')
+    if (!b.fecha_entrega) errores.push('fecha_entrega')
+    if (!SERVICIOS_VALIDOS.includes(b.servicio)) errores.push('servicio (meal_prep|cocinera)')
+    if (errores.length) {
+      return res.status(400).json({ error: 'Faltan o son inválidos los campos: ' + errores.join(', ') })
+    }
+
+    const c = cuposCols(b.servicio)
+    const pedido = await withTransaction(async (client) => {
+      // Vincula a la cuenta del cliente si su email ya existe (para su portal).
+      const u = await client.query(
+        "SELECT id FROM admin_users WHERE lower(email) = lower($1) AND rol = 'cliente'",
+        [String(b.email).trim()]
+      )
+      const usuarioId = u.rows[0]?.id || null
+
+      const insert = await client.query(
+        `INSERT INTO pedidos
+           (nombre, email, telefono, direccion, comuna, fecha_entrega,
+            platos, restricciones, observaciones, tipo_entrega,
+            costo_despacho, total, servicio, productos_hornear, lista_compras, personas, usuario_id)
+         VALUES
+           ($1,$2,$3,$4,$5,$6,
+            $7::jsonb,$8::jsonb,$9,$10,
+            $11,$12,$13,$14::jsonb,$15::jsonb,$16,$17)
+         RETURNING *`,
+        [
+          String(b.nombre).trim(),
+          String(b.email).trim(),
+          b.telefono || null,
+          b.direccion || null,
+          b.comuna || null,
+          b.fecha_entrega,
+          JSON.stringify(asArray(b.platos)),
+          JSON.stringify(asArray(b.restricciones)),
+          b.observaciones || null,
+          b.tipo_entrega || null,
+          Number(b.costo_despacho) || 0,
+          Number(b.total) || 0,
+          b.servicio,
+          JSON.stringify(asArray(b.productos_hornear)),
+          JSON.stringify(asArray(b.lista_compras)),
+          Number.isInteger(Number(b.personas)) && Number(b.personas) > 0 ? Number(b.personas) : null,
+          usuarioId,
+        ]
+      )
+
+      // Best-effort: descuenta cupo del servicio si está configurado para esa
+      // fecha (sin tope: el admin puede sobre-reservar a propósito).
+      await client.query(
+        `UPDATE cupos SET ${c.conf} = COALESCE(${c.conf}, 0) + 1 WHERE fecha = $1 AND ${c.cap} IS NOT NULL`,
+        [b.fecha_entrega]
+      )
+      return insert.rows[0]
+    })
+
+    if (b.enviar_correo) {
+      sendEstadoEmail(pedido, 'solicitud_recibida').catch((e) =>
+        console.error('[mail] no se pudo enviar "solicitud_recibida" (alta manual):', e?.message || e)
+      )
+    }
+
+    return res.status(201).json({ pedido })
+  } catch (err) {
+    next(err)
+  }
+})
+
+/**
  * POST /api/pedidos/consultar  (público)
  * El cliente consulta SU pedido con número + email (verificación simple). Devuelve
  * un subconjunto seguro: estado, fecha, platos, lista de compras, etc. (sin

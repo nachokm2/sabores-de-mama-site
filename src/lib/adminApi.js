@@ -132,6 +132,9 @@ export function getPedidos(params = {}) {
 export function getPedido(id) {
   return apiFetch(`/pedidos/${id}`)
 }
+export function crearPedidoAdmin(data) {
+  return apiFetch('/pedidos/admin', { method: 'POST', body: data })
+}
 export function cambiarEstadoPedido(id, estado) {
   return apiFetch(`/pedidos/${id}/estado`, { method: 'PATCH', body: { estado } })
 }

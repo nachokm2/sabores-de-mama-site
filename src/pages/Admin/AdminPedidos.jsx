@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import AdminLayout from '../../components/admin/AdminLayout'
 import { EstadoBadge, fmtCLP, fmtFecha } from '../../components/admin/adminHelpers'
 import PedidoDetalle from '../../components/admin/PedidoDetalle'
+import PedidoNuevo from '../../components/admin/PedidoNuevo'
 import {
   getPedidos,
   cambiarEstadoPedido,
@@ -31,6 +32,7 @@ export default function AdminPedidos() {
   const [expandedId, setExpandedId] = useState(null)
   const [catalogo, setCatalogo] = useState([])
   const [comunas, setComunas] = useState([])
+  const [creando, setCreando] = useState(false)
 
   const goLogin = useCallback(() => navigate('/admin/login', { replace: true }), [navigate])
 
@@ -55,19 +57,26 @@ export default function AdminPedidos() {
     cargar()
   }, [cargar])
 
-  // Catálogo de platos + comunas para el formulario de edición (una sola vez).
+  // Catálogo de platos + comunas (del servicio) para los formularios.
   useEffect(() => {
     getPlatos({ incluirInactivos: true })
       .then((d) => setCatalogo(d.platos || []))
       .catch(() => {})
-    getComunas({ todos: true })
+    getComunas({ todos: true, servicio })
       .then((d) => setComunas(d.comunas || []))
       .catch(() => {})
-  }, [])
+  }, [servicio])
 
   const onPedidoEditado = (actualizado) => {
     setPedidos((prev) => prev.map((p) => (p.id === actualizado.id ? actualizado : p)))
     setMsg(`Pedido #${actualizado.id} actualizado.`)
+  }
+
+  const onPedidoCreado = (nuevo) => {
+    setPedidos((prev) => [nuevo, ...prev])
+    setCreando(false)
+    setError('')
+    setMsg(`Reserva #${nuevo.id} creada.`)
   }
 
   const onCambiarEstado = async (pedido, estado) => {
@@ -115,7 +124,35 @@ export default function AdminPedidos() {
   }
 
   return (
-    <AdminLayout title="Pedidos">
+    <AdminLayout
+      title="Pedidos"
+      actions={
+        !creando && (
+          <button
+            onClick={() => {
+              setCreando(true)
+              setMsg('')
+              setError('')
+            }}
+            className="bg-terracotta text-ivory font-semibold rounded-full px-5 py-2.5 text-sm hover:bg-ember transition-colors"
+          >
+            + Nueva reserva
+          </button>
+        )
+      }
+    >
+      {creando && (
+        <PedidoNuevo
+          servicio={servicio}
+          platosCatalogo={catalogo}
+          comunas={comunas}
+          onCreated={onPedidoCreado}
+          onCancel={() => setCreando(false)}
+          onError={setError}
+          on401={goLogin}
+        />
+      )}
+
       {/* Filtros */}
       <div className="flex flex-wrap items-end gap-3 mb-5">
         <label className="text-sm">
