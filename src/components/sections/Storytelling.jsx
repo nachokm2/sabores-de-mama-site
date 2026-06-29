@@ -159,23 +159,38 @@ export default function Storytelling() {
             </p>
 
             <div className="space-y-5 pt-2 reveal-item">
+              <div>
+                <h3 className="font-display text-2xl font-bold text-espresso mb-2">
+                  Lo que ganas con Sabores de Mamá
+                </h3>
+                <p className="font-body text-warm-gray text-sm md:text-base leading-relaxed">
+                  Descubre todo el tiempo y la tranquilidad que obtienes al dejar la cocina
+                  en nuestras manos. Comidas caseras, listas para disfrutar cuando tú las necesites.
+                </p>
+              </div>
               <FeatureItem
-                icon="🌿"
-                title="Ingredientes frescos"
-                text="Seleccionamos los mejores ingredientes de temporada cada mañana."
+                icon="⏰"
+                title="Más tiempo para ti"
+                text="Dedica tus horas a descansar, compartir con tu familia o hacer lo que más disfrutas."
                 delay={0.1}
               />
               <FeatureItem
-                icon="👩‍🍳"
-                title="Recetas familiares"
-                text="Preparaciones transmitidas de generación en generación."
+                icon="🍽️"
+                title="Comida casera toda la semana"
+                text="Platos preparados con dedicación para que siempre tengas una opción rica y nutritiva."
                 delay={0.2}
               />
               <FeatureItem
-                icon="🏠"
-                title="Sabor de hogar"
-                text="Cada mordida te devuelve al calor de la mesa familiar."
+                icon="🤔"
+                title="Sin pensar qué cocinar"
+                text="Olvídate de planificar menús, hacer compras de último minuto o improvisar cada día."
                 delay={0.3}
+              />
+              <FeatureItem
+                icon="🔥"
+                title="Todo listo para calentar"
+                text="Solo calienta, sirve y disfruta de una comida como hecha en casa, en pocos minutos."
+                delay={0.4}
               />
             </div>
           </div>
