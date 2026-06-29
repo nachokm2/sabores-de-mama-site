@@ -4,16 +4,12 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { openChatBot } from '../../lib/openChatBot'
 
 // R-02 · Navegación principal (orden exacto solicitado).
-// El sitio es multipágina (React Router): los servicios/productos son anclas
-// dentro de /menu, por lo que cada ítem hace scroll suave a su sección.
-// TODO (fuera de alcance de esta fase): "Hornear en Casa" aún no tiene una
-// sección/servicio propio en el contenido. Se apunta provisionalmente al bloque
-// de Servicios (/menu#servicios); crear su sección dedicada en la fase de contenido.
+// El sitio es multipágina (React Router): cada ítem apunta a su propia ruta.
 const NAV_LINKS = [
   { label: 'Inicio',               href: '/' },
   { label: 'Meal Prep',            href: '/meal-prep-en-casa' },
   { label: 'Cocinera a Domicilio', href: '/cocinera' },
-  { label: 'Hornear en Casa',      href: '/hornear-en-casa' },
+  { label: 'Healthy',              href: '/healthy' },
   { label: 'Nosotros',             href: '/nosotros' },
   { label: 'Contacto',             href: '/contacto' },
 ]

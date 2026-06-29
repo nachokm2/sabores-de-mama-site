@@ -52,7 +52,7 @@ export default function HornearEnCasa() {
   return (
     <>
       <Helmet>
-        <title>Hornear en Casa | Sabores de Mamá</title>
+        <title>Healthy | Sabores de Mamá</title>
         <meta
           name="description"
           content="Postres y galletas saludables hechos en casa: los recibes listos para disfrutar o para hornear en casa y tenerlos como recién hechos. Sin culpa, sin conservantes."
@@ -64,11 +64,11 @@ export default function HornearEnCasa() {
       <main>
         {/* ── Hero ── */}
         <PageHero
-          label="Hornear en Casa"
+          label="Healthy"
           title="Postres y galletas,"
           titleHighlight="como recién hechos."
           subtitle="Dulces saludables hechos en casa: los recibes listos para disfrutar o para terminar en tu horno y servirlos calentitos, con ese aroma de recién horneado."
-          breadcrumb={[{ label: 'Inicio', href: '/' }, { label: 'Hornear en Casa', href: '/hornear-en-casa' }]}
+          breadcrumb={[{ label: 'Inicio', href: '/' }, { label: 'Healthy', href: '/healthy' }]}
         >
           <button onClick={pedir} className="btn-whatsapp text-sm">
             Pedir por WhatsApp

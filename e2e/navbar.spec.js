@@ -4,7 +4,7 @@ const ITEMS = [
   { label: 'Inicio', href: '/' },
   { label: 'Meal Prep', href: '/meal-prep-en-casa' },
   { label: 'Cocinera a Domicilio', href: '/cocinera' },
-  { label: 'Hornear en Casa', href: '/hornear-en-casa' },
+  { label: 'Healthy', href: '/healthy' },
   { label: 'Nosotros', href: '/nosotros' },
   { label: 'Contacto', href: '/contacto' },
 ]

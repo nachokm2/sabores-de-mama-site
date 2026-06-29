@@ -89,7 +89,7 @@ function AppContent({ lenisRef }) {
         <Route path="/menu"      element={<Menu />} />
         <Route path="/meal-prep-en-casa" element={<MealPrep />} />
         <Route path="/cocinera"  element={<Cocinera />} />
-        <Route path="/hornear-en-casa" element={<HornearEnCasa />} />
+        <Route path="/healthy" element={<HornearEnCasa />} />
         <Route path="/consultar-pedido" element={<ConsultarPedido />} />
         <Route path="/galeria"   element={<Galeria />} />
         <Route path="/contacto"  element={<Contacto />} />
