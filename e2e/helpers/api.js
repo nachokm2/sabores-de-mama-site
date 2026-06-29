@@ -15,15 +15,22 @@ export async function adminToken(request) {
   return (await res.json()).token
 }
 
-/** Crea o actualiza el cupo de una fecha (upsert). */
+/**
+ * Crea o actualiza el cupo de una fecha (upsert). Los cupos son por servicio,
+ * así que se siembra para AMBOS servicios para que cualquier flujo lo encuentre.
+ */
 export async function ensureCupo(request, { fecha, capacidad = 10, activo = true }) {
   const token = await adminToken(request)
-  const res = await request.post(`${API_URL}/cupos`, {
-    headers: { Authorization: `Bearer ${token}` },
-    data: { fecha, capacidad_maxima: capacidad, activo },
-  })
-  if (!res.ok()) throw new Error(`No se pudo crear el cupo ${fecha} (${res.status()})`)
-  return (await res.json()).cupo
+  let ultimo
+  for (const servicio of ['meal_prep', 'cocinera']) {
+    const res = await request.post(`${API_URL}/cupos`, {
+      headers: { Authorization: `Bearer ${token}` },
+      data: { fecha, servicio, capacidad_maxima: capacidad, activo },
+    })
+    if (!res.ok()) throw new Error(`No se pudo crear el cupo ${fecha} (${servicio}) (${res.status()})`)
+    ultimo = (await res.json()).cupo
+  }
+  return ultimo
 }
 
 /** Obtiene un pedido por id (protegido) → para verificar estado/datos en la BD. */

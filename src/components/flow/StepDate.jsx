@@ -21,7 +21,7 @@ export default function StepDate({ data, update, onNext, onBack }) {
   useEffect(() => {
     let active = true
     setLoading(true)
-    getCupos()
+    getCupos(data.servicio)
       .then((lista) => {
         if (active) setCupos(lista)
       })
@@ -34,7 +34,7 @@ export default function StepDate({ data, update, onNext, onBack }) {
     return () => {
       active = false
     }
-  }, [])
+  }, [data.servicio])
 
   const seleccionar = (cupo) => {
     if (cupo.disponibles <= 0) return

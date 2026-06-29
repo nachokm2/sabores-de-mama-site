@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 import AdminLayout from '../../components/admin/AdminLayout'
 import { fmtFecha, todayStr } from '../../components/admin/adminHelpers'
 import {
@@ -43,6 +43,7 @@ function generarFechas(desde, hasta, dias) {
  */
 export default function AdminCupos() {
   const navigate = useNavigate()
+  const { servicio } = useParams()
   const [cupos, setCupos] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -67,7 +68,7 @@ export default function AdminCupos() {
     setLoading(true)
     setError('')
     try {
-      const data = await getCupos({ todos: true })
+      const data = await getCupos({ todos: true, servicio })
       setCupos((data.cupos || []).map((c) => ({ ...c, _dirty: false })))
     } catch (err) {
       if (!handle401(err)) setError(err.message || 'No se pudieron cargar los cupos.')
@@ -75,7 +76,7 @@ export default function AdminCupos() {
       setLoading(false)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [navigate])
+  }, [navigate, servicio])
 
   useEffect(() => {
     cargar()
@@ -101,10 +102,10 @@ export default function AdminCupos() {
     setSaving(true)
     try {
       if (fechas.length === 1) {
-        await guardarCupo({ fecha: fechas[0], capacidad_maxima: Number(capacidad), activo: true })
+        await guardarCupo({ fecha: fechas[0], capacidad_maxima: Number(capacidad), activo: true, servicio })
         setMsg(`Cupo del ${fmtFecha(fechas[0])} guardado.`)
       } else {
-        await guardarCuposBulk({ fechas, capacidad_maxima: Number(capacidad), activo: true })
+        await guardarCuposBulk({ fechas, capacidad_maxima: Number(capacidad), activo: true, servicio })
         setMsg(`${fechas.length} fechas creadas/actualizadas.`)
       }
       setDesde('')
@@ -131,6 +132,7 @@ export default function AdminCupos() {
         fecha: String(c.fecha).slice(0, 10),
         capacidad_maxima: Number(c.capacidad_maxima),
         activo: c.activo,
+        servicio,
       })
       setCupos((prev) => prev.map((x) => (x.id === c.id ? { ...x, _dirty: false } : x)))
       setMsg(`Cupo del ${fmtFecha(c.fecha)} actualizado.`)
@@ -144,9 +146,9 @@ export default function AdminCupos() {
     setError('')
     setMsg('')
     try {
-      await eliminarCupo(c.id)
+      await eliminarCupo(c.id, servicio)
       setCupos((prev) => prev.filter((x) => x.id !== c.id))
-      setMsg(`Fecha ${fmtFecha(c.fecha)} eliminada.`)
+      setMsg(`Fecha ${fmtFecha(c.fecha)} quitada de este servicio.`)
     } catch (err) {
       if (!handle401(err)) setError(err.message || 'No se pudo eliminar el cupo.')
     }
@@ -160,6 +162,9 @@ export default function AdminCupos() {
 
   return (
     <AdminLayout title="Cupos">
+      <p className="text-sm text-warm-gray -mt-3 mb-5">
+        Capacidad por fecha de este servicio. Es independiente del otro servicio.
+      </p>
       {msg && (
         <div className="mb-4 text-sm text-[#15803D] bg-[#15803D]/10 border border-[#15803D]/30 rounded-lg px-4 py-2">
           {msg}

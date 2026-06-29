@@ -157,19 +157,23 @@ export function eliminarPlato(id) {
   return apiFetch(`/platos/${id}`, { method: 'DELETE' })
 }
 
-// Cupos
-export function getCupos({ todos = false } = {}) {
-  const qs = todos ? '?todos=true' : ''
-  return apiFetch(`/cupos${qs}`)
+// Cupos (por servicio)
+export function getCupos({ todos = false, servicio } = {}) {
+  const qs = new URLSearchParams({
+    ...(todos ? { todos: 'true' } : {}),
+    ...(servicio ? { servicio } : {}),
+  }).toString()
+  return apiFetch(`/cupos${qs ? `?${qs}` : ''}`)
 }
 export function guardarCupo(data) {
   return apiFetch('/cupos', { method: 'POST', body: data })
 }
-export function guardarCuposBulk({ fechas, capacidad_maxima, activo }) {
-  return apiFetch('/cupos/bulk', { method: 'POST', body: { fechas, capacidad_maxima, activo } })
+export function guardarCuposBulk({ fechas, capacidad_maxima, activo, servicio }) {
+  return apiFetch('/cupos/bulk', { method: 'POST', body: { fechas, capacidad_maxima, activo, servicio } })
 }
-export function eliminarCupo(id) {
-  return apiFetch(`/cupos/${id}`, { method: 'DELETE' })
+export function eliminarCupo(id, servicio) {
+  const qs = servicio ? `?servicio=${encodeURIComponent(servicio)}` : ''
+  return apiFetch(`/cupos/${id}${qs}`, { method: 'DELETE' })
 }
 
 // Subida de imágenes (presigned URL → PUT directo al bucket)

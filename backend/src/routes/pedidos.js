@@ -11,6 +11,14 @@ function asArray(v) {
   return Array.isArray(v) ? v : []
 }
 
+// Columnas de cupo por servicio (whitelist). Cada servicio tiene su propia
+// capacidad y confirmados, independientes (igual que las comunas).
+function cuposCols(servicio) {
+  return servicio === 'cocinera'
+    ? { cap: 'capacidad_cocinera', conf: 'confirmados_cocinera', act: 'activo_cocinera' }
+    : { cap: 'capacidad_meal_prep', conf: 'confirmados_meal_prep', act: 'activo_meal_prep' }
+}
+
 /**
  * POST /api/pedidos  (público)
  * Crea un pedido. REGLA CRÍTICA: verifica y reserva el cupo de la fecha de
@@ -36,26 +44,30 @@ router.post('/', async (req, res, next) => {
       return res.status(400).json({ error: 'Faltan o son inválidos los campos: ' + errores.join(', ') })
     }
 
+    const c = cuposCols(b.servicio)
     const pedido = await withTransaction(async (client) => {
-      // 1) Reservar cupo de forma atómica (lock optimista).
+      // 1) Reservar cupo DEL SERVICIO de forma atómica (lock optimista).
       const reserva = await client.query(
         `UPDATE cupos
-            SET pedidos_confirmados = pedidos_confirmados + 1
-          WHERE fecha = $1 AND activo = true AND pedidos_confirmados < capacidad_maxima
-        RETURNING id, capacidad_maxima, pedidos_confirmados`,
+            SET ${c.conf} = COALESCE(${c.conf}, 0) + 1
+          WHERE fecha = $1
+            AND ${c.cap} IS NOT NULL
+            AND COALESCE(${c.act}, false) = true
+            AND COALESCE(${c.conf}, 0) < ${c.cap}
+        RETURNING id`,
         [b.fecha_entrega]
       )
 
       if (reserva.rowCount === 0) {
         // Diferenciar el motivo para un mensaje claro.
         const chk = await client.query(
-          'SELECT capacidad_maxima, pedidos_confirmados, activo FROM cupos WHERE fecha = $1',
+          `SELECT ${c.cap} AS cap, COALESCE(${c.act}, false) AS act FROM cupos WHERE fecha = $1`,
           [b.fecha_entrega]
         )
         const err = new Error()
         err.status = 409
-        if (!chk.rows[0]) err.message = 'No hay cupos configurados para esa fecha.'
-        else if (!chk.rows[0].activo) err.message = 'La fecha seleccionada no está disponible.'
+        if (!chk.rows[0] || chk.rows[0].cap === null) err.message = 'No hay cupos configurados para esa fecha.'
+        else if (!chk.rows[0].act) err.message = 'La fecha seleccionada no está disponible.'
         else err.message = 'No quedan cupos disponibles para esa fecha.'
         throw err
       }

@@ -157,6 +157,28 @@ UPDATE comunas SET
   activo_cocinera  = COALESCE(activo_cocinera,  activo AND cocinera)
 WHERE costo_meal_prep IS NULL OR costo_cocinera IS NULL
    OR activo_meal_prep IS NULL OR activo_cocinera IS NULL;
+
+-- Cupos: capacidad, confirmados y disponibilidad INDEPENDIENTES por servicio.
+ALTER TABLE cupos ADD COLUMN IF NOT EXISTS capacidad_meal_prep   INTEGER;
+ALTER TABLE cupos ADD COLUMN IF NOT EXISTS capacidad_cocinera    INTEGER;
+ALTER TABLE cupos ADD COLUMN IF NOT EXISTS confirmados_meal_prep INTEGER;
+ALTER TABLE cupos ADD COLUMN IF NOT EXISTS confirmados_cocinera  INTEGER;
+ALTER TABLE cupos ADD COLUMN IF NOT EXISTS activo_meal_prep      BOOLEAN;
+ALTER TABLE cupos ADD COLUMN IF NOT EXISTS activo_cocinera       BOOLEAN;
+-- Copia UNA sola vez desde el modelo compartido. Los confirmados por servicio se
+-- recalculan desde los pedidos reales (cada pedido ya lleva su servicio).
+UPDATE cupos c SET
+  capacidad_meal_prep   = COALESCE(c.capacidad_meal_prep,   c.capacidad_maxima),
+  capacidad_cocinera    = COALESCE(c.capacidad_cocinera,    c.capacidad_maxima),
+  confirmados_meal_prep = COALESCE(c.confirmados_meal_prep,
+    (SELECT count(*) FROM pedidos p WHERE p.fecha_entrega = c.fecha AND p.servicio = 'meal_prep')),
+  confirmados_cocinera  = COALESCE(c.confirmados_cocinera,
+    (SELECT count(*) FROM pedidos p WHERE p.fecha_entrega = c.fecha AND p.servicio = 'cocinera')),
+  activo_meal_prep      = COALESCE(c.activo_meal_prep, c.activo),
+  activo_cocinera       = COALESCE(c.activo_cocinera,  c.activo)
+WHERE c.capacidad_meal_prep IS NULL OR c.capacidad_cocinera IS NULL
+   OR c.confirmados_meal_prep IS NULL OR c.confirmados_cocinera IS NULL
+   OR c.activo_meal_prep IS NULL OR c.activo_cocinera IS NULL;
 `
 
 // Comunas del Gran Santiago (lista inicial de cobertura). El costo de despacho

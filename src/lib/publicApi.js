@@ -75,9 +75,10 @@ export async function getPlatos() {
   return data?.platos || []
 }
 
-/** Fechas futuras con cupos disponibles. */
-export async function getCupos() {
-  const data = await request('/cupos')
+/** Fechas futuras con cupos disponibles para un servicio ('meal_prep' | 'cocinera'). */
+export async function getCupos(servicio) {
+  const qs = servicio ? `?servicio=${encodeURIComponent(servicio)}` : ''
+  const data = await request(`/cupos${qs}`)
   return data?.cupos || []
 }
 

@@ -33,9 +33,14 @@ async function login() {
 }
 
 async function seedCupo(fecha, capacidad = 5, activo = true) {
+  // Cupos por servicio: se siembra capacidad para AMBOS servicios.
   await pool.query(
-    `INSERT INTO cupos (fecha, capacidad_maxima, pedidos_confirmados, activo)
-     VALUES ($1, $2, 0, $3)`,
+    `INSERT INTO cupos
+       (fecha, capacidad_maxima, pedidos_confirmados, activo,
+        capacidad_meal_prep, capacidad_cocinera,
+        confirmados_meal_prep, confirmados_cocinera,
+        activo_meal_prep, activo_cocinera)
+     VALUES ($1, $2, 0, $3, $2, $2, 0, 0, $3, $3)`,
     [fecha, capacidad, activo]
   )
 }
@@ -95,8 +100,8 @@ describe('POST /api/pedidos', () => {
     expect(res.body.pedido.id).toBeTruthy()
     expect(res.body.pedido.estado).toBe('solicitud_recibida')
 
-    const { rows } = await pool.query('SELECT pedidos_confirmados FROM cupos WHERE fecha = $1', ['2026-12-01'])
-    expect(rows[0].pedidos_confirmados).toBe(1)
+    const { rows } = await pool.query('SELECT confirmados_meal_prep FROM cupos WHERE fecha = $1', ['2026-12-01'])
+    expect(rows[0].confirmados_meal_prep).toBe(1)
 
     // Dispara el correo de solicitud_recibida.
     expect(sendEstadoEmail).toHaveBeenCalledWith(expect.objectContaining({ id: res.body.pedido.id }), 'solicitud_recibida')
@@ -118,8 +123,29 @@ describe('POST /api/pedidos', () => {
     expect(r1.status).toBe(201)
     expect(r2.status).toBe(409)
 
-    const { rows } = await pool.query('SELECT pedidos_confirmados FROM cupos WHERE fecha = $1', ['2026-12-02'])
-    expect(rows[0].pedidos_confirmados).toBe(1) // no se sobre-reservó
+    const { rows } = await pool.query('SELECT confirmados_meal_prep FROM cupos WHERE fecha = $1', ['2026-12-02'])
+    expect(rows[0].confirmados_meal_prep).toBe(1) // no se sobre-reservó
+  })
+
+  it('los cupos son independientes por servicio (agotar meal_prep no afecta a cocinera)', async () => {
+    await seedCupo('2026-12-05', 1) // capacidad 1 para cada servicio
+
+    // meal_prep: el primero entra, el segundo recibe 409 (lleno).
+    const r1 = await request(app).post('/api/pedidos').send(pedidoValido({ fecha_entrega: '2026-12-05', servicio: 'meal_prep' }))
+    const r2 = await request(app).post('/api/pedidos').send(pedidoValido({ fecha_entrega: '2026-12-05', servicio: 'meal_prep' }))
+    expect(r1.status).toBe(201)
+    expect(r2.status).toBe(409)
+
+    // cocinera conserva su cupo intacto.
+    const r3 = await request(app).post('/api/pedidos').send(pedidoValido({ fecha_entrega: '2026-12-05', servicio: 'cocinera' }))
+    expect(r3.status).toBe(201)
+
+    const { rows } = await pool.query(
+      'SELECT confirmados_meal_prep, confirmados_cocinera FROM cupos WHERE fecha = $1',
+      ['2026-12-05']
+    )
+    expect(rows[0].confirmados_meal_prep).toBe(1)
+    expect(rows[0].confirmados_cocinera).toBe(1)
   })
 })
 
