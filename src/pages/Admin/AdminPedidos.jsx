@@ -1,5 +1,5 @@
 import { Fragment, useCallback, useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 import AdminLayout from '../../components/admin/AdminLayout'
 import { EstadoBadge, fmtCLP, fmtFecha } from '../../components/admin/adminHelpers'
 import PedidoDetalle from '../../components/admin/PedidoDetalle'
@@ -20,6 +20,7 @@ import {
  */
 export default function AdminPedidos() {
   const navigate = useNavigate()
+  const { servicio } = useParams()
   const [pedidos, setPedidos] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -37,7 +38,7 @@ export default function AdminPedidos() {
     setLoading(true)
     setError('')
     try {
-      const data = await getPedidos({ estado: filtroEstado, fecha: filtroFecha })
+      const data = await getPedidos({ estado: filtroEstado, fecha: filtroFecha, servicio })
       setPedidos(data.pedidos || [])
     } catch (err) {
       if (err instanceof ApiError && err.status === 401) {
@@ -48,7 +49,7 @@ export default function AdminPedidos() {
     } finally {
       setLoading(false)
     }
-  }, [filtroEstado, filtroFecha, navigate])
+  }, [filtroEstado, filtroFecha, servicio, navigate])
 
   useEffect(() => {
     cargar()

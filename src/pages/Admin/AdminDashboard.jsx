@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useNavigate, Link } from 'react-router-dom'
+import { useNavigate, useParams, Link } from 'react-router-dom'
 import AdminLayout from '../../components/admin/AdminLayout'
 import { EstadoBadge, fmtCLP, fmtFecha, toDateStr, todayStr } from '../../components/admin/adminHelpers'
 import { getPedidos, ApiError, SERVICIOS } from '../../lib/adminApi'
@@ -19,6 +19,7 @@ function StatCard({ label, value, accent }) {
  */
 export default function AdminDashboard() {
   const navigate = useNavigate()
+  const { servicio } = useParams()
   const [pedidos, setPedidos] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -27,7 +28,7 @@ export default function AdminDashboard() {
     let active = true
     ;(async () => {
       try {
-        const data = await getPedidos({ limit: 500 })
+        const data = await getPedidos({ servicio, limit: 500 })
         if (active) setPedidos(data.pedidos || [])
       } catch (err) {
         if (err instanceof ApiError && err.status === 401) {
@@ -42,7 +43,7 @@ export default function AdminDashboard() {
     return () => {
       active = false
     }
-  }, [navigate])
+  }, [navigate, servicio])
 
   const hoy = todayStr()
   const entregasHoy = pedidos.filter((p) => toDateStr(p.fecha_entrega) === hoy).length
@@ -68,7 +69,7 @@ export default function AdminDashboard() {
       <div className="bg-background-surface border border-espresso/10 rounded-2xl overflow-hidden">
         <div className="flex items-center justify-between px-5 py-4 border-b border-espresso/10">
           <h2 className="font-display text-lg font-bold text-espresso">Pedidos recientes</h2>
-          <Link to="/admin/pedidos" className="text-sm font-medium text-terracotta hover:underline">
+          <Link to={`/admin/${servicio}/pedidos`} className="text-sm font-medium text-terracotta hover:underline">
             Ver todos →
           </Link>
         </div>

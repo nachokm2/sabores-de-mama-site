@@ -1,23 +1,37 @@
-import { NavLink, useNavigate } from 'react-router-dom'
+import { NavLink, Link, Navigate, useNavigate, useParams } from 'react-router-dom'
 import { Helmet } from 'react-helmet-async'
 import { getAdminUser, logout } from '../../lib/adminApi'
 
-const NAV = [
-  { to: '/admin/dashboard', label: 'Dashboard', icon: '📊' },
-  { to: '/admin/pedidos', label: 'Pedidos', icon: '🧾' },
-  { to: '/admin/platos', label: 'Platos', icon: '🍽️' },
-  { to: '/admin/productos', label: 'Hornear', icon: '🧁' },
-  { to: '/admin/cupos', label: 'Cupos', icon: '📅' },
-  { to: '/admin/comunas', label: 'Comunas', icon: '📍' },
-]
+const SERVICIO_LABEL = { meal_prep: 'Meal Prep', cocinera: 'Cocinera a Domicilio' }
+
+// Construye la navegación según el servicio. "Hornear" sólo aplica a Meal Prep.
+function buildNav(servicio) {
+  const base = `/admin/${servicio}`
+  return [
+    { to: `${base}/dashboard`, label: 'Dashboard', icon: '📊' },
+    { to: `${base}/pedidos`, label: 'Reservas', icon: '🧾' },
+    { to: `${base}/platos`, label: 'Platos', icon: '🍽️' },
+    ...(servicio === 'meal_prep' ? [{ to: `${base}/productos`, label: 'Hornear', icon: '🧁' }] : []),
+    { to: `${base}/cupos`, label: 'Cupos', icon: '📅' },
+    { to: `${base}/comunas`, label: 'Comunas', icon: '📍' },
+  ]
+}
 
 /**
- * Layout compartido del panel admin: barra superior con navegación, usuario
- * actual y cierre de sesión. Envuelve el contenido de cada página protegida.
+ * Layout compartido del panel admin, ahora con CONTEXTO DE SERVICIO: la barra de
+ * navegación se arma según `/admin/:servicio/...` (Cocinera no tiene "Hornear").
  */
 export default function AdminLayout({ title, actions, children }) {
   const navigate = useNavigate()
+  const { servicio } = useParams()
   const admin = getAdminUser()
+
+  // Servicio inválido → volver al hub a elegir.
+  if (servicio && !SERVICIO_LABEL[servicio]) {
+    return <Navigate to="/admin/hub" replace />
+  }
+
+  const nav = buildNav(servicio)
 
   const handleLogout = () => {
     logout()
@@ -35,18 +49,17 @@ export default function AdminLayout({ title, actions, children }) {
       <header className="sticky top-0 z-40 bg-background-warm/95 backdrop-blur border-b border-espresso/10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
           <div className="flex items-center gap-2">
-            <span className="font-display text-lg font-bold text-terracotta">
-              Sabores de Mamá
-            </span>
+            <span className="font-display text-lg font-bold text-terracotta">Sabores de Mamá</span>
             <span className="hidden sm:inline text-xs font-semibold uppercase tracking-wider text-accent-600 bg-amber/10 px-2 py-0.5 rounded-full">
-              Admin
+              {SERVICIO_LABEL[servicio] || 'Admin'}
             </span>
           </div>
 
           <div className="flex items-center gap-3">
-            <span className="hidden md:inline text-sm text-warm-gray">
-              {admin?.nombre || admin?.email}
-            </span>
+            <Link to="/admin/hub" className="text-sm text-warm-gray hover:text-terracotta transition-colors">
+              ⇄ Cambiar servicio
+            </Link>
+            <span className="hidden md:inline text-sm text-warm-gray">{admin?.nombre || admin?.email}</span>
             <button
               onClick={handleLogout}
               className="text-sm font-medium text-espresso/80 hover:text-terracotta border border-espresso/15 hover:border-terracotta/50 rounded-full px-4 py-1.5 transition-colors"
@@ -58,7 +71,7 @@ export default function AdminLayout({ title, actions, children }) {
 
         {/* Nav */}
         <nav className="max-w-7xl mx-auto px-4 sm:px-6 flex gap-1 overflow-x-auto" aria-label="Navegación admin">
-          {NAV.map((item) => (
+          {nav.map((item) => (
             <NavLink
               key={item.to}
               to={item.to}

@@ -145,7 +145,7 @@ router.post('/consultar', async (req, res, next) => {
  */
 router.get('/', requireAdmin, async (req, res, next) => {
   try {
-    const { estado, fecha, desde, hasta } = req.query
+    const { estado, fecha, desde, hasta, servicio } = req.query
     const limit = Math.min(Number(req.query.limit) || 100, 500)
     const offset = Number(req.query.offset) || 0
 
@@ -154,6 +154,10 @@ router.get('/', requireAdmin, async (req, res, next) => {
     if (estado) {
       params.push(estado)
       where.push(`estado = $${params.length}`)
+    }
+    if (servicio) {
+      params.push(servicio)
+      where.push(`servicio = $${params.length}`)
     }
     if (fecha) {
       params.push(fecha)

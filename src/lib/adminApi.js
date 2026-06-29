@@ -109,6 +109,11 @@ export async function login(email, password) {
     body: { email, password },
     auth: false,
   })
+  // El panel admin es solo para administradores: una cuenta cliente no entra.
+  if (data?.user?.rol === 'cliente') {
+    clearToken()
+    throw new ApiError('Esta cuenta es de cliente. Usa el portal en /cuenta.', 403)
+  }
   if (data?.token) setToken(data.token)
   return data
 }

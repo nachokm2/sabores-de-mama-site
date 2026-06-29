@@ -16,7 +16,7 @@ export default function AdminLogin() {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
-  const destino = location.state?.from || '/admin/dashboard'
+  const destino = location.state?.from || '/admin/hub'
 
   // Si ya hay sesión válida, saltar el login.
   if (isTokenValid()) {

@@ -34,11 +34,12 @@ const AdminPlatos    = lazy(() => import('./pages/Admin/AdminPlatos'))
 const AdminCupos     = lazy(() => import('./pages/Admin/AdminCupos'))
 const AdminComunas   = lazy(() => import('./pages/Admin/AdminComunas'))
 const AdminProductos = lazy(() => import('./pages/Admin/AdminProductos'))
+const AdminHub       = lazy(() => import('./pages/Admin/AdminHub'))
 import { isTokenValid } from './lib/adminApi'
 
-// /admin → dashboard si hay sesión válida; si no, al login.
+// /admin → hub (elegir servicio) si hay sesión válida; si no, al login.
 function AdminIndex() {
-  return <Navigate to={isTokenValid() ? '/admin/dashboard' : '/admin/login'} replace />
+  return <Navigate to={isTokenValid() ? '/admin/hub' : '/admin/login'} replace />
 }
 
 /**
@@ -120,12 +121,14 @@ function AppContent({ lenisRef }) {
         <Route path="/admin"           element={<AdminIndex />} />
         <Route path="/admin/login"     element={<AdminLogin />} />
         <Route element={<PrivateRoute />}>
-          <Route path="/admin/dashboard" element={<AdminDashboard />} />
-          <Route path="/admin/pedidos"   element={<AdminPedidos />} />
-          <Route path="/admin/platos"    element={<AdminPlatos />} />
-          <Route path="/admin/cupos"     element={<AdminCupos />} />
-          <Route path="/admin/comunas"   element={<AdminComunas />} />
-          <Route path="/admin/productos" element={<AdminProductos />} />
+          <Route path="/admin/hub"     element={<AdminHub />} />
+          {/* Panel por servicio: /admin/:servicio/... (meal_prep | cocinera) */}
+          <Route path="/admin/:servicio/dashboard" element={<AdminDashboard />} />
+          <Route path="/admin/:servicio/pedidos"   element={<AdminPedidos />} />
+          <Route path="/admin/:servicio/platos"    element={<AdminPlatos />} />
+          <Route path="/admin/:servicio/cupos"     element={<AdminCupos />} />
+          <Route path="/admin/:servicio/comunas"   element={<AdminComunas />} />
+          <Route path="/admin/:servicio/productos" element={<AdminProductos />} />
         </Route>
 
         <Route path="*"          element={<NotFound />} />
