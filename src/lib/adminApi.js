@@ -213,10 +213,13 @@ export function eliminarProductoHornear(id) {
   return apiFetch(`/productos-hornear/${id}`, { method: 'DELETE' })
 }
 
-// Comunas
-export function getComunas({ todos = false } = {}) {
-  const qs = todos ? '?todos=true' : ''
-  return apiFetch(`/comunas${qs}`)
+// Comunas (por servicio)
+export function getComunas({ todos = false, servicio } = {}) {
+  const qs = new URLSearchParams({
+    ...(todos ? { todos: 'true' } : {}),
+    ...(servicio ? { servicio } : {}),
+  }).toString()
+  return apiFetch(`/comunas${qs ? `?${qs}` : ''}`)
 }
 export function crearComuna(data) {
   return apiFetch('/comunas', { method: 'POST', body: data })
@@ -224,8 +227,9 @@ export function crearComuna(data) {
 export function editarComuna(id, data) {
   return apiFetch(`/comunas/${id}`, { method: 'PUT', body: data })
 }
-export function eliminarComuna(id) {
-  return apiFetch(`/comunas/${id}`, { method: 'DELETE' })
+export function eliminarComuna(id, servicio) {
+  const qs = servicio ? `?servicio=${encodeURIComponent(servicio)}` : ''
+  return apiFetch(`/comunas/${id}${qs}`, { method: 'DELETE' })
 }
 
 // Etiquetas de estado para la UI.

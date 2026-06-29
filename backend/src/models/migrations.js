@@ -130,6 +130,19 @@ ALTER TABLE admin_users ADD COLUMN IF NOT EXISTS reset_token VARCHAR(255);
 ALTER TABLE admin_users ADD COLUMN IF NOT EXISTS reset_token_exp TIMESTAMPTZ;
 -- Vincula una reserva/pedido a la cuenta del cliente (null = pedido público).
 ALTER TABLE pedidos ADD COLUMN IF NOT EXISTS usuario_id INTEGER REFERENCES admin_users(id);
+-- Comunas: costo y disponibilidad INDEPENDIENTES por servicio.
+ALTER TABLE comunas ADD COLUMN IF NOT EXISTS costo_meal_prep  INTEGER;
+ALTER TABLE comunas ADD COLUMN IF NOT EXISTS costo_cocinera   INTEGER;
+ALTER TABLE comunas ADD COLUMN IF NOT EXISTS activo_meal_prep BOOLEAN;
+ALTER TABLE comunas ADD COLUMN IF NOT EXISTS activo_cocinera  BOOLEAN;
+-- Copia UNA sola vez desde el modelo anterior (luego quedan no-nulas).
+UPDATE comunas SET
+  costo_meal_prep  = COALESCE(costo_meal_prep,  costo_despacho),
+  costo_cocinera   = COALESCE(costo_cocinera,   costo_despacho),
+  activo_meal_prep = COALESCE(activo_meal_prep, activo AND meal_prep),
+  activo_cocinera  = COALESCE(activo_cocinera,  activo AND cocinera)
+WHERE costo_meal_prep IS NULL OR costo_cocinera IS NULL
+   OR activo_meal_prep IS NULL OR activo_cocinera IS NULL;
 `
 
 // Comunas del Gran Santiago (lista inicial de cobertura). El costo de despacho
@@ -150,7 +163,10 @@ async function seedComunas(client) {
   const costo = Number(process.env.COMUNA_COSTO_DEFAULT) || 3000
   for (const nombre of COMUNAS_INICIALES) {
     await client.query(
-      `INSERT INTO comunas (nombre, costo_despacho, activo) VALUES ($1, $2, true)
+      `INSERT INTO comunas
+         (nombre, costo_despacho, activo,
+          costo_meal_prep, costo_cocinera, activo_meal_prep, activo_cocinera)
+       VALUES ($1, $2, true, $2, $2, true, true)
        ON CONFLICT (nombre) DO NOTHING`,
       [nombre, costo]
     )

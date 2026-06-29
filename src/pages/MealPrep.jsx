@@ -72,7 +72,7 @@ export default function MealPrep() {
     let active = true
     ;(async () => {
       try {
-        const lista = await getComunas()
+        const lista = await getComunas('meal_prep')
         if (active && Array.isArray(lista)) setComunas(lista)
       } catch {
         /* sin cobertura en vivo: la sección lo indica */

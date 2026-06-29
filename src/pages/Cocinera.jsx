@@ -72,7 +72,7 @@ export default function Cocinera() {
     let active = true
     ;(async () => {
       try {
-        const lista = await getComunas()
+        const lista = await getComunas('cocinera')
         if (active && Array.isArray(lista)) setComunas(lista)
       } catch {
         /* sin cobertura en vivo: la sección lo indica */

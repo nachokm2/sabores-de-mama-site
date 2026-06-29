@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 import AdminLayout from '../../components/admin/AdminLayout'
 import { fmtCLP } from '../../components/admin/adminHelpers'
 import {
@@ -11,11 +11,13 @@ import {
 } from '../../lib/adminApi'
 
 /**
- * AdminComunas · gestiona la cobertura y el costo de despacho POR comuna.
- * El flujo de pedido lee estas comunas y cobra el despacho según la elegida.
+ * AdminComunas · cobertura y costo de despacho POR SERVICIO. Cada servicio
+ * (meal_prep | cocinera, según la ruta) tiene su propia lista y valores; lo que
+ * se edita aquí NO afecta al otro servicio.
  */
 export default function AdminComunas() {
   const navigate = useNavigate()
+  const { servicio } = useParams()
   const [comunas, setComunas] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -25,8 +27,6 @@ export default function AdminComunas() {
   // Formulario de alta
   const [nombre, setNombre] = useState('')
   const [costo, setCosto] = useState(3000)
-  const [mealPrep, setMealPrep] = useState(true)
-  const [cocinera, setCocinera] = useState(true)
 
   const handle401 = (err) => {
     if (err instanceof ApiError && err.status === 401) {
@@ -40,7 +40,7 @@ export default function AdminComunas() {
     setLoading(true)
     setError('')
     try {
-      const data = await getComunas({ todos: true })
+      const data = await getComunas({ todos: true, servicio })
       setComunas((data.comunas || []).map((c) => ({ ...c, _dirty: false })))
     } catch (err) {
       if (!handle401(err)) setError(err.message || 'No se pudieron cargar las comunas.')
@@ -48,7 +48,7 @@ export default function AdminComunas() {
       setLoading(false)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [navigate])
+  }, [navigate, servicio])
 
   useEffect(() => {
     cargar()
@@ -60,18 +60,10 @@ export default function AdminComunas() {
     setError('')
     setMsg('')
     try {
-      await crearComuna({
-        nombre,
-        costo_despacho: Number(costo),
-        activo: true,
-        meal_prep: mealPrep,
-        cocinera: cocinera,
-      })
+      await crearComuna({ nombre, costo_despacho: Number(costo), activo: true, servicio })
       setMsg(`Comuna "${nombre.trim()}" guardada.`)
       setNombre('')
       setCosto(3000)
-      setMealPrep(true)
-      setCocinera(true)
       await cargar()
     } catch (err) {
       if (!handle401(err)) setError(err.message || 'No se pudo guardar la comuna.')
@@ -80,11 +72,8 @@ export default function AdminComunas() {
     }
   }
 
-  // Edición inline de una fila
   const setCampo = (id, campo, valor) => {
-    setComunas((prev) =>
-      prev.map((c) => (c.id === id ? { ...c, [campo]: valor, _dirty: true } : c))
-    )
+    setComunas((prev) => prev.map((c) => (c.id === id ? { ...c, [campo]: valor, _dirty: true } : c)))
   }
 
   const onGuardarFila = async (c) => {
@@ -92,11 +81,10 @@ export default function AdminComunas() {
     setMsg('')
     try {
       await editarComuna(c.id, {
+        servicio,
         nombre: c.nombre,
         costo_despacho: Number(c.costo_despacho),
         activo: c.activo,
-        meal_prep: c.meal_prep,
-        cocinera: c.cocinera,
       })
       setComunas((prev) => prev.map((x) => (x.id === c.id ? { ...x, _dirty: false } : x)))
       setMsg(`Comuna "${c.nombre}" actualizada.`)
@@ -106,15 +94,15 @@ export default function AdminComunas() {
   }
 
   const onEliminar = async (c) => {
-    if (!window.confirm(`¿Eliminar la comuna "${c.nombre}"? Dejará de aparecer en el flujo de pedido.`)) return
+    if (!window.confirm(`¿Quitar la comuna "${c.nombre}" de este servicio?`)) return
     setError('')
     setMsg('')
     try {
-      await eliminarComuna(c.id)
+      await eliminarComuna(c.id, servicio)
       setComunas((prev) => prev.filter((x) => x.id !== c.id))
-      setMsg(`Comuna "${c.nombre}" eliminada.`)
+      setMsg(`Comuna "${c.nombre}" quitada de este servicio.`)
     } catch (err) {
-      if (!handle401(err)) setError(err.message || 'No se pudo eliminar la comuna.')
+      if (!handle401(err)) setError(err.message || 'No se pudo quitar la comuna.')
     }
   }
 
@@ -123,6 +111,10 @@ export default function AdminComunas() {
 
   return (
     <AdminLayout title="Comunas">
+      <p className="text-sm text-warm-gray -mt-3 mb-5">
+        Cobertura y costo de despacho de este servicio. Es independiente del otro servicio.
+      </p>
+
       {msg && (
         <div className="mb-4 text-sm text-[#15803D] bg-[#15803D]/10 border border-[#15803D]/30 rounded-lg px-4 py-2">
           {msg}
@@ -161,19 +153,6 @@ export default function AdminComunas() {
             required
           />
         </label>
-        <div className="text-sm">
-          <span className="block text-espresso font-medium mb-1">Disponible en</span>
-          <div className="flex items-center gap-4 h-[42px]">
-            <label className="inline-flex items-center gap-2 text-warm-gray">
-              <input type="checkbox" checked={mealPrep} onChange={(e) => setMealPrep(e.target.checked)} />
-              Meal Prep
-            </label>
-            <label className="inline-flex items-center gap-2 text-warm-gray">
-              <input type="checkbox" checked={cocinera} onChange={(e) => setCocinera(e.target.checked)} />
-              Cocinera
-            </label>
-          </div>
-        </div>
         <button
           type="submit"
           disabled={saving}
@@ -188,7 +167,7 @@ export default function AdminComunas() {
         {loading ? (
           <p className="px-5 py-8 text-center text-warm-gray text-sm">Cargando…</p>
         ) : comunas.length === 0 ? (
-          <p className="px-5 py-8 text-center text-warm-gray text-sm">No hay comunas configuradas.</p>
+          <p className="px-5 py-8 text-center text-warm-gray text-sm">No hay comunas para este servicio. Agrega la primera.</p>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
@@ -196,8 +175,6 @@ export default function AdminComunas() {
                 <tr className="text-left text-warm-gray border-b border-espresso/10">
                   <th className="px-5 py-3 font-medium">Comuna</th>
                   <th className="px-5 py-3 font-medium">Costo despacho</th>
-                  <th className="px-5 py-3 font-medium">Meal Prep</th>
-                  <th className="px-5 py-3 font-medium">Cocinera</th>
                   <th className="px-5 py-3 font-medium">Activa</th>
                   <th className="px-5 py-3 font-medium"></th>
                 </tr>
@@ -226,22 +203,6 @@ export default function AdminComunas() {
                       </div>
                     </td>
                     <td className="px-5 py-2.5">
-                      <input
-                        type="checkbox"
-                        checked={c.meal_prep}
-                        onChange={(e) => setCampo(c.id, 'meal_prep', e.target.checked)}
-                        aria-label={`${c.nombre} disponible en Meal Prep`}
-                      />
-                    </td>
-                    <td className="px-5 py-2.5">
-                      <input
-                        type="checkbox"
-                        checked={c.cocinera}
-                        onChange={(e) => setCampo(c.id, 'cocinera', e.target.checked)}
-                        aria-label={`${c.nombre} disponible en Cocinera`}
-                      />
-                    </td>
-                    <td className="px-5 py-2.5">
                       <label className="inline-flex items-center gap-2">
                         <input
                           type="checkbox"
@@ -263,9 +224,9 @@ export default function AdminComunas() {
                         <button
                           onClick={() => onEliminar(c)}
                           className="text-sm text-warm-gray hover:text-primary-600"
-                          aria-label={`Eliminar ${c.nombre}`}
+                          aria-label={`Quitar ${c.nombre}`}
                         >
-                          Eliminar
+                          Quitar
                         </button>
                       </div>
                     </td>
