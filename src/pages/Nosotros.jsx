@@ -240,27 +240,33 @@ export default function Nosotros() {
               <div ref={ref1} className="space-y-6">
                 <SectionLabel>Quiénes somos</SectionLabel>
                 <h2 id="story-heading" className="section-title text-espresso fade-item">
-                  La comida como lenguaje de amor.
+                  Más que cocinar, queremos hacerte la vida más fácil.
                 </h2>
                 <p className="font-body text-warm-gray text-base md:text-lg leading-relaxed fade-item">
-                  Sabores de Mamá nació de una convicción simple: la mejor comida del mundo
-                  no sale de un restaurante con estrellas, sino de la cocina de casa. De esa
-                  cocina donde los olores del sofrito se mezclan con la música de fondo y las
-                  conversaciones de sobremesa.
+                  <strong className="text-espresso">Sabores de Mamá</strong> nació de una idea muy
+                  simple: disfrutar de comida casera no debería depender de tener tiempo para cocinar.
                 </p>
                 <p className="font-body text-warm-gray text-base leading-relaxed fade-item">
-                  Cada plato se prepara con dedicación, usando ingredientes frescos, respetando
-                  los tiempos de cocción tradicionales y cuidando cada detalle como si
-                  cocináramos para nuestra propia familia.
+                  Cada semana preparamos comidas personalizadas para personas y familias que quieren
+                  seguir disfrutando del auténtico sabor de casa, sin tener que pasar horas en la cocina.
                 </p>
                 <p className="font-body text-warm-gray text-base leading-relaxed fade-item">
-                  Queremos que cada cliente sienta ese calor hogareño, ese sabor que recuerda
-                  a los domingos en familia o a una tarde fría con pan recién amasado.
+                  Utilizamos ingredientes frescos y de calidad, cocinamos cada plato como si fuera
+                  para nuestra propia familia y cuidamos cada detalle para que tú solo tengas que
+                  disfrutar de una comida rica, nutritiva y hecha con cariño.
                 </p>
                 <blockquote className="border-l-2 border-amber pl-5 fade-item">
                   <p className="font-display text-xl text-espresso italic">
-                    "Una invitación a volver a lo simple, a lo auténtico y a lo que de verdad importa: compartir, disfrutar y nutrirnos con amor."
+                    "Siempre he creído que cocinar es una forma de cuidar a quienes queremos. Hoy
+                    tengo la oportunidad de hacerlo por muchas familias, y eso es lo más lindo de
+                    este proyecto."
                   </p>
+                  <footer className="mt-3 not-italic">
+                    <p className="font-display text-espresso font-bold">Estela Zavalla</p>
+                    <p className="font-body text-warm-gray text-sm">
+                      Fundadora de <strong className="text-espresso">Sabores de Mamá</strong>
+                    </p>
+                  </footer>
                 </blockquote>
               </div>
             </div>
