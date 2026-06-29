@@ -120,17 +120,19 @@ export default function Cocinera() {
           <div className="container-site max-w-3xl text-center">
             <SectionLabel>¿En qué consiste?</SectionLabel>
             <h2 id="consiste-heading" className="section-title text-espresso mt-4 mb-5">
-              Mamá cocina <em className="not-italic text-amber">en tu hogar.</em>
+              Nosotros cocinamos. <em className="not-italic text-amber">Tú disfrutas.</em>
             </h2>
-            <p className="font-body text-warm-gray text-base md:text-lg leading-relaxed">
-              Estela va directamente a tu casa y cocina <strong className="text-espresso">hasta 5 preparaciones</strong> usando
-              tus propios ingredientes. El servicio dura entre <strong className="text-espresso">2 y 5 horas</strong> según
-              la cantidad de platos, y al terminar <strong className="text-espresso">deja tu cocina limpia y ordenada</strong>.
-              Tú solo eliges los platos y compras los ingredientes con la lista que te entregamos.
-            </p>
-            <p className="mt-6 inline-block font-display text-2xl font-bold text-terracotta">
-              $55.000 <span className="text-base font-body text-warm-gray font-normal">+ movilización según tu comuna</span>
-            </p>
+            <div className="space-y-4 font-body text-warm-gray text-base md:text-lg leading-relaxed">
+              <p>
+                Tú eliges <strong className="text-espresso">hasta 5 preparaciones</strong> y recibes una lista
+                con todos los ingredientes que necesitarás.
+              </p>
+              <p>
+                El día agendado vamos a tu hogar, cocinamos cada plato, dejamos las preparaciones
+                listas para la semana y tu <strong className="text-espresso">cocina limpia y ordenada</strong>.
+              </p>
+              <p>Solo preocúpate de disfrutar la comida.</p>
+            </div>
           </div>
         </section>
 
