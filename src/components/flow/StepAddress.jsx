@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { getComunas } from '../../lib/publicApi'
+import { getPerfil, isTokenValid } from '../../lib/clienteApi'
 import { DELIVERY_COST, computeTotal } from '../../lib/flowConfig'
 
 // Lista de respaldo si la API de comunas no responde (mismo costo para todas).
@@ -37,6 +38,25 @@ export default function StepAddress({ data, update, onNext }) {
       active = false
     }
   }, [data.servicio])
+
+  // Si el cliente está logueado y aún no escribió una dirección, se precarga la
+  // de su perfil (sólo una vez; no pisa lo que el cliente escriba).
+  useEffect(() => {
+    if (data.direccion.trim() || !isTokenValid()) return
+    let active = true
+    getPerfil()
+      .then((res) => {
+        const dir = res?.user?.direccion
+        if (active && dir && !data.direccion.trim()) update({ direccion: dir })
+      })
+      .catch(() => {
+        /* sin perfil: el cliente la escribe a mano */
+      })
+    return () => {
+      active = false
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const onComuna = (nombre) => {
     const c = comunas.find((x) => x.nombre === nombre)
