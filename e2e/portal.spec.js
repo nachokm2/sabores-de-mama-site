@@ -23,7 +23,7 @@ async function registrarPorUI(page, c) {
 }
 
 test.describe('Portal de clientes', () => {
-  test('registro, dashboard y CTA para agendar', async ({ page }) => {
+  test('registro, dashboard y CTA para consultar lista', async ({ page }) => {
     const c = nuevoCliente()
     await registrarPorUI(page, c)
 
@@ -31,9 +31,9 @@ test.describe('Portal de clientes', () => {
     await expect(page.getByRole('heading', { name: new RegExp(c.nombre) })).toBeVisible()
     await expect(page.getByRole('button', { name: /Cerrar sesión/ })).toBeVisible()
 
-    // El CTA "Agendar ahora" lleva al flujo de Cocinera.
-    await page.getByRole('button', { name: /Agendar ahora/ }).click()
-    await expect(page).toHaveURL(/\/cocinera-a-domicilio/)
+    // El CTA "Consultar lista" lleva a la herramienta de lista de compras.
+    await page.getByRole('button', { name: /Consultar lista/ }).click()
+    await expect(page).toHaveURL(/\/cuenta\/lista/)
   })
 
   test('ruta protegida: /cuenta sin sesión redirige a login', async ({ page }) => {

@@ -141,17 +141,6 @@ export default function ClienteCuenta() {
           {msg && <div className="mb-4 text-sm text-[#15803D] bg-[#15803D]/10 border border-[#15803D]/30 rounded-lg px-4 py-2">{msg}</div>}
           {error && <div className="mb-4 text-sm text-primary-700 bg-primary-50 border border-primary-200 rounded-lg px-4 py-2">{error}</div>}
 
-          {/* CTA agendar */}
-          <div className="bg-amber/[0.06] border border-amber/30 rounded-2xl p-5 mb-4 flex items-center justify-between gap-4 flex-wrap">
-            <div>
-              <p className="font-display text-espresso font-bold">¿Quieres agendar una Cocinera a Domicilio?</p>
-              <p className="text-sm text-warm-gray">Elige tus platos y fecha; quedará asociada a tu cuenta.</p>
-            </div>
-            <button onClick={() => navigate('/cocinera-a-domicilio')} className="bg-terracotta text-ivory font-semibold rounded-full px-5 py-2.5 text-sm hover:bg-ember transition-colors whitespace-nowrap">
-              Agendar ahora
-            </button>
-          </div>
-
           {/* CTA consultar lista de compras */}
           <div className="bg-background-surface border border-espresso/10 rounded-2xl p-5 mb-8 flex items-center justify-between gap-4 flex-wrap">
             <div>
