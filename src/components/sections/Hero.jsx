@@ -150,7 +150,7 @@ export default function Hero() {
           >
             <span className="w-8 h-px bg-accent-600" aria-hidden="true" />
             <span className="text-accent-600 text-xs font-semibold tracking-[0.2em] uppercase font-body">
-              Sabores de Mamá · Comida Casera
+              Sabores de Mamá
             </span>
           </motion.div>
 
@@ -160,10 +160,10 @@ export default function Hero() {
             ref={titleRef}
             className="font-display text-5xl sm:text-6xl md:text-7xl lg:text-8xl text-espresso leading-[1.0] tracking-tighter-display mb-6"
           >
-            {['La comida', 'que', 'te lleva', 'al hogar.'].map((word, i) => (
+            {['Volver a comer', 'casero,', 'sin tener que', 'cocinar.'].map((word, i) => (
               <span
                 key={i}
-                className={`word block ${i === 3 ? 'text-gradient-gold' : ''}`}
+                className={`word block ${i === 1 ? 'text-gradient-gold' : ''}`}
                 style={{ opacity: prefersReduced ? 1 : 0 }}
               >
                 {word}
@@ -173,13 +173,14 @@ export default function Hero() {
 
           {/* Subline */}
           <motion.p
-            className="font-body text-warm-gray text-base md:text-lg max-w-md leading-relaxed mb-10"
+            className="font-body text-warm-gray text-base md:text-lg max-w-xl leading-relaxed mb-10"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 1.0 }}
           >
-            Recetas auténticas preparadas con ingredientes frescos y mucho cariño.
-            Como las de siempre, solo que ahora llegan hasta tu puerta.
+            Preparamos comidas caseras personalizadas para que disfrutes de platos hechos
+            como en casa, elaborados con ingredientes frescos y mucho cariño, sin tener que
+            pasar horas en la cocina.
           </motion.p>
 
           {/* CTA buttons */}
