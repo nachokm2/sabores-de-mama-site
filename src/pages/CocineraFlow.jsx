@@ -10,6 +10,7 @@ import StepPreferences from '../components/flow/StepPreferences'
 import StepDelivery from '../components/flow/StepDelivery'
 import StepSummary from '../components/flow/StepSummary'
 import { DELIVERY_COST, COCINERA_BASE, computeTotal } from '../lib/flowConfig'
+import { getPrecioBase } from '../lib/publicApi'
 
 // Flujo Cocinera a Domicilio: 7 pasos. Reutiliza los componentes de Meal Prep e
 // inserta ShoppingList (paso 4) entre StepDishes y StepPreferences.
@@ -76,6 +77,18 @@ export default function CocineraFlow() {
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }, [state.step])
+
+  // Precio base configurado por la admin para este servicio (cae al valor por
+  // defecto si el backend no responde).
+  useEffect(() => {
+    let active = true
+    getPrecioBase('cocinera').then((base) => {
+      if (active && base != null) update({ base })
+    })
+    return () => {
+      active = false
+    }
+  }, [])
 
   const stepProps = { data: state, update, onNext, onBack }
 

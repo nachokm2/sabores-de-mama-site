@@ -34,6 +34,7 @@ const AdminPlatos    = lazy(() => import('./pages/Admin/AdminPlatos'))
 const AdminCupos     = lazy(() => import('./pages/Admin/AdminCupos'))
 const AdminComunas   = lazy(() => import('./pages/Admin/AdminComunas'))
 const AdminProductos = lazy(() => import('./pages/Admin/AdminProductos'))
+const AdminAjustes   = lazy(() => import('./pages/Admin/AdminAjustes'))
 const AdminHub       = lazy(() => import('./pages/Admin/AdminHub'))
 import { isTokenValid } from './lib/adminApi'
 
@@ -129,6 +130,7 @@ function AppContent({ lenisRef }) {
           <Route path="/admin/:servicio/cupos"     element={<AdminCupos />} />
           <Route path="/admin/:servicio/comunas"   element={<AdminComunas />} />
           <Route path="/admin/:servicio/productos" element={<AdminProductos />} />
+          <Route path="/admin/:servicio/ajustes"   element={<AdminAjustes />} />
         </Route>
 
         <Route path="*"          element={<NotFound />} />

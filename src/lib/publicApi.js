@@ -92,6 +92,20 @@ export async function getComunas(servicio) {
   return data?.comunas || []
 }
 
+/**
+ * Precio base configurado para un servicio ('meal_prep' | 'cocinera').
+ * Devuelve el número, o null si algo falla (el flujo cae al valor por defecto).
+ */
+export async function getPrecioBase(servicio) {
+  try {
+    const data = await request(`/config/${encodeURIComponent(servicio)}`)
+    const n = Number(data?.config?.precio_base)
+    return Number.isFinite(n) ? n : null
+  } catch {
+    return null
+  }
+}
+
 /** Crea un pedido (reserva cupo + dispara correo en el backend). */
 export async function createPedido(payload) {
   const data = await request('/pedidos', { method: 'POST', body: payload })

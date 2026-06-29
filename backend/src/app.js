@@ -13,6 +13,7 @@ import comunasRouter from './routes/comunas.js'
 import uploadsRouter from './routes/uploads.js'
 import correosRouter from './routes/correos.js'
 import productosHornearRouter from './routes/productosHornear.js'
+import configRouter from './routes/config.js'
 
 dotenv.config()
 
@@ -77,6 +78,7 @@ app.use('/api/comunas', comunasRouter)
 app.use('/api/uploads', uploadsRouter)
 app.use('/api/correos', correosRouter)
 app.use('/api/productos-hornear', productosHornearRouter)
+app.use('/api/config', configRouter)
 
 // ── 404 ──
 app.use((req, res) => {

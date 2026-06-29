@@ -96,6 +96,18 @@ CREATE TABLE IF NOT EXISTS pedidos (
   created_at        TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
+-- ── servicios_config (ajustes por servicio: precio base, etc.) ──
+CREATE TABLE IF NOT EXISTS servicios_config (
+  servicio    VARCHAR(30) PRIMARY KEY,
+  precio_base INTEGER NOT NULL DEFAULT 0,
+  updated_at  TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+-- Semilla idempotente: precios base por defecto (la admin los ajusta luego).
+INSERT INTO servicios_config (servicio, precio_base) VALUES
+  ('meal_prep', 60000),
+  ('cocinera',  55000)
+ON CONFLICT (servicio) DO NOTHING;
+
 -- ── admin_users ──
 CREATE TABLE IF NOT EXISTS admin_users (
   id            SERIAL PRIMARY KEY,

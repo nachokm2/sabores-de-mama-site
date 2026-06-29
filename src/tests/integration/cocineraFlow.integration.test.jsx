@@ -19,6 +19,7 @@ vi.mock('../../lib/publicApi', () => ({
   getIngredientesDePlatos: vi.fn(),
   createPedido: vi.fn(),
   getPedidoResumen: vi.fn(),
+  getPrecioBase: vi.fn(() => Promise.resolve(null)),
   ApiError: class ApiError extends Error {},
 }))
 

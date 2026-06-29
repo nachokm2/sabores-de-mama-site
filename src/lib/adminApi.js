@@ -232,6 +232,14 @@ export function eliminarComuna(id, servicio) {
   return apiFetch(`/comunas/${id}${qs}`, { method: 'DELETE' })
 }
 
+// Ajustes por servicio (precio base, independiente entre servicios)
+export function getServiciosConfig() {
+  return apiFetch('/config', { auth: false })
+}
+export function editarServicioConfig(servicio, data) {
+  return apiFetch(`/config/${encodeURIComponent(servicio)}`, { method: 'PUT', body: data })
+}
+
 // Etiquetas de estado para la UI.
 export const ESTADOS = [
   { value: 'solicitud_recibida', label: 'Solicitud recibida' },
