@@ -101,9 +101,9 @@ export default function MealPrep() {
         {/* ── Hero ── */}
         <PageHero
           label="Meal Prep"
-          title="Tú pones los ingredientes,"
-          titleHighlight="mamá los convierte en comida casera."
-          subtitle="Un servicio de preparación a tu medida: nos envías tus ingredientes, mamá cocina con su sazón de siempre, envasa al vacío y te lo despacha listo para disfrutar."
+          title="Volver a comer casero"
+          titleHighlight="nunca fue tan fácil."
+          subtitle="Nos envías tus ingredientes, nosotros los transformamos en comidas caseras listas para disfrutar durante toda la semana."
           breadcrumb={[{ label: 'Inicio', href: '/' }, { label: 'Meal Prep', href: '/meal-prep-en-casa' }]}
         >
           <button onClick={agendar} className="btn-primary text-sm">
