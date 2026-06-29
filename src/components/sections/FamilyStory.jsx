@@ -2,11 +2,11 @@ import { useRef } from 'react'
 import { motion, useScroll, useTransform } from 'framer-motion'
 import SectionLabel from '../ui/SectionLabel'
 
-const MOMENTS = [
-  { emoji: '☀️', title: 'El desayuno de los domingos', text: 'Pan amasado recién salido del horno, manjar y una taza de té. El inicio perfecto de la semana.' },
-  { emoji: '🌧️', title: 'Los días de lluvia', text: 'Nada combina mejor con el frío que una cazuela humeante. El olor que llena la casa y el corazón.' },
-  { emoji: '🎂', title: 'Las celebraciones', text: 'El cumpleaños siempre con su torta de chocolate y ese postre especial que solo ella hacía.' },
-  { emoji: '👵', title: 'Las recetas de la abuela', text: 'Apuntadas en libretas amarillas, con medidas en "puñados" y "un poco de esto". Pura magia.' },
+const AUDIENCIAS = [
+  { emoji: '💼', title: 'Quienes trabajan todo el día', text: 'Llegan a casa con ganas de disfrutar una buena comida, no de pasar horas cocinando.' },
+  { emoji: '🏡', title: 'Quienes extrañan el sabor de hogar', text: 'Buscan volver a disfrutar el sabor auténtico de una comida casera, preparada con cariño.' },
+  { emoji: '👨‍👩‍👧‍👦', title: 'Familias que quieren compartir más tiempo juntas', text: 'Prefieren dedicar su tiempo a estar con quienes más quieren y dejar la cocina en nuestras manos.' },
+  { emoji: '🥘', title: 'Personas que quieren comer mejor', text: 'Eligen comida casera y nutritiva como una alternativa a la comida rápida y los alimentos ultraprocesados.' },
 ]
 
 function MomentCard({ moment, index }) {
@@ -19,7 +19,7 @@ function MomentCard({ moment, index }) {
       transition={{ duration: 0.8, delay: index * 0.15, ease: [0.19, 1, 0.22, 1] }}
     >
       {/* Vertical line connector */}
-      {index < MOMENTS.length - 1 && (
+      {index < AUDIENCIAS.length - 1 && (
         <div
           className="absolute left-5 top-14 w-px h-12 bg-gradient-to-b from-amber/40 to-transparent"
           aria-hidden="true"
@@ -115,10 +115,10 @@ export default function FamilyStory() {
 
           {/* ── Right: Timeline moments ── */}
           <motion.div style={{ y: illustrY }} className="space-y-8">
-            <p className="font-body text-accent-600 text-xs font-semibold tracking-[0.18em] uppercase mb-8">
-              Momentos que nos inspiran
-            </p>
-            {MOMENTS.map((moment, i) => (
+            <h3 className="font-display text-espresso text-2xl font-bold mb-8">
+              Cocinamos para personas como tú
+            </h3>
+            {AUDIENCIAS.map((moment, i) => (
               <MomentCard key={moment.title} moment={moment} index={i} />
             ))}
           </motion.div>
