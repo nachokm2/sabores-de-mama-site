@@ -107,7 +107,9 @@ export default function FamilyStory() {
             {/* Pull quote */}
             <div className="border-l-2 border-terracotta pl-5">
               <p className="font-display text-xl text-espresso italic">
-                "No cocinamos para vender. Cocinamos para compartir."
+                "Siempre he creído que una buena comida puede cambiar el día de una persona.
+                Por eso preparamos cada pedido con el mismo cuidado y cariño con el que
+                cocinaríamos para nuestra propia familia."
               </p>
               <p className="font-body text-warm-gray text-sm mt-2">— Fundadora, Sabores de Mamá</p>
             </div>
