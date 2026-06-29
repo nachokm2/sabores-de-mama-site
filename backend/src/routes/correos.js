@@ -1,6 +1,6 @@
 import { Router } from 'express'
 import { query } from '../models/index.js'
-import { authJWT } from '../middleware/authJWT.js'
+import { requireAdmin } from '../middleware/authJWT.js'
 import { sendEstadoEmail, ESTADOS_VALIDOS } from '../services/mailService.js'
 
 const router = Router()
@@ -11,7 +11,7 @@ const router = Router()
  * Body opcional: { estado } — si se omite, usa el estado actual del pedido.
  * Útil para reenviar (p. ej. datos bancarios) sin cambiar el estado.
  */
-router.post('/pedido/:id', authJWT, async (req, res, next) => {
+router.post('/pedido/:id', requireAdmin, async (req, res, next) => {
   try {
     const { rows } = await query('SELECT * FROM pedidos WHERE id = $1', [req.params.id])
     const pedido = rows[0]

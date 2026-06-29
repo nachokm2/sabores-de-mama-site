@@ -4,6 +4,7 @@ import request from 'supertest'
 // El envío de correos se mockea (los tests de plantillas viven en mailService.test.js).
 vi.mock('../services/mailService.js', () => ({
   sendEstadoEmail: vi.fn().mockResolvedValue({ ok: true, skipped: true }),
+  sendPasswordReset: vi.fn().mockResolvedValue({ ok: true, skipped: true }),
   ESTADOS_VALIDOS: ['solicitud_recibida', 'pagado', 'en_preparacion', 'entregado'],
 }))
 

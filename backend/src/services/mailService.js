@@ -358,36 +358,59 @@ export async function sendEstadoEmail(pedido, estado) {
   if (estado === 'pagado') extra.platosConIng = await getPlatosConIngredientes(pedido)
 
   const { subject, html } = builder(pedido, extra)
-  const from = mailFrom()
+  return dispatchMail({ to: pedido.email, subject, html, label: estado })
+}
 
-  // 1) Preferir Resend (API HTTP) si está configurado: imprescindible en hosts
-  //    que bloquean el SMTP saliente (p. ej. Railway → "Connection timeout").
+/**
+ * Envía un correo (Resend si hay API key; si no, SMTP; si no, lo omite).
+ * Centraliza la lógica de proveedor para todos los correos transaccionales.
+ */
+async function dispatchMail({ to, subject, html, label = 'correo' }) {
+  const from = mailFrom()
   if (process.env.RESEND_API_KEY) {
     try {
-      const id = await sendViaResend({ apiKey: process.env.RESEND_API_KEY, from, to: pedido.email, subject, html })
-      console.log(`[mail] Enviado "${estado}" → ${pedido.email} (resend id: ${id})`)
+      const id = await sendViaResend({ apiKey: process.env.RESEND_API_KEY, from, to, subject, html })
+      console.log(`[mail] Enviado "${label}" → ${to} (resend id: ${id})`)
       return { ok: true, messageId: id, provider: 'resend' }
     } catch (err) {
-      console.error(`[mail] Error (Resend) enviando "${estado}" → ${pedido.email}:`, err.message)
+      console.error(`[mail] Error (Resend) enviando "${label}" → ${to}:`, err.message)
       return { ok: false, error: err.message, provider: 'resend' }
     }
   }
-
-  // 2) Fallback: SMTP (útil en desarrollo local, donde el puerto no está bloqueado).
   const tx = getTransporter()
   if (!tx) {
-    console.log(`[mail] Sin proveedor de correo (ni RESEND_API_KEY ni SMTP). Omitiendo "${estado}" → ${pedido.email} (asunto: ${subject})`)
+    console.log(`[mail] Sin proveedor de correo. Omitiendo "${label}" → ${to} (asunto: ${subject})`)
     return { ok: false, skipped: true, reason: 'sin_proveedor' }
   }
-
   try {
-    const info = await tx.sendMail({ from, to: pedido.email, subject, html })
-    console.log(`[mail] Enviado "${estado}" → ${pedido.email} (id: ${info.messageId})`)
+    const info = await tx.sendMail({ from, to, subject, html })
+    console.log(`[mail] Enviado "${label}" → ${to} (id: ${info.messageId})`)
     return { ok: true, messageId: info.messageId, provider: 'smtp' }
   } catch (err) {
-    console.error(`[mail] Error enviando "${estado}" → ${pedido.email}:`, err.message)
+    console.error(`[mail] Error enviando "${label}" → ${to}:`, err.message)
     return { ok: false, error: err.message, provider: 'smtp' }
   }
 }
 
-export default { sendEstadoEmail, ESTADOS_VALIDOS }
+/**
+ * Correo de recuperación de contraseña para clientes.
+ */
+export async function sendPasswordReset(email, resetUrl) {
+  const html = baseTemplate({
+    titulo: 'Recuperar contraseña',
+    intro: 'Recibimos una solicitud para restablecer tu contraseña. Si no fuiste tú, ignora este correo.',
+    bodyHtml: `
+      <table role="presentation" cellpadding="0" cellspacing="0"><tr><td style="padding:8px 0">
+        <a href="${esc(resetUrl)}" style="display:inline-block;background:${BRAND};color:#FFFCF7;text-decoration:none;font-weight:bold;padding:12px 24px;border-radius:10px;font-size:14px;">
+          Restablecer contraseña
+        </a>
+      </td></tr></table>
+      <p style="margin:14px 0 0;font-size:12px;color:${MUTED};word-break:break-all;">
+        O copia este enlace en tu navegador:<br>${esc(resetUrl)}
+      </p>`,
+    footerNota: 'El enlace expira en 1 hora. Si no solicitaste el cambio, tu contraseña sigue intacta.',
+  })
+  return dispatchMail({ to: email, subject: 'Sabores de Mamá — Recuperar contraseña', html, label: 'recuperar' })
+}
+
+export default { sendEstadoEmail, sendPasswordReset, ESTADOS_VALIDOS }

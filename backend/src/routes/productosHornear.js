@@ -1,22 +1,10 @@
 import { Router } from 'express'
-import jwt from 'jsonwebtoken'
 import { query } from '../models/index.js'
-import { authJWT } from '../middleware/authJWT.js'
+import { requireAdmin, isAdminToken } from '../middleware/authJWT.js'
 
 const router = Router()
 
 const COLS = 'id, nombre, descripcion, precio, imagen, formato, porciones, activo'
-
-function hasValidToken(req) {
-  const [scheme, token] = (req.headers.authorization || '').split(' ')
-  if (scheme !== 'Bearer' || !token) return false
-  try {
-    jwt.verify(token, process.env.JWT_SECRET)
-    return true
-  } catch {
-    return false
-  }
-}
 
 /**
  * GET /api/productos-hornear  (público)
@@ -25,7 +13,7 @@ function hasValidToken(req) {
  */
 router.get('/', async (req, res, next) => {
   try {
-    const verTodos = req.query.todos === 'true' && hasValidToken(req)
+    const verTodos = req.query.todos === 'true' && isAdminToken(req)
     const sql = verTodos
       ? `SELECT ${COLS} FROM productos_hornear ORDER BY nombre`
       : `SELECT ${COLS} FROM productos_hornear WHERE activo = true ORDER BY nombre`
@@ -40,7 +28,7 @@ router.get('/', async (req, res, next) => {
  * POST /api/productos-hornear  (protegido) — crear o editar (upsert por id).
  * Body: { id?, nombre, descripcion, precio, imagen, formato, porciones, activo }
  */
-router.post('/', authJWT, async (req, res, next) => {
+router.post('/', requireAdmin, async (req, res, next) => {
   try {
     const { id, nombre, descripcion, precio, imagen, formato, porciones, activo } = req.body || {}
     if (!nombre || !String(nombre).trim()) return res.status(400).json({ error: 'El nombre es obligatorio.' })
@@ -80,7 +68,7 @@ router.post('/', authJWT, async (req, res, next) => {
 /**
  * DELETE /api/productos-hornear/:id  (protegido)
  */
-router.delete('/:id', authJWT, async (req, res, next) => {
+router.delete('/:id', requireAdmin, async (req, res, next) => {
   try {
     const { rowCount } = await query('DELETE FROM productos_hornear WHERE id = $1', [req.params.id])
     if (!rowCount) return res.status(404).json({ error: 'Producto no encontrado.' })

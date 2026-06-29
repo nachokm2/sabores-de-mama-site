@@ -1,20 +1,8 @@
 import { Router } from 'express'
-import jwt from 'jsonwebtoken'
 import { query } from '../models/index.js'
-import { authJWT } from '../middleware/authJWT.js'
+import { requireAdmin, isAdminToken } from '../middleware/authJWT.js'
 
 const router = Router()
-
-function hasValidToken(req) {
-  const [scheme, token] = (req.headers.authorization || '').split(' ')
-  if (scheme !== 'Bearer' || !token) return false
-  try {
-    jwt.verify(token, process.env.JWT_SECRET)
-    return true
-  } catch {
-    return false
-  }
-}
 
 function parseCosto(v) {
   const n = Number(v)
@@ -31,7 +19,7 @@ const COLS = 'id, nombre, costo_despacho, activo, meal_prep, cocinera'
  */
 router.get('/', async (req, res, next) => {
   try {
-    const verTodos = req.query.todos === 'true' && hasValidToken(req)
+    const verTodos = req.query.todos === 'true' && isAdminToken(req)
     let sql
     if (verTodos) {
       sql = `SELECT ${COLS} FROM comunas ORDER BY nombre ASC`
@@ -52,7 +40,7 @@ router.get('/', async (req, res, next) => {
  * POST /api/comunas  (protegido) — crea o actualiza por nombre (upsert).
  * Body: { nombre, costo_despacho, activo }
  */
-router.post('/', authJWT, async (req, res, next) => {
+router.post('/', requireAdmin, async (req, res, next) => {
   try {
     const { nombre, costo_despacho, activo, meal_prep, cocinera } = req.body || {}
     const nom = String(nombre || '').trim()
@@ -78,7 +66,7 @@ router.post('/', authJWT, async (req, res, next) => {
 /**
  * PUT /api/comunas/:id  (protegido) — edita nombre, costo y/o estado.
  */
-router.put('/:id', authJWT, async (req, res, next) => {
+router.put('/:id', requireAdmin, async (req, res, next) => {
   try {
     const { nombre, costo_despacho, activo, meal_prep, cocinera } = req.body || {}
     const sets = []
@@ -125,7 +113,7 @@ router.put('/:id', authJWT, async (req, res, next) => {
 /**
  * DELETE /api/comunas/:id  (protegido)
  */
-router.delete('/:id', authJWT, async (req, res, next) => {
+router.delete('/:id', requireAdmin, async (req, res, next) => {
   try {
     const { rowCount } = await query('DELETE FROM comunas WHERE id = $1', [req.params.id])
     if (!rowCount) return res.status(404).json({ error: 'Comuna no encontrada.' })

@@ -1,5 +1,5 @@
 import { Router } from 'express'
-import { authJWT } from '../middleware/authJWT.js'
+import { requireAdmin } from '../middleware/authJWT.js'
 import { presignUpload, presignGet, storageConfigured } from '../services/storage.js'
 
 const router = Router()
@@ -22,7 +22,7 @@ router.get('/file', async (req, res, next) => {
 })
 
 /** GET /api/uploads/config (protegido) — ¿hay almacenamiento configurado? */
-router.get('/config', authJWT, (req, res) => {
+router.get('/config', requireAdmin, (req, res) => {
   res.json({ enabled: storageConfigured() })
 })
 
@@ -31,7 +31,7 @@ router.get('/config', authJWT, (req, res) => {
  * Body: { filename, contentType, prefix? }
  * Devuelve { uploadUrl, publicUrl } para subir el archivo directo al bucket.
  */
-router.post('/presign', authJWT, async (req, res, next) => {
+router.post('/presign', requireAdmin, async (req, res, next) => {
   try {
     const { filename, contentType, prefix } = req.body || {}
     if (!contentType) return res.status(400).json({ error: 'contentType es obligatorio.' })

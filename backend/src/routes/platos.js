@@ -1,21 +1,8 @@
 import { Router } from 'express'
-import jwt from 'jsonwebtoken'
 import { query, withTransaction } from '../models/index.js'
-import { authJWT } from '../middleware/authJWT.js'
+import { requireAdmin, isAdminToken } from '../middleware/authJWT.js'
 
 const router = Router()
-
-// Auth opcional: devuelve true si llega un Bearer token válido (sin bloquear).
-function hasValidToken(req) {
-  const [scheme, token] = (req.headers.authorization || '').split(' ')
-  if (scheme !== 'Bearer' || !token) return false
-  try {
-    jwt.verify(token, process.env.JWT_SECRET)
-    return true
-  } catch {
-    return false
-  }
-}
 
 // SELECT de platos con sus ingredientes agregados como JSON.
 function selectPlatosSQL(whereSql = '') {
@@ -50,7 +37,7 @@ async function getPlatoConIngredientes(id) {
  */
 router.get('/', async (req, res, next) => {
   try {
-    const incluirInactivos = req.query.incluir_inactivos === 'true' && hasValidToken(req)
+    const incluirInactivos = req.query.incluir_inactivos === 'true' && isAdminToken(req)
     const whereSql = incluirInactivos ? '' : 'WHERE p.activo = true'
     const { rows } = await query(selectPlatosSQL(whereSql))
     return res.json({ platos: rows, count: rows.length })
@@ -116,7 +103,7 @@ router.get('/ingredientes', async (req, res, next) => {
  * POST /api/platos  (protegido)
  * Body: { nombre, descripcion, categoria, activo, ingredientes: [{nombre,cantidad,unidad}] }
  */
-router.post('/', authJWT, async (req, res, next) => {
+router.post('/', requireAdmin, async (req, res, next) => {
   try {
     const { nombre, descripcion, categoria, imagen, activo, ingredientes } = req.body || {}
     if (!nombre) return res.status(400).json({ error: 'El nombre del plato es obligatorio.' })
@@ -153,7 +140,7 @@ router.post('/', authJWT, async (req, res, next) => {
  * PUT /api/platos/:id  (protegido)
  * Actualiza el plato. Si se envía `ingredientes`, reemplaza la lista completa.
  */
-router.put('/:id', authJWT, async (req, res, next) => {
+router.put('/:id', requireAdmin, async (req, res, next) => {
   try {
     const { id } = req.params
     const { nombre, descripcion, categoria, imagen, activo, ingredientes } = req.body || {}
@@ -199,7 +186,7 @@ router.put('/:id', authJWT, async (req, res, next) => {
 /**
  * DELETE /api/platos/:id  (protegido) — soft delete (activo = false).
  */
-router.delete('/:id', authJWT, async (req, res, next) => {
+router.delete('/:id', requireAdmin, async (req, res, next) => {
   try {
     const { rows } = await query(
       'UPDATE platos SET activo = false WHERE id = $1 RETURNING id',
