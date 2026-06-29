@@ -44,7 +44,10 @@ const INCLUYE = [
   'Movilización de la cocinera (según tu comuna)',
 ]
 
-const NO_INCLUYE = ['Los ingredientes (los compras tú con tu lista de compras) y tu cocina']
+const NO_INCLUYE = [
+  'Los ingredientes (los compras tú con tu lista de compras) y tu cocina',
+  'Los aliños y condimentos',
+]
 
 function PasoCard({ paso, index }) {
   return (
