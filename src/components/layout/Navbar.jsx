@@ -113,13 +113,9 @@ export default function Navbar() {
           </ul>
 
           {/* Desktop CTA */}
+          {/* "Mi cuenta" se oculta a propósito: el portal es solo para clientes
+              exclusivos que reciben el enlace directo (/cuenta). */}
           <div className="hidden lg:flex items-center gap-4">
-            <Link
-              to="/cuenta"
-              className="flex items-center gap-1.5 text-sm font-medium text-espresso/80 hover:text-terracotta transition-colors"
-            >
-              <span aria-hidden="true">👤</span> Mi cuenta
-            </Link>
             <motion.button
               onClick={openChatBot}
               className="flex items-center gap-2 bg-[#25D366] text-white text-sm font-medium px-5 py-2.5 rounded-full hover:bg-[#1ebe57] transition-colors shadow-[0_2px_12px_rgba(37,211,102,0.35)]"
@@ -206,12 +202,8 @@ export default function Navbar() {
                   <WhatsAppSmall className="w-5 h-5" />
                   Hacer pedido por WhatsApp
                 </button>
-                <Link
-                  to="/cuenta"
-                  className="mt-4 flex items-center gap-2 justify-center text-espresso hover:text-terracotta font-display text-xl"
-                >
-                  <span aria-hidden="true">👤</span> Mi cuenta
-                </Link>
+                {/* "Mi cuenta" oculto: el portal es solo para clientes exclusivos
+                    que reciben el enlace directo (/cuenta). */}
               </motion.div>
             </div>
           </motion.div>
