@@ -117,7 +117,7 @@ export default function AdminProductos() {
     setForm({
       id: p.id,
       nombre: p.nombre || '',
-      precio: p.precio ?? '',
+      precio: p.precio != null ? Number(p.precio) : '',
       formato: p.formato || '',
       porciones: p.porciones || '',
       descripcion: p.descripcion || '',
@@ -175,7 +175,7 @@ export default function AdminProductos() {
           <div className="grid grid-cols-2 gap-3 mb-3">
             <label className="block text-sm">
               <span className="block text-espresso font-medium mb-1">Precio ($)</span>
-              <input type="number" min={0} className={inputCls} value={form.precio} onChange={(e) => setCampo('precio', e.target.value)} />
+              <input type="number" min={0} step="any" className={inputCls} value={form.precio} onChange={(e) => setCampo('precio', e.target.value)} />
             </label>
             <label className="block text-sm">
               <span className="block text-espresso font-medium mb-1">Cantidad / formato</span>
