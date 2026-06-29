@@ -98,8 +98,11 @@ export default function HornearEnCasa() {
             <div className="text-center mb-12">
               <SectionLabel>Cómo los disfrutas</SectionLabel>
               <h2 id="modos-heading" className="section-title text-espresso mt-4">
-                Dos formas, <em className="not-italic text-amber">un mismo sabor casero.</em>
+                Dos formas, <em className="not-italic text-amber">el mismo sabor.</em>
               </h2>
+              <p className="font-body text-warm-gray text-base md:text-lg mt-4">
+                Lo saludable ya va listo.
+              </p>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               {MODOS.map((m, i) => (
