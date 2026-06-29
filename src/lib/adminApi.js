@@ -247,13 +247,30 @@ export function editarServicioConfig(servicio, data) {
   return apiFetch(`/config/${encodeURIComponent(servicio)}`, { method: 'PUT', body: data })
 }
 
-// Etiquetas de estado para la UI.
-export const ESTADOS = [
-  { value: 'solicitud_recibida', label: 'Solicitud recibida' },
-  { value: 'pagado', label: 'Pagado' },
-  { value: 'en_preparacion', label: 'En preparación' },
-  { value: 'entregado', label: 'Entregado' },
-]
+// Etiquetas de todos los estados posibles.
+export const ESTADOS_LABELS = {
+  solicitud_recibida: 'Solicitud recibida',
+  pagado: 'Pagado',
+  en_preparacion: 'En preparación',
+  en_delivery: 'En delivery',
+  entregado: 'Entregado',
+}
+
+// Estados disponibles POR SERVICIO (en orden de avance):
+// - Meal Prep añade "En delivery".
+// - Cocinera a Domicilio no tiene "En preparación" ni "En delivery".
+const ESTADOS_POR_SERVICIO = {
+  meal_prep: ['solicitud_recibida', 'pagado', 'en_preparacion', 'en_delivery', 'entregado'],
+  cocinera: ['solicitud_recibida', 'pagado', 'entregado'],
+}
+
+export function estadosDeServicio(servicio) {
+  const vals = ESTADOS_POR_SERVICIO[servicio] || ESTADOS_POR_SERVICIO.meal_prep
+  return vals.map((value) => ({ value, label: ESTADOS_LABELS[value] }))
+}
+
+// Lista completa (todos los estados) para vistas no acotadas a un servicio.
+export const ESTADOS = Object.entries(ESTADOS_LABELS).map(([value, label]) => ({ value, label }))
 
 export const SERVICIOS = {
   meal_prep: 'Meal Prep',

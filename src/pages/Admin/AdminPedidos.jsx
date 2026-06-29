@@ -10,7 +10,8 @@ import {
   reenviarCorreo,
   getPlatos,
   getComunas,
-  ESTADOS,
+  estadosDeServicio,
+  ESTADOS_LABELS,
   SERVICIOS,
   ApiError,
 } from '../../lib/adminApi'
@@ -104,6 +105,15 @@ export default function AdminPedidos() {
     }
   }
 
+  // Estados disponibles para este servicio (Meal Prep / Cocinera).
+  const estadosServicio = estadosDeServicio(servicio)
+  // Opciones del selector de una fila: incluye el estado actual aunque ya no
+  // pertenezca al servicio (p. ej. pedidos antiguos en "en_preparacion").
+  const opcionesEstado = (estadoActual) =>
+    estadosServicio.some((e) => e.value === estadoActual)
+      ? estadosServicio
+      : [{ value: estadoActual, label: ESTADOS_LABELS[estadoActual] || estadoActual }, ...estadosServicio]
+
   const onReenviar = async (pedido) => {
     setMsg('')
     setError('')
@@ -163,7 +173,7 @@ export default function AdminPedidos() {
             className="rounded-xl border border-espresso/15 bg-background-surface px-3 py-2 text-espresso"
           >
             <option value="">Todos</option>
-            {ESTADOS.map((e) => (
+            {estadosServicio.map((e) => (
               <option key={e.value} value={e.value}>
                 {e.label}
               </option>
@@ -248,7 +258,7 @@ export default function AdminPedidos() {
                         onChange={(e) => onCambiarEstado(p, e.target.value)}
                         className="rounded-lg border border-espresso/15 bg-background px-2 py-1.5 text-espresso text-xs disabled:opacity-50"
                       >
-                        {ESTADOS.map((e) => (
+                        {opcionesEstado(p.estado).map((e) => (
                           <option key={e.value} value={e.value}>
                             {e.label}
                           </option>

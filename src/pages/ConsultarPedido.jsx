@@ -10,6 +10,7 @@ const ESTADOS = {
   solicitud_recibida: { label: 'Solicitud recibida', sub: 'Esperando la transferencia para confirmar.', ok: false },
   pagado: { label: 'Pago confirmado', sub: '¡Listo! Tu pedido está confirmado.', ok: true },
   en_preparacion: { label: 'En preparación', sub: 'Mamá está manos a la obra. 👩‍🍳', ok: true },
+  en_delivery: { label: 'En delivery', sub: 'Tu pedido va en camino. 🚗', ok: true },
   entregado: { label: 'Entregado', sub: '¡Que lo disfrutes! ❤️', ok: true },
 }
 

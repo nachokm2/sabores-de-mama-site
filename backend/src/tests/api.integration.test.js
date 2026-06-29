@@ -252,6 +252,18 @@ describe('PATCH /api/pedidos/:id/estado', () => {
       .send({ estado: 'inexistente' })
     expect(res.status).toBe(400)
   })
+
+  it('acepta el nuevo estado "en_delivery" (Meal Prep)', async () => {
+    const id = await crearPedidoDirecto()
+    const token = await login()
+    const res = await request(app)
+      .patch(`/api/pedidos/${id}/estado`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({ estado: 'en_delivery' })
+    expect(res.status).toBe(200)
+    expect(res.body.pedido.estado).toBe('en_delivery')
+    expect(sendEstadoEmail).toHaveBeenCalledWith(expect.objectContaining({ id }), 'en_delivery')
+  })
 })
 
 describe('Rate limiter (10 req/min por IP en /api/pedidos)', () => {

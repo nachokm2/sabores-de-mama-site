@@ -299,6 +299,18 @@ const TEMPLATES = {
       }),
     }
   },
+  en_delivery(pedido) {
+    const nombre = esc((pedido.nombre || '').split(' ')[0] || 'hola')
+    return {
+      subject: 'Tu pedido va en camino 🚗',
+      html: baseTemplate({
+        titulo: 'En delivery',
+        intro: `¡${nombre}, tu pedido va en camino! 🚗 Pronto llegará a tu dirección${pedido.comuna ? ` en <strong>${esc(pedido.comuna)}</strong>` : ''}.`,
+        bodyHtml: resumenPedidoHtml(pedido),
+        footerNota: 'Mantén tu teléfono a mano por si el repartidor necesita contactarte.',
+      }),
+    }
+  },
   entregado(pedido) {
     const nombre = esc((pedido.nombre || '').split(' ')[0] || 'hola')
     return {

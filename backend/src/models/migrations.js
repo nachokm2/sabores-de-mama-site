@@ -233,6 +233,9 @@ export async function runMigrations() {
   const client = await pool.connect()
   try {
     await client.query(SQL)
+    // Nuevo estado "en_delivery" (Meal Prep). Va aparte porque ALTER TYPE ...
+    // ADD VALUE no puede ejecutarse dentro de la transacción que crea el tipo.
+    await client.query("ALTER TYPE estado_pedido ADD VALUE IF NOT EXISTS 'en_delivery'")
     await seedComunas(client)
     await seedAdmin(client)
     console.log('[migrate] Migraciones aplicadas correctamente.')

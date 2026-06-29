@@ -12,6 +12,7 @@ const ESTADOS = {
   solicitud_recibida: { label: 'Solicitud recibida', ok: false },
   pagado: { label: 'Pago confirmado', ok: true },
   en_preparacion: { label: 'En preparación', ok: true },
+  en_delivery: { label: 'En delivery', ok: true },
   entregado: { label: 'Entregado', ok: true },
 }
 const SERVICIOS = { meal_prep: 'Meal Prep', cocinera: 'Cocinera a Domicilio' }
