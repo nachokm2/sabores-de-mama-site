@@ -119,12 +119,11 @@ export default function MealPrep() {
               La cocina de mamá, <em className="not-italic text-amber">con tus ingredientes.</em>
             </h2>
             <p className="font-body text-warm-gray text-base md:text-lg leading-relaxed">
-              El Meal Prep es ideal si quieres comida casera lista para la semana sin pasar
-              horas en la cocina. <strong className="text-espresso">Tú eliges y compras los ingredientes</strong> que
-              prefieras y se los envías a mamá. Ella los prepara con dedicación, los
-              <strong className="text-espresso"> envasa al vacío</strong> para que conserven su frescura y te los
-              despacha a tu domicilio. Como los ingredientes los pones tú, solo pagas por la
-              preparación y el despacho.
+              Eliges los platos que quieres para la semana y nosotros te enviamos la
+              <strong className="text-espresso"> lista exacta de ingredientes</strong>. Cuando los
+              recibimos, cocinamos cada preparación, la porcionamos, la
+              <strong className="text-espresso"> sellamos al vacío</strong> y te la entregamos
+              lista para disfrutar.
             </p>
           </div>
         </section>
