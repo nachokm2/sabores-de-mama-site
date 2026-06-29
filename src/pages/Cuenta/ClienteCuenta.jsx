@@ -142,13 +142,24 @@ export default function ClienteCuenta() {
           {error && <div className="mb-4 text-sm text-primary-700 bg-primary-50 border border-primary-200 rounded-lg px-4 py-2">{error}</div>}
 
           {/* CTA agendar */}
-          <div className="bg-amber/[0.06] border border-amber/30 rounded-2xl p-5 mb-8 flex items-center justify-between gap-4 flex-wrap">
+          <div className="bg-amber/[0.06] border border-amber/30 rounded-2xl p-5 mb-4 flex items-center justify-between gap-4 flex-wrap">
             <div>
               <p className="font-display text-espresso font-bold">¿Quieres agendar una Cocinera a Domicilio?</p>
               <p className="text-sm text-warm-gray">Elige tus platos y fecha; quedará asociada a tu cuenta.</p>
             </div>
             <button onClick={() => navigate('/cocinera-a-domicilio')} className="bg-terracotta text-ivory font-semibold rounded-full px-5 py-2.5 text-sm hover:bg-ember transition-colors whitespace-nowrap">
               Agendar ahora
+            </button>
+          </div>
+
+          {/* CTA consultar lista de compras */}
+          <div className="bg-background-surface border border-espresso/10 rounded-2xl p-5 mb-8 flex items-center justify-between gap-4 flex-wrap">
+            <div>
+              <p className="font-display text-espresso font-bold">Planifica tus compras</p>
+              <p className="text-sm text-warm-gray">Elige platos y cuántas personas; te generamos la lista de ingredientes.</p>
+            </div>
+            <button onClick={() => navigate('/cuenta/lista')} className="border border-terracotta text-terracotta font-semibold rounded-full px-5 py-2.5 text-sm hover:bg-amber/10 transition-colors whitespace-nowrap">
+              Consultar lista
             </button>
           </div>
 

@@ -24,6 +24,7 @@ const ClienteRegistro  = lazy(() => import('./pages/Cuenta/ClienteRegistro'))
 const ClienteRecuperar = lazy(() => import('./pages/Cuenta/ClienteRecuperar'))
 const ClienteReset     = lazy(() => import('./pages/Cuenta/ClienteReset'))
 const ClienteCuenta    = lazy(() => import('./pages/Cuenta/ClienteCuenta'))
+const ClienteLista     = lazy(() => import('./pages/Cuenta/ClienteListaCompras'))
 
 // ── Panel admin (chunks aparte; no se cargan en el sitio público) ──
 import PrivateRoute   from './components/admin/PrivateRoute'
@@ -116,6 +117,7 @@ function AppContent({ lenisRef }) {
         <Route path="/cuenta/reset"     element={<ClienteReset />} />
         <Route element={<ClientePrivateRoute />}>
           <Route path="/cuenta"         element={<ClienteCuenta />} />
+          <Route path="/cuenta/lista"   element={<ClienteLista />} />
         </Route>
 
         {/* ── Panel admin ── */}
