@@ -5,7 +5,7 @@ import { registro, ApiError } from '../../lib/clienteApi'
 
 export default function ClienteRegistro() {
   const navigate = useNavigate()
-  const [form, setForm] = useState({ nombre: '', email: '', telefono: '', password: '' })
+  const [form, setForm] = useState({ nombre: '', email: '', telefono: '', direccion: '', password: '' })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
@@ -20,6 +20,7 @@ export default function ClienteRegistro() {
         nombre: form.nombre.trim(),
         email: form.email.trim(),
         telefono: form.telefono.trim() || null,
+        direccion: form.direccion.trim(),
         password: form.password,
       })
       navigate('/cuenta', { replace: true })
@@ -44,6 +45,10 @@ export default function ClienteRegistro() {
         <label className="block mb-3 text-sm">
           <span className="block text-espresso font-medium mb-1.5">Teléfono <span className="text-warm-gray font-normal">(opcional)</span></span>
           <input className={cuentaInputCls} value={form.telefono} onChange={(e) => set('telefono', e.target.value)} placeholder="+56 9 ..." />
+        </label>
+        <label className="block mb-3 text-sm">
+          <span className="block text-espresso font-medium mb-1.5">Dirección</span>
+          <input className={cuentaInputCls} value={form.direccion} onChange={(e) => set('direccion', e.target.value)} placeholder="Calle, número, comuna" required />
         </label>
         <label className="block mb-4 text-sm">
           <span className="block text-espresso font-medium mb-1.5">Contraseña <span className="text-warm-gray font-normal">(mín. 6)</span></span>

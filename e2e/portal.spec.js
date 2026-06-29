@@ -8,6 +8,7 @@ function nuevoCliente() {
     nombre: 'Cliente E2E',
     email: `cliente.${Date.now()}.${n}@example.com`,
     telefono: '+56900000000',
+    direccion: 'Av. Siempre Viva 742, Ñuñoa',
     password: 'secreto123',
   }
 }
@@ -17,6 +18,7 @@ async function registrarPorUI(page, c) {
   await page.getByLabel(/Nombre/).fill(c.nombre)
   await page.getByLabel(/Email/).fill(c.email)
   await page.getByLabel(/Teléfono/).fill(c.telefono)
+  await page.getByLabel(/Dirección/).fill(c.direccion)
   await page.getByLabel(/Contraseña/).fill(c.password)
   await page.getByRole('button', { name: /Crear cuenta/ }).click()
   await expect(page).toHaveURL(/\/cuenta$/)

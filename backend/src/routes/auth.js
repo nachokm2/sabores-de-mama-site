@@ -18,7 +18,14 @@ function signToken(user) {
 
 // Forma pública del usuario (sin password_hash ni tokens).
 function publicUser(u) {
-  return { id: u.id, email: u.email, nombre: u.nombre, telefono: u.telefono || null, rol: u.rol }
+  return {
+    id: u.id,
+    email: u.email,
+    nombre: u.nombre,
+    telefono: u.telefono || null,
+    direccion: u.direccion || null,
+    rol: u.rol,
+  }
 }
 
 const emailNorm = (e) => String(e || '').toLowerCase().trim()
@@ -33,7 +40,7 @@ router.post('/login', async (req, res, next) => {
       return res.status(400).json({ error: 'Email y password son obligatorios.' })
     }
     const { rows } = await query(
-      'SELECT id, email, password_hash, nombre, telefono, rol FROM admin_users WHERE email = $1',
+      'SELECT id, email, password_hash, nombre, telefono, direccion, rol FROM admin_users WHERE email = $1',
       [emailNorm(email)]
     )
     const user = rows[0]
@@ -48,11 +55,11 @@ router.post('/login', async (req, res, next) => {
 
 /**
  * POST /api/auth/registro  (público) — crea una cuenta de CLIENTE.
- * Body: { nombre, email, password, telefono? }
+ * Body: { nombre, email, password, telefono?, direccion? }
  */
 router.post('/registro', async (req, res, next) => {
   try {
-    const { nombre, email, password, telefono } = req.body || {}
+    const { nombre, email, password, telefono, direccion } = req.body || {}
     if (!nombre || !email || !password) {
       return res.status(400).json({ error: 'Nombre, email y contraseña son obligatorios.' })
     }
@@ -66,10 +73,10 @@ router.post('/registro', async (req, res, next) => {
     }
     const hash = await bcrypt.hash(password, 10)
     const { rows } = await query(
-      `INSERT INTO admin_users (email, password_hash, nombre, telefono, rol)
-       VALUES ($1, $2, $3, $4, 'cliente')
-       RETURNING id, email, nombre, telefono, rol`,
-      [correo, hash, String(nombre).trim(), telefono || null]
+      `INSERT INTO admin_users (email, password_hash, nombre, telefono, direccion, rol)
+       VALUES ($1, $2, $3, $4, $5, 'cliente')
+       RETURNING id, email, nombre, telefono, direccion, rol`,
+      [correo, hash, String(nombre).trim(), telefono || null, (direccion && String(direccion).trim()) || null]
     )
     const user = rows[0]
     return res.status(201).json({ token: signToken(user), user: publicUser(user) })
@@ -139,7 +146,7 @@ router.post('/reset', async (req, res, next) => {
 router.get('/perfil', authJWT, async (req, res, next) => {
   try {
     const { rows } = await query(
-      'SELECT id, email, nombre, telefono, rol FROM admin_users WHERE id = $1',
+      'SELECT id, email, nombre, telefono, direccion, rol FROM admin_users WHERE id = $1',
       [req.admin.sub]
     )
     if (!rows[0]) return res.status(404).json({ error: 'Usuario no encontrado.' })
@@ -154,7 +161,7 @@ router.get('/perfil', authJWT, async (req, res, next) => {
  */
 router.patch('/perfil', authJWT, async (req, res, next) => {
   try {
-    const { nombre, telefono, password } = req.body || {}
+    const { nombre, telefono, direccion, password } = req.body || {}
     const sets = []
     const params = []
     if (nombre !== undefined) {
@@ -164,6 +171,10 @@ router.patch('/perfil', authJWT, async (req, res, next) => {
     if (telefono !== undefined) {
       params.push(telefono || null)
       sets.push(`telefono = $${params.length}`)
+    }
+    if (direccion !== undefined) {
+      params.push((direccion && String(direccion).trim()) || null)
+      sets.push(`direccion = $${params.length}`)
     }
     if (password) {
       if (String(password).length < 6) {
@@ -177,7 +188,7 @@ router.patch('/perfil', authJWT, async (req, res, next) => {
     params.push(req.admin.sub)
     const { rows } = await query(
       `UPDATE admin_users SET ${sets.join(', ')} WHERE id = $${params.length}
-       RETURNING id, email, nombre, telefono, rol`,
+       RETURNING id, email, nombre, telefono, direccion, rol`,
       params
     )
     if (!rows[0]) return res.status(404).json({ error: 'Usuario no encontrado.' })

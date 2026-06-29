@@ -66,7 +66,7 @@ export default function ClienteCuenta() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [msg, setMsg] = useState('')
-  const [perfil, setPerfil] = useState({ nombre: '', telefono: '', password: '' })
+  const [perfil, setPerfil] = useState({ nombre: '', telefono: '', direccion: '', password: '' })
   const [savingPerfil, setSavingPerfil] = useState(false)
 
   const salir = () => {
@@ -80,7 +80,7 @@ export default function ClienteCuenta() {
       try {
         const [p, rs] = await Promise.all([getPerfil(), getMisReservas()])
         if (!active) return
-        setPerfil({ nombre: p.user?.nombre || '', telefono: p.user?.telefono || '', password: '' })
+        setPerfil({ nombre: p.user?.nombre || '', telefono: p.user?.telefono || '', direccion: p.user?.direccion || '', password: '' })
         setReservas(rs.pedidos || [])
       } catch (err) {
         if (err instanceof ApiError && err.status === 401) return salir()
@@ -101,7 +101,11 @@ export default function ClienteCuenta() {
     setError('')
     setMsg('')
     try {
-      const body = { nombre: perfil.nombre.trim(), telefono: perfil.telefono.trim() || null }
+      const body = {
+        nombre: perfil.nombre.trim(),
+        telefono: perfil.telefono.trim() || null,
+        direccion: perfil.direccion.trim() || null,
+      }
       if (perfil.password) body.password = perfil.password
       await editarPerfil(body)
       setPerfil((p) => ({ ...p, password: '' }))
@@ -186,6 +190,10 @@ export default function ClienteCuenta() {
                     <label className="text-sm">
                       <span className="block text-espresso font-medium mb-1.5">Teléfono</span>
                       <input className={cuentaInputCls} value={perfil.telefono} onChange={(e) => setPerfil((p) => ({ ...p, telefono: e.target.value }))} />
+                    </label>
+                    <label className="text-sm sm:col-span-2">
+                      <span className="block text-espresso font-medium mb-1.5">Dirección</span>
+                      <input className={cuentaInputCls} value={perfil.direccion} onChange={(e) => setPerfil((p) => ({ ...p, direccion: e.target.value }))} placeholder="Calle, número, comuna" />
                     </label>
                     <label className="text-sm">
                       <span className="block text-espresso font-medium mb-1.5">Email</span>

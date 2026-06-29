@@ -85,6 +85,39 @@ describe('Auth / JWT', () => {
   })
 })
 
+describe('Registro y perfil de cliente (dirección)', () => {
+  it('el registro guarda la dirección y la devuelve en el usuario', async () => {
+    const res = await request(app).post('/api/auth/registro').send({
+      nombre: 'Cliente Dir',
+      email: 'cliente.dir@example.com',
+      password: 'secreto123',
+      telefono: '+56900000000',
+      direccion: 'Av. Siempre Viva 742, Ñuñoa',
+    })
+    expect(res.status).toBe(201)
+    expect(res.body.user.rol).toBe('cliente')
+    expect(res.body.user.direccion).toBe('Av. Siempre Viva 742, Ñuñoa')
+
+    const { rows } = await pool.query('SELECT direccion FROM admin_users WHERE email = $1', ['cliente.dir@example.com'])
+    expect(rows[0].direccion).toBe('Av. Siempre Viva 742, Ñuñoa')
+  })
+
+  it('PATCH /api/auth/perfil actualiza la dirección', async () => {
+    const reg = await request(app).post('/api/auth/registro').send({
+      nombre: 'Cliente Dir2',
+      email: 'cliente.dir2@example.com',
+      password: 'secreto123',
+    })
+    const token = reg.body.token
+    const res = await request(app)
+      .patch('/api/auth/perfil')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ direccion: 'Nueva 123, Maipú' })
+    expect(res.status).toBe(200)
+    expect(res.body.user.direccion).toBe('Nueva 123, Maipú')
+  })
+})
+
 describe('POST /api/pedidos', () => {
   it('valida los campos obligatorios (400)', async () => {
     const res = await request(app).post('/api/pedidos').send({})

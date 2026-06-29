@@ -137,9 +137,10 @@ ALTER TABLE productos_hornear ADD COLUMN IF NOT EXISTS formato   VARCHAR(120);
 ALTER TABLE productos_hornear ADD COLUMN IF NOT EXISTS porciones VARCHAR(80);
 -- Foto del plato.
 ALTER TABLE platos ADD COLUMN IF NOT EXISTS imagen TEXT;
--- Usuarios: rol (admin|cliente), teléfono y recuperación de contraseña.
+-- Usuarios: rol (admin|cliente), teléfono, dirección y recuperación de contraseña.
 ALTER TABLE admin_users ADD COLUMN IF NOT EXISTS rol VARCHAR(20) NOT NULL DEFAULT 'admin';
 ALTER TABLE admin_users ADD COLUMN IF NOT EXISTS telefono VARCHAR(50);
+ALTER TABLE admin_users ADD COLUMN IF NOT EXISTS direccion VARCHAR(255);
 ALTER TABLE admin_users ADD COLUMN IF NOT EXISTS reset_token VARCHAR(255);
 ALTER TABLE admin_users ADD COLUMN IF NOT EXISTS reset_token_exp TIMESTAMPTZ;
 -- Vincula una reserva/pedido a la cuenta del cliente (null = pedido público).

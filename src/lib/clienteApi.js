@@ -78,10 +78,10 @@ async function apiFetch(path, { method = 'GET', body, auth = true } = {}) {
 }
 
 // ── Auth ──────────────────────────────────────────────────────────────────
-export async function registro({ nombre, email, password, telefono }) {
+export async function registro({ nombre, email, password, telefono, direccion }) {
   const data = await apiFetch('/auth/registro', {
     method: 'POST',
-    body: { nombre, email, password, telefono },
+    body: { nombre, email, password, telefono, direccion },
     auth: false,
   })
   if (data?.token) setToken(data.token)
