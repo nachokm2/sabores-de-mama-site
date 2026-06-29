@@ -8,6 +8,7 @@ const FOOTER_LINKS = [
   { label: 'Nosotros',  to: '/nosotros' },
   { label: 'Galería',   to: '/galeria' },
   { label: 'Consultar pedido', to: '/consultar-pedido' },
+  { label: 'Mi cuenta', to: '/cuenta' },
   { label: 'Contacto',  to: '/contacto' },
 ]
 

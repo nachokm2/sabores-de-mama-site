@@ -33,11 +33,21 @@ export class ApiError extends Error {
 }
 
 async function request(path, { method = 'GET', body } = {}) {
+  const headers = {}
+  if (body) headers['Content-Type'] = 'application/json'
+  // Si hay un cliente logueado, adjunta su token para vincular el pedido a su
+  // cuenta (el backend lo usa de forma opcional en POST /pedidos).
+  try {
+    const t = localStorage.getItem('sdm_cliente_token')
+    if (t) headers.Authorization = `Bearer ${t}`
+  } catch {
+    /* sin localStorage */
+  }
   let res
   try {
     res = await fetch(`${API_BASE}${path}`, {
       method,
-      headers: body ? { 'Content-Type': 'application/json' } : undefined,
+      headers: Object.keys(headers).length ? headers : undefined,
       body: body ? JSON.stringify(body) : undefined,
     })
   } catch {

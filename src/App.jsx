@@ -17,6 +17,14 @@ const MealPrepFlow  = lazy(() => import('./pages/MealPrepFlow'))
 const CocineraFlow  = lazy(() => import('./pages/CocineraFlow'))
 const StepPayment   = lazy(() => import('./pages/StepPayment'))
 
+// ── Portal de clientes (chunks aparte) ──
+import ClientePrivateRoute from './components/cuenta/ClientePrivateRoute'
+const ClienteLogin     = lazy(() => import('./pages/Cuenta/ClienteLogin'))
+const ClienteRegistro  = lazy(() => import('./pages/Cuenta/ClienteRegistro'))
+const ClienteRecuperar = lazy(() => import('./pages/Cuenta/ClienteRecuperar'))
+const ClienteReset     = lazy(() => import('./pages/Cuenta/ClienteReset'))
+const ClienteCuenta    = lazy(() => import('./pages/Cuenta/ClienteCuenta'))
+
 // ── Panel admin (chunks aparte; no se cargan en el sitio público) ──
 import PrivateRoute   from './components/admin/PrivateRoute'
 const AdminLogin     = lazy(() => import('./pages/Admin/AdminLogin'))
@@ -98,6 +106,15 @@ function AppContent({ lenisRef }) {
         <Route path="/meal-prep"             element={<MealPrepFlow />} />
         <Route path="/cocinera-a-domicilio"  element={<CocineraFlow />} />
         <Route path="/pago/:pedidoId"        element={<StepPayment />} />
+
+        {/* ── Portal de clientes ── */}
+        <Route path="/cuenta/login"     element={<ClienteLogin />} />
+        <Route path="/cuenta/registro"  element={<ClienteRegistro />} />
+        <Route path="/cuenta/recuperar" element={<ClienteRecuperar />} />
+        <Route path="/cuenta/reset"     element={<ClienteReset />} />
+        <Route element={<ClientePrivateRoute />}>
+          <Route path="/cuenta"         element={<ClienteCuenta />} />
+        </Route>
 
         {/* ── Panel admin ── */}
         <Route path="/admin"           element={<AdminIndex />} />
