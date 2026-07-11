@@ -106,11 +106,12 @@ describe('mailService', () => {
     expect(html).toContain('Carne molida')
   })
 
-  it('los 4 templates generan HTML válido sin errores', async () => {
+  it('todas las plantillas generan HTML válido sin errores', async () => {
     const asuntosEsperados = {
       solicitud_recibida: 'Sabores de Mamá — Recibimos tu pedido',
       pagado: '¡Tu pago fue confirmado! 🎉',
       en_preparacion: 'Tu pedido está en preparación',
+      en_delivery: 'Tu pedido va en camino 🚗',
       entregado: '¡Gracias por tu pedido! ❤️',
     }
     expect(ESTADOS_VALIDOS).toEqual(Object.keys(asuntosEsperados))

@@ -64,8 +64,20 @@ async function sendViaResend({ apiKey, from, to, subject, html }) {
       body: JSON.stringify({ from, to: [to], subject, html }),
       signal: controller.signal,
     })
-    const data = await res.json().catch(() => ({}))
-    if (!res.ok) throw new Error(data?.message || data?.name || `Resend HTTP ${res.status}`)
+    // Leemos el cuerpo como texto y lo intentamos parsear: así, ante un 4xx/5xx,
+    // el log muestra el motivo EXACTO de Resend (dominio no verificado, cuota, etc.)
+    // aunque la respuesta no sea JSON.
+    const bodyText = await res.text().catch(() => '')
+    let data = {}
+    try {
+      data = bodyText ? JSON.parse(bodyText) : {}
+    } catch {
+      /* respuesta no-JSON: se usa bodyText tal cual en el detalle */
+    }
+    if (!res.ok) {
+      const detalle = data?.message || data?.name || bodyText || `HTTP ${res.status}`
+      throw new Error(`Resend HTTP ${res.status}: ${detalle}`)
+    }
     return data?.id
   } finally {
     clearTimeout(timer)
