@@ -195,11 +195,13 @@ export default function MealPrep() {
             <div className="text-center mb-10">
               <SectionLabel>Cobertura y despacho</SectionLabel>
               <h2 id="cobertura-heading" className="section-title text-espresso mt-4 mb-4">
-                El despacho depende <em className="not-italic text-amber">de tu comuna.</em>
+                Despachamos con el mismo cuidado con el que{' '}
+                <em className="not-italic text-amber">cocinamos.</em>
               </h2>
               <p className="font-body text-warm-gray text-base max-w-xl mx-auto">
-                Llevamos tus platos a estas comunas del Gran Santiago. El valor del despacho se
-                ajusta según la distancia y queda incluido al momento de agendar.
+                Cada pedido viaja en cajas térmicas para conservar su temperatura y frescura.
+                Además, el vehículo está destinado exclusivamente al transporte de nuestras
+                preparaciones, para que recibas tu pedido tal como salió de nuestra cocina.
               </p>
             </div>
 
