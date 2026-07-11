@@ -7,20 +7,6 @@ import SectionLabel from '../components/ui/SectionLabel'
 import { DULCES_FAMILIAR, DULCES_SNACKS } from '../data/menu'
 import { WHATSAPP, getWhatsAppLink } from '../data/siteConfig'
 
-/* ── Dos formas de disfrutarlos ──────────────────────────────────────────── */
-const MODOS = [
-  {
-    icon: '🍰',
-    title: 'Listos para disfrutar',
-    text: 'Llegan ya horneados a tu casa. Solo abres, sirves y disfrutas un dulce casero cuando se te antoje.',
-  },
-  {
-    icon: '🔥',
-    title: 'Para hornear en casa',
-    text: 'Los terminas en tu propio horno y los sirves calentitos, con ese aroma y sabor de recién hecho que llena la casa.',
-  },
-]
-
 function DulceCard({ item, index }) {
   return (
     <motion.div
@@ -55,7 +41,7 @@ export default function HornearEnCasa() {
         <title>Healthy | Sabores de Mamá</title>
         <meta
           name="description"
-          content="Postres y galletas saludables hechos en casa: los recibes listos para disfrutar o para hornear en casa y tenerlos como recién hechos. Sin culpa, sin conservantes."
+          content="Postres y galletas saludables hechos en casa: los recibes listos para disfrutar, con ingredientes seleccionados. Sin culpa, sin conservantes."
         />
       </Helmet>
 
@@ -65,9 +51,9 @@ export default function HornearEnCasa() {
         {/* ── Hero ── */}
         <PageHero
           label="Healthy"
-          title="Postres y galletas,"
-          titleHighlight="como recién hechos."
-          subtitle="Dulces saludables hechos en casa: los recibes listos para disfrutar o para terminar en tu horno y servirlos calentitos, con ese aroma de recién horneado."
+          title="Dulces caseros,"
+          titleHighlight="elaborados con ingredientes seleccionados y listos para disfrutar."
+          subtitle="Dulces saludables hechos en casa: los recibes listos para disfrutar, con ingredientes seleccionados y sin conservantes."
           breadcrumb={[{ label: 'Inicio', href: '/' }, { label: 'Healthy', href: '/healthy' }]}
         >
           <button onClick={pedir} className="btn-whatsapp text-sm">
@@ -85,41 +71,10 @@ export default function HornearEnCasa() {
             </h2>
             <p className="font-body text-warm-gray text-base md:text-lg leading-relaxed mt-5">
               Postres y galletas preparados con ingredientes naturales y mucho cariño. Los
-              disfrutas tal cual o los terminas en tu horno para tenerlos como recién hechos.
+              recibes listos para disfrutar, cuando se te antoje.
               <strong className="text-espresso"> No necesitas aportar ingredientes</strong> y puedes agregarlos
               a cualquiera de tus servicios.
             </p>
-          </div>
-        </section>
-
-        {/* ── Dos formas de disfrutarlos ── */}
-        <section className="section-padding bg-cream" aria-labelledby="modos-heading">
-          <div className="container-site max-w-4xl">
-            <div className="text-center mb-12">
-              <SectionLabel>Cómo los disfrutas</SectionLabel>
-              <h2 id="modos-heading" className="section-title text-espresso mt-4">
-                Dos formas, <em className="not-italic text-amber">el mismo sabor.</em>
-              </h2>
-              <p className="font-body text-warm-gray text-base md:text-lg mt-4">
-                Lo saludable ya va listo.
-              </p>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-              {MODOS.map((m, i) => (
-                <motion.div
-                  key={m.title}
-                  className="bg-ivory border border-wheat/50 rounded-2xl p-6 text-center"
-                  initial={{ opacity: 0, y: 30 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true, margin: '-50px' }}
-                  transition={{ duration: 0.6, delay: i * 0.1 }}
-                >
-                  <span className="text-4xl mb-3 block" aria-hidden="true">{m.icon}</span>
-                  <h3 className="font-display text-espresso text-xl font-bold mb-2">{m.title}</h3>
-                  <p className="font-body text-warm-gray text-sm leading-relaxed">{m.text}</p>
-                </motion.div>
-              ))}
-            </div>
           </div>
         </section>
 
@@ -156,7 +111,7 @@ export default function HornearEnCasa() {
               ¿Se te antojó algo dulce?
             </h2>
             <p className="font-body text-warm-gray text-base mb-8">
-              Escríbenos por WhatsApp y coordinamos tus postres y galletas, listos para disfrutar o para hornear en casa.
+              Escríbenos por WhatsApp y coordinamos tus postres y galletas, listos para disfrutar.
             </p>
             <button onClick={pedir} className="btn-whatsapp">
               Pedir por WhatsApp

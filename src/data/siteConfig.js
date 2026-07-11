@@ -23,7 +23,7 @@ export const WHATSAPP = {
   menuMessage:    '¡Hola! Me interesa el menú. ¿Me puedes indicar disponibilidad?',
   orderMessage:   '¡Hola! Quiero hacer un pedido de: ',
   cocineraMessage: '¡Hola! Quiero agendar el servicio de Cocinera a Domicilio 👩‍🍳 para coordinar fecha y detalles.',
-  horneadosMessage: '¡Hola! Quiero pedir postres/galletas para hornear en casa 🍪 ¿Me cuentas disponibilidad?',
+  horneadosMessage: '¡Hola! Quiero pedir postres/galletas saludables, listos para disfrutar 🍪 ¿Me cuentas disponibilidad?',
 }
 
 export function getWhatsAppLink(message = WHATSAPP.defaultMessage) {
