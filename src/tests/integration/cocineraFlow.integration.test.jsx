@@ -70,8 +70,9 @@ describe('Integración · flujo completo Cocinera a Domicilio', () => {
     fireEvent.click((await screen.findByText('5 cupos')).closest('button'))
     fireEvent.click(continuar())
 
-    // Paso 3 · Selección de 5 platos
-    await screen.findByText('Pollo')
+    // Paso 3 · Selección de 5 platos (acordeones colapsados: se despliegan todos)
+    const headers = await screen.findAllByRole('button', { expanded: false })
+    headers.forEach((b) => fireEvent.click(b))
     DISH_NAMES.forEach((n) => fireEvent.click(screen.getByRole('button', { name: new RegExp(n) })))
     fireEvent.click(continuar())
 

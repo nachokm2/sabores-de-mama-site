@@ -62,7 +62,9 @@ async function step2to3() {
   fireEvent.click(continuar())
 }
 async function selectDishes() {
-  await screen.findByText('Pollo')
+  // Los platos están en acordeones colapsados por categoría: se despliegan todos.
+  const headers = await screen.findAllByRole('button', { expanded: false })
+  headers.forEach((b) => fireEvent.click(b))
   DISH_NAMES.forEach((n) => fireEvent.click(screen.getByRole('button', { name: new RegExp(n) })))
 }
 

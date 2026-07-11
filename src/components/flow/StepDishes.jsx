@@ -3,6 +3,17 @@ import { getPlatos, imagenUrl } from '../../lib/publicApi'
 
 const MAX = 5
 
+// Normaliza para búsqueda: minúsculas y sin tildes (acento-insensible).
+const norm = (s) =>
+  String(s || '')
+    .toLowerCase()
+    .replace(/[áàäâ]/g, 'a')
+    .replace(/[éèëê]/g, 'e')
+    .replace(/[íìïî]/g, 'i')
+    .replace(/[óòöô]/g, 'o')
+    .replace(/[úùüû]/g, 'u')
+    .replace(/ñ/g, 'n')
+
 function agrupar(platos) {
   const map = new Map()
   for (const p of platos) {
@@ -14,13 +25,17 @@ function agrupar(platos) {
 }
 
 /**
- * Paso 3 · Selección de platos. Carga los platos desde la API. Permite elegir
- * exactamente 5 (ni más ni menos para avanzar). Contador en tiempo real.
+ * Paso 3 · Selección de platos. Carga los platos desde la API y permite elegir
+ * exactamente 5. Para no abrumar con una lista larga, los platos se organizan en
+ * acordeones por categoría (colapsados por defecto) y hay un buscador por nombre
+ * que filtra y auto-despliega las categorías con coincidencias.
  */
 export default function StepDishes({ data, update, onNext, onBack }) {
   const [platos, setPlatos] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [query, setQuery] = useState('')
+  const [expanded, setExpanded] = useState(() => new Set())
 
   useEffect(() => {
     let active = true
@@ -38,6 +53,9 @@ export default function StepDishes({ data, update, onNext, onBack }) {
   const count = seleccionados.length
   const completo = count === MAX
 
+  const q = norm(query.trim())
+  const buscando = q.length > 0
+
   const toggle = (p) => {
     const isSel = seleccionados.includes(p.id)
     let nextIds
@@ -50,6 +68,25 @@ export default function StepDishes({ data, update, onNext, onBack }) {
       .map((x) => ({ id: x.id, nombre: x.nombre, descripcion: x.descripcion }))
     update({ platos: nextIds, platosDetalle: detalle })
   }
+
+  const toggleCat = (cat) =>
+    setExpanded((prev) => {
+      const next = new Set(prev)
+      next.has(cat) ? next.delete(cat) : next.add(cat)
+      return next
+    })
+
+  // Al buscar, se filtran los platos por nombre y se ocultan las categorías sin
+  // coincidencias; sin búsqueda se muestran todas las categorías (colapsables).
+  const gruposVisibles = useMemo(() => {
+    if (!buscando) return grupos
+    return grupos
+      .map(({ cat, items }) => ({ cat, items: items.filter((p) => norm(p.nombre).includes(q)) }))
+      .filter((g) => g.items.length > 0)
+  }, [grupos, buscando, q])
+
+  // Durante una búsqueda las categorías con resultados quedan siempre abiertas.
+  const isOpen = (cat) => buscando || expanded.has(cat)
 
   return (
     <div>
@@ -69,61 +106,112 @@ export default function StepDishes({ data, update, onNext, onBack }) {
         {count} de {MAX} platos seleccionados {completo && '✓'}
       </div>
 
+      {/* Buscador */}
+      <div className="relative mb-4">
+        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-warm-gray text-sm" aria-hidden="true">
+          🔍
+        </span>
+        <input
+          type="search"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="Buscar plato por nombre…"
+          aria-label="Buscar plato por nombre"
+          className="w-full rounded-xl border border-espresso/15 bg-background pl-9 pr-3.5 py-2.5 text-sm text-espresso focus:outline-none focus:border-terracotta/60"
+        />
+      </div>
+
       {loading ? (
         <p className="text-warm-gray text-sm py-8 text-center">Cargando platos…</p>
       ) : error ? (
         <p className="text-primary-600 text-sm py-6">{error}</p>
       ) : (
-        <div className="space-y-5 mb-6">
-          {grupos.map(({ cat, items }) => (
-            <div key={cat}>
-              <h3 className="font-display text-sm font-bold text-terracotta mb-2">{cat}</h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                {items.map((p) => {
-                  const sel = seleccionados.includes(p.id)
-                  const bloqueado = !sel && count >= MAX
-                  return (
-                    <button
-                      key={p.id}
-                      onClick={() => toggle(p)}
-                      disabled={bloqueado}
-                      aria-pressed={sel}
-                      className={`text-left rounded-xl border p-3 transition-all ${
-                        sel
-                          ? 'border-terracotta bg-amber/10 ring-1 ring-terracotta'
-                          : bloqueado
-                            ? 'border-espresso/10 bg-espresso/[0.02] opacity-50 cursor-not-allowed'
-                            : 'border-espresso/15 bg-background-surface hover:border-terracotta/50'
-                      }`}
+        <div className="space-y-2.5 mb-6">
+          {gruposVisibles.map(({ cat, items }) => {
+            const abierto = isOpen(cat)
+            const nSel = items.filter((p) => seleccionados.includes(p.id)).length
+            return (
+              <div key={cat}>
+                <button
+                  type="button"
+                  onClick={() => toggleCat(cat)}
+                  aria-expanded={abierto}
+                  className="w-full flex items-center justify-between gap-3 rounded-xl border border-espresso/15 bg-background-surface px-4 py-3 text-left transition-colors hover:border-terracotta/40"
+                >
+                  <span className="font-display text-sm font-bold text-espresso">
+                    {cat}
+                    <span className="ml-2 text-xs font-normal text-warm-gray">({items.length})</span>
+                  </span>
+                  <span className="flex items-center gap-3">
+                    {nSel > 0 && (
+                      <span className="text-xs font-semibold text-terracotta whitespace-nowrap">
+                        {nSel} elegido{nSel > 1 ? 's' : ''}
+                      </span>
+                    )}
+                    <span
+                      className={`text-warm-gray transition-transform duration-200 ${abierto ? 'rotate-90' : ''}`}
+                      aria-hidden="true"
                     >
-                      <div className="flex items-start gap-2">
-                        <span
-                          className={`mt-0.5 flex-shrink-0 w-4 h-4 rounded-md border flex items-center justify-center text-[10px] ${
-                            sel ? 'bg-terracotta border-terracotta text-ivory' : 'border-espresso/30'
+                      ▸
+                    </span>
+                  </span>
+                </button>
+
+                {abierto && (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 mt-2.5">
+                    {items.map((p) => {
+                      const sel = seleccionados.includes(p.id)
+                      const bloqueado = !sel && count >= MAX
+                      return (
+                        <button
+                          key={p.id}
+                          onClick={() => toggle(p)}
+                          disabled={bloqueado}
+                          aria-pressed={sel}
+                          className={`text-left rounded-xl border p-3 transition-all ${
+                            sel
+                              ? 'border-terracotta bg-amber/10 ring-1 ring-terracotta'
+                              : bloqueado
+                                ? 'border-espresso/10 bg-espresso/[0.02] opacity-50 cursor-not-allowed'
+                                : 'border-espresso/15 bg-background-surface hover:border-terracotta/50'
                           }`}
-                          aria-hidden="true"
                         >
-                          {sel ? '✓' : ''}
-                        </span>
-                        {p.imagen && (
-                          <img
-                            src={imagenUrl(p.imagen)}
-                            alt=""
-                            className="w-12 h-12 rounded-lg object-cover flex-shrink-0"
-                            onError={(e) => { e.currentTarget.style.display = 'none' }}
-                          />
-                        )}
-                        <div className="min-w-0">
-                          <p className="text-sm font-semibold text-espresso">{p.nombre}</p>
-                          {p.descripcion && <p className="text-xs text-warm-gray mt-0.5">{p.descripcion}</p>}
-                        </div>
-                      </div>
-                    </button>
-                  )
-                })}
+                          <div className="flex items-start gap-2">
+                            <span
+                              className={`mt-0.5 flex-shrink-0 w-4 h-4 rounded-md border flex items-center justify-center text-[10px] ${
+                                sel ? 'bg-terracotta border-terracotta text-ivory' : 'border-espresso/30'
+                              }`}
+                              aria-hidden="true"
+                            >
+                              {sel ? '✓' : ''}
+                            </span>
+                            {p.imagen && (
+                              <img
+                                src={imagenUrl(p.imagen)}
+                                alt=""
+                                className="w-12 h-12 rounded-lg object-cover flex-shrink-0"
+                                onError={(e) => { e.currentTarget.style.display = 'none' }}
+                              />
+                            )}
+                            <div className="min-w-0">
+                              <p className="text-sm font-semibold text-espresso">{p.nombre}</p>
+                              {p.descripcion && <p className="text-xs text-warm-gray mt-0.5">{p.descripcion}</p>}
+                            </div>
+                          </div>
+                        </button>
+                      )
+                    })}
+                  </div>
+                )}
               </div>
-            </div>
-          ))}
+            )
+          })}
+
+          {buscando && gruposVisibles.length === 0 && (
+            <p className="text-warm-gray text-sm py-6 text-center">
+              No encontramos platos con “{query.trim()}”.
+            </p>
+          )}
         </div>
       )}
 
