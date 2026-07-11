@@ -78,11 +78,13 @@ router.post('/', async (req, res, next) => {
         `INSERT INTO pedidos
            (nombre, email, telefono, direccion, comuna, fecha_entrega,
             platos, restricciones, observaciones, tipo_entrega,
-            costo_despacho, total, servicio, productos_hornear, lista_compras, personas, usuario_id)
+            costo_despacho, total, servicio, productos_hornear, lista_compras, personas, usuario_id,
+            adicionales)
          VALUES
            ($1,$2,$3,$4,$5,$6,
             $7::jsonb,$8::jsonb,$9,$10,
-            $11,$12,$13,$14::jsonb,$15::jsonb,$16,$17)
+            $11,$12,$13,$14::jsonb,$15::jsonb,$16,$17,
+            $18::jsonb)
          RETURNING *`,
         [
           b.nombre,
@@ -102,6 +104,7 @@ router.post('/', async (req, res, next) => {
           JSON.stringify(asArray(b.lista_compras)),
           Number.isInteger(Number(b.personas)) && Number(b.personas) > 0 ? Number(b.personas) : null,
           optionalUserId(req),
+          JSON.stringify(asArray(b.adicionales)),
         ]
       )
       return insert.rows[0]
@@ -156,11 +159,13 @@ router.post('/admin', requireAdmin, async (req, res, next) => {
         `INSERT INTO pedidos
            (nombre, email, telefono, direccion, comuna, fecha_entrega,
             platos, restricciones, observaciones, tipo_entrega,
-            costo_despacho, total, servicio, productos_hornear, lista_compras, personas, usuario_id)
+            costo_despacho, total, servicio, productos_hornear, lista_compras, personas, usuario_id,
+            adicionales)
          VALUES
            ($1,$2,$3,$4,$5,$6,
             $7::jsonb,$8::jsonb,$9,$10,
-            $11,$12,$13,$14::jsonb,$15::jsonb,$16,$17)
+            $11,$12,$13,$14::jsonb,$15::jsonb,$16,$17,
+            $18::jsonb)
          RETURNING *`,
         [
           String(b.nombre).trim(),
@@ -180,6 +185,7 @@ router.post('/admin', requireAdmin, async (req, res, next) => {
           JSON.stringify(asArray(b.lista_compras)),
           Number.isInteger(Number(b.personas)) && Number(b.personas) > 0 ? Number(b.personas) : null,
           usuarioId,
+          JSON.stringify(asArray(b.adicionales)),
         ]
       )
 
@@ -219,7 +225,7 @@ router.post('/consultar', async (req, res, next) => {
     }
     const { rows } = await query(
       `SELECT id, estado, fecha_entrega, total, servicio, tipo_entrega, comuna,
-              costo_despacho, platos, lista_compras, productos_hornear, personas, observaciones, created_at
+              costo_despacho, platos, lista_compras, productos_hornear, adicionales, personas, observaciones, created_at
          FROM pedidos
         WHERE id = $1 AND lower(email) = lower($2)`,
       [idNum, String(email).trim()]
@@ -289,7 +295,7 @@ router.get('/mis', authJWT, async (req, res, next) => {
   try {
     const { rows } = await query(
       `SELECT id, estado, fecha_entrega, total, servicio, tipo_entrega, comuna,
-              costo_despacho, platos, lista_compras, productos_hornear, personas, observaciones, created_at
+              costo_despacho, platos, lista_compras, productos_hornear, adicionales, personas, observaciones, created_at
          FROM pedidos
         WHERE usuario_id = $1
         ORDER BY fecha_entrega DESC, created_at DESC`,
@@ -397,6 +403,7 @@ router.patch('/:id', requireAdmin, async (req, res, next) => {
     if (b.platos !== undefined) add('platos', JSON.stringify(asArray(b.platos)), '::jsonb')
     if (b.restricciones !== undefined) add('restricciones', JSON.stringify(asArray(b.restricciones)), '::jsonb')
     if (b.productos_hornear !== undefined) add('productos_hornear', JSON.stringify(asArray(b.productos_hornear)), '::jsonb')
+    if (b.adicionales !== undefined) add('adicionales', JSON.stringify(asArray(b.adicionales)), '::jsonb')
     if (b.lista_compras !== undefined) add('lista_compras', JSON.stringify(asArray(b.lista_compras)), '::jsonb')
 
     if (!sets.length) return res.status(400).json({ error: 'No hay campos para actualizar.' })

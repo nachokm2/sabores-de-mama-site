@@ -24,6 +24,7 @@ vi.mock('../lib/publicApi', () => ({
   createPedido: vi.fn(),
   getPedidoResumen: vi.fn(),
   getPrecioBase: vi.fn(() => Promise.resolve(null)),
+  getServicioConfig: vi.fn(() => Promise.resolve({})),
   ApiError: class ApiError extends Error {},
 }))
 

@@ -159,6 +159,15 @@ UPDATE comunas SET
 WHERE costo_meal_prep IS NULL OR costo_cocinera IS NULL
    OR activo_meal_prep IS NULL OR activo_cocinera IS NULL;
 
+-- Servicios adicionales configurables de Meal Prep (precio editable por la admin).
+ALTER TABLE servicios_config ADD COLUMN IF NOT EXISTS costo_ingredientes INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE servicios_config ADD COLUMN IF NOT EXISTS costo_porcionado   INTEGER NOT NULL DEFAULT 0;
+-- Semilla inicial sólo si siguen en 0 (no pisa valores ya ajustados por la admin).
+UPDATE servicios_config SET costo_ingredientes = 1000 WHERE servicio = 'meal_prep' AND costo_ingredientes = 0;
+UPDATE servicios_config SET costo_porcionado   = 3000 WHERE servicio = 'meal_prep' AND costo_porcionado   = 0;
+-- Desglose de adicionales elegidos por el cliente en cada pedido.
+ALTER TABLE pedidos ADD COLUMN IF NOT EXISTS adicionales JSONB NOT NULL DEFAULT '[]'::jsonb;
+
 -- Cupos: capacidad, confirmados y disponibilidad INDEPENDIENTES por servicio.
 ALTER TABLE cupos ADD COLUMN IF NOT EXISTS capacidad_meal_prep   INTEGER;
 ALTER TABLE cupos ADD COLUMN IF NOT EXISTS capacidad_cocinera    INTEGER;

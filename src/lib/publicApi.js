@@ -107,6 +107,26 @@ export async function getPrecioBase(servicio) {
   }
 }
 
+/**
+ * Configuración completa de un servicio: precio base + costos de los servicios
+ * adicionales (Meal Prep). Devuelve sólo los campos numéricos válidos; el flujo
+ * cae a sus valores por defecto para los que falten.
+ */
+export async function getServicioConfig(servicio) {
+  try {
+    const data = await request(`/config/${encodeURIComponent(servicio)}`)
+    const cfg = data?.config || {}
+    const out = {}
+    for (const key of ['precio_base', 'costo_ingredientes', 'costo_porcionado']) {
+      const n = Number(cfg[key])
+      if (Number.isFinite(n)) out[key] = n
+    }
+    return out
+  } catch {
+    return {}
+  }
+}
+
 /** Crea un pedido (reserva cupo + dispara correo en el backend). */
 export async function createPedido(payload) {
   const data = await request('/pedidos', { method: 'POST', body: payload })

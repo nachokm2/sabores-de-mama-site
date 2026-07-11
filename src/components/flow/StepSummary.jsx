@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import BakingAddon from './BakingAddon'
+import AdicionalesMealPrep from './AdicionalesMealPrep'
 import { createPedido, ApiError } from '../../lib/publicApi'
 import { fmtCLP } from '../../lib/flowConfig'
 
@@ -40,6 +41,8 @@ export default function StepSummary({ data, update, onBack }) {
   const platosDetalle = data.platosDetalle || []
   const restricciones = data.restricciones || []
   const baking = data.productosHornearDetalle || []
+  const adicionales = data.adicionales || []
+  const esMealPrep = (data.servicio || 'meal_prep') === 'meal_prep'
 
   const confirmar = async () => {
     setTouched(true)
@@ -63,6 +66,8 @@ export default function StepSummary({ data, update, onBack }) {
         costo_despacho: data.costo_despacho,
         total: data.total,
         productos_hornear: baking.map((p) => ({ id: p.id, nombre: p.nombre, precio: p.precio })),
+        // Servicios adicionales elegidos (Meal Prep).
+        adicionales: adicionales.map((a) => ({ clave: a.clave, nombre: a.nombre, precio: a.precio })),
         // Lista de compras editable (flujo Cocinera); vacío en Meal Prep.
         lista_compras: data.lista_compras || [],
         // Nº de comensales (flujo Cocinera); null en Meal Prep.
@@ -120,13 +125,21 @@ export default function StepSummary({ data, update, onBack }) {
         {restricciones.length > 0 && <Fila label="Restricciones">{restricciones.join(', ')}</Fila>}
         {data.observaciones && <Fila label="Observaciones">{data.observaciones}</Fila>}
         {baking.length > 0 && <Fila label="Para hornear">{baking.map((p) => p.nombre).join(', ')}</Fila>}
+        {adicionales.length > 0 && (
+          <Fila label="Servicios adicionales">{adicionales.map((a) => a.nombre).join(', ')}</Fila>
+        )}
         <div className="flex justify-between font-bold text-espresso mt-2 pt-2 border-t border-espresso/10">
           <span>Total</span>
           <span className="text-terracotta">{fmtCLP(data.total)}</span>
         </div>
       </div>
 
-      {/* Add-on de hornear (ANTES del botón confirmar) */}
+      {/* Servicios adicionales (sólo Meal Prep) + add-on de hornear (ANTES del botón confirmar) */}
+      {esMealPrep && (
+        <div className="mb-5">
+          <AdicionalesMealPrep data={data} update={update} />
+        </div>
+      )}
       <div className="mb-5">
         <BakingAddon data={data} update={update} />
       </div>

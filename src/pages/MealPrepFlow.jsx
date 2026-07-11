@@ -8,8 +8,14 @@ import StepDishes from '../components/flow/StepDishes'
 import StepPreferences from '../components/flow/StepPreferences'
 import StepDelivery from '../components/flow/StepDelivery'
 import StepSummary from '../components/flow/StepSummary'
-import { DELIVERY_COST, MEAL_PREP_BASE, computeTotal } from '../lib/flowConfig'
-import { getPrecioBase } from '../lib/publicApi'
+import {
+  DELIVERY_COST,
+  MEAL_PREP_BASE,
+  MEAL_PREP_INGREDIENTES,
+  MEAL_PREP_PORCIONADO,
+  computeTotal,
+} from '../lib/flowConfig'
+import { getServicioConfig } from '../lib/publicApi'
 
 const initialState = {
   step: 1,
@@ -36,6 +42,11 @@ const initialState = {
   productos_hornear: [], // ids
   productosHornearDetalle: [],
   bakingTotal: 0,
+  // Servicios adicionales (precios configurables por la admin)
+  costoIngredientes: MEAL_PREP_INGREDIENTES,
+  costoPorcionado: MEAL_PREP_PORCIONADO,
+  adicionales: [], // [{ clave, nombre, precio }]
+  adicionalesTotal: 0,
   // Paso 6 (datos personales)
   nombre: '',
   email: '',
@@ -48,7 +59,12 @@ function reducer(state, action) {
   switch (action.type) {
     case 'SET': {
       const next = { ...state, ...action.payload }
-      next.total = computeTotal({ base: next.base, costo_despacho: next.costo_despacho, bakingTotal: next.bakingTotal })
+      next.total = computeTotal({
+        base: next.base,
+        costo_despacho: next.costo_despacho,
+        bakingTotal: next.bakingTotal,
+        adicionalesTotal: next.adicionalesTotal,
+      })
       return next
     }
     case 'NEXT':
@@ -86,12 +102,17 @@ export default function MealPrepFlow() {
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }, [state.step])
 
-  // Precio base configurado por la admin para este servicio (cae al valor por
-  // defecto si el backend no responde).
+  // Configuración de la admin para este servicio: precio base + costos de los
+  // servicios adicionales (cae a los valores por defecto si el backend no responde).
   useEffect(() => {
     let active = true
-    getPrecioBase('meal_prep').then((base) => {
-      if (active && base != null) update({ base })
+    getServicioConfig('meal_prep').then((cfg) => {
+      if (!active || !cfg) return
+      const payload = {}
+      if (cfg.precio_base != null) payload.base = cfg.precio_base
+      if (cfg.costo_ingredientes != null) payload.costoIngredientes = cfg.costo_ingredientes
+      if (cfg.costo_porcionado != null) payload.costoPorcionado = cfg.costo_porcionado
+      if (Object.keys(payload).length) update(payload)
     })
     return () => {
       active = false

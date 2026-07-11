@@ -74,6 +74,7 @@ export default function ConsultarPedido() {
   const platos = Array.isArray(pedido?.platos) ? pedido.platos : []
   const lista = Array.isArray(pedido?.lista_compras) ? pedido.lista_compras : []
   const baking = Array.isArray(pedido?.productos_hornear) ? pedido.productos_hornear : []
+  const adicionales = Array.isArray(pedido?.adicionales) ? pedido.adicionales : []
 
   return (
     <>
@@ -203,6 +204,16 @@ export default function ConsultarPedido() {
                   <ul className="list-disc pl-5 text-espresso text-sm space-y-0.5">
                     {baking.map((p, i) => (
                       <li key={i}>{platoNombre(p)}{p?.precio ? ` — ${fmtCLP(p.precio)}` : ''}</li>
+                    ))}
+                  </ul>
+                </Bloque>
+              )}
+
+              {adicionales.length > 0 && (
+                <Bloque titulo="Servicios adicionales">
+                  <ul className="list-disc pl-5 text-espresso text-sm space-y-0.5">
+                    {adicionales.map((a, i) => (
+                      <li key={i}>{platoNombre(a)}{a?.precio ? ` — ${fmtCLP(a.precio)}` : ''}</li>
                     ))}
                   </ul>
                 </Bloque>

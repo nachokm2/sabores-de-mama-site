@@ -17,7 +17,12 @@ export default function StepDelivery({ data, update, onNext, onBack }) {
     update({
       tipo_entrega: nuevoTipo,
       costo_despacho,
-      total: computeTotal({ base, costo_despacho, bakingTotal: data.bakingTotal }),
+      total: computeTotal({
+        base,
+        costo_despacho,
+        bakingTotal: data.bakingTotal,
+        adicionalesTotal: data.adicionalesTotal,
+      }),
     })
   }
 
@@ -76,6 +81,12 @@ export default function StepDelivery({ data, update, onNext, onBack }) {
           <div className="flex justify-between text-sm text-warm-gray mt-1">
             <span>Para hornear</span>
             <span>{fmtCLP(data.bakingTotal)}</span>
+          </div>
+        )}
+        {data.adicionalesTotal > 0 && (
+          <div className="flex justify-between text-sm text-warm-gray mt-1">
+            <span>Servicios adicionales</span>
+            <span>{fmtCLP(data.adicionalesTotal)}</span>
           </div>
         )}
         <div className="flex justify-between font-bold text-espresso mt-2 pt-2 border-t border-espresso/10">
