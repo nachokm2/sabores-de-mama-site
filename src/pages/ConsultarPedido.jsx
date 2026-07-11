@@ -3,7 +3,7 @@ import { Helmet } from 'react-helmet-async'
 import Navbar from '../components/layout/Navbar'
 import Footer from '../components/layout/Footer'
 import SectionLabel from '../components/ui/SectionLabel'
-import { consultarPedido, ApiError } from '../lib/publicApi'
+import { consultarPedido, imagenUrl, ApiError } from '../lib/publicApi'
 import { fmtCLP } from '../lib/flowConfig'
 
 const ESTADOS = {
@@ -216,6 +216,17 @@ export default function ConsultarPedido() {
                       <li key={i}>{platoNombre(a)}{a?.precio ? ` — ${fmtCLP(a.precio)}` : ''}</li>
                     ))}
                   </ul>
+                </Bloque>
+              )}
+
+              {pedido.foto_entrega && (pedido.estado === 'en_delivery' || pedido.estado === 'entregado') && (
+                <Bloque titulo="Foto de tu pedido">
+                  <img
+                    src={imagenUrl(pedido.foto_entrega)}
+                    alt="Foto de tu pedido"
+                    className="w-full max-w-sm rounded-xl border border-espresso/10 object-cover"
+                    loading="lazy"
+                  />
                 </Bloque>
               )}
 

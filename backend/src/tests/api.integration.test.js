@@ -5,7 +5,7 @@ import request from 'supertest'
 vi.mock('../services/mailService.js', () => ({
   sendEstadoEmail: vi.fn().mockResolvedValue({ ok: true, skipped: true }),
   sendPasswordReset: vi.fn().mockResolvedValue({ ok: true, skipped: true }),
-  ESTADOS_VALIDOS: ['solicitud_recibida', 'pagado', 'en_preparacion', 'entregado'],
+  ESTADOS_VALIDOS: ['solicitud_recibida', 'pagado', 'en_preparacion', 'en_delivery', 'entregado'],
 }))
 
 import app from '../app.js'
@@ -253,8 +253,37 @@ describe('PATCH /api/pedidos/:id/estado', () => {
     expect(res.status).toBe(400)
   })
 
-  it('acepta el nuevo estado "en_delivery" (Meal Prep)', async () => {
+  it('NO permite pasar a "en_delivery" sin una foto del pedido (422)', async () => {
     const id = await crearPedidoDirecto()
+    const token = await login()
+    const res = await request(app)
+      .patch(`/api/pedidos/${id}/estado`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({ estado: 'en_delivery' })
+    expect(res.status).toBe(422)
+    expect(res.body.error).toMatch(/fotograf/i)
+    // No cambió el estado ni se disparó el correo.
+    const { rows } = await pool.query('SELECT estado FROM pedidos WHERE id = $1', [id])
+    expect(rows[0].estado).toBe('solicitud_recibida')
+    expect(sendEstadoEmail).not.toHaveBeenCalled()
+  })
+
+  it('permite "en_delivery" cuando se adjunta la foto y la persiste (200)', async () => {
+    const id = await crearPedidoDirecto()
+    const token = await login()
+    const res = await request(app)
+      .patch(`/api/pedidos/${id}/estado`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({ estado: 'en_delivery', foto_entrega: 'entregas/foto-123.jpg' })
+    expect(res.status).toBe(200)
+    expect(res.body.pedido.estado).toBe('en_delivery')
+    expect(res.body.pedido.foto_entrega).toBe('entregas/foto-123.jpg')
+    expect(sendEstadoEmail).toHaveBeenCalledWith(expect.objectContaining({ id }), 'en_delivery')
+  })
+
+  it('permite "en_delivery" si el pedido ya tenía una foto guardada (200)', async () => {
+    const id = await crearPedidoDirecto()
+    await pool.query('UPDATE pedidos SET foto_entrega = $1 WHERE id = $2', ['entregas/previa.jpg', id])
     const token = await login()
     const res = await request(app)
       .patch(`/api/pedidos/${id}/estado`)
@@ -262,7 +291,7 @@ describe('PATCH /api/pedidos/:id/estado', () => {
       .send({ estado: 'en_delivery' })
     expect(res.status).toBe(200)
     expect(res.body.pedido.estado).toBe('en_delivery')
-    expect(sendEstadoEmail).toHaveBeenCalledWith(expect.objectContaining({ id }), 'en_delivery')
+    expect(res.body.pedido.foto_entrega).toBe('entregas/previa.jpg')
   })
 })
 

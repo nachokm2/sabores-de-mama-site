@@ -4,6 +4,7 @@ import AdminLayout from '../../components/admin/AdminLayout'
 import { EstadoBadge, fmtCLP, fmtFecha } from '../../components/admin/adminHelpers'
 import PedidoDetalle from '../../components/admin/PedidoDetalle'
 import PedidoNuevo from '../../components/admin/PedidoNuevo'
+import FotoEntregaModal from '../../components/admin/FotoEntregaModal'
 import {
   getPedidos,
   cambiarEstadoPedido,
@@ -34,6 +35,8 @@ export default function AdminPedidos() {
   const [catalogo, setCatalogo] = useState([])
   const [comunas, setComunas] = useState([])
   const [creando, setCreando] = useState(false)
+  // Pedido a la espera de foto para pasar a "En delivery" (abre el modal).
+  const [fotoPedido, setFotoPedido] = useState(null)
 
   const goLogin = useCallback(() => navigate('/admin/login', { replace: true }), [navigate])
 
@@ -80,13 +83,12 @@ export default function AdminPedidos() {
     setMsg(`Reserva #${nuevo.id} creada.`)
   }
 
-  const onCambiarEstado = async (pedido, estado) => {
-    if (estado === pedido.estado) return
+  // Aplica el cambio de estado (con foto opcional). Lanza el error para que el
+  // llamador decida dónde mostrarlo (fila vs. modal); el 401 navega al login.
+  const aplicarEstado = async (pedido, estado, fotoKey) => {
     setSavingId(pedido.id)
-    setMsg('')
-    setError('')
     try {
-      const res = await cambiarEstadoPedido(pedido.id, estado)
+      const res = await cambiarEstadoPedido(pedido.id, estado, fotoKey)
       setPedidos((prev) => prev.map((p) => (p.id === pedido.id ? res.pedido : p)))
       const correo = res.email?.ok
         ? 'correo enviado.'
@@ -97,12 +99,38 @@ export default function AdminPedidos() {
     } catch (err) {
       if (err instanceof ApiError && err.status === 401) {
         navigate('/admin/login', { replace: true })
-        return
       }
-      setError(err.message || 'No se pudo cambiar el estado.')
+      throw err
     } finally {
       setSavingId(null)
     }
+  }
+
+  const onCambiarEstado = async (pedido, estado) => {
+    if (estado === pedido.estado) return
+    setMsg('')
+    setError('')
+    // Regla: "En delivery" exige una foto del pedido. Si aún no hay, pedirla.
+    if (estado === 'en_delivery' && !pedido.foto_entrega) {
+      setFotoPedido(pedido)
+      return
+    }
+    try {
+      await aplicarEstado(pedido, estado)
+    } catch (err) {
+      if (!(err instanceof ApiError && err.status === 401)) {
+        setError(err.message || 'No se pudo cambiar el estado.')
+      }
+    }
+  }
+
+  // Confirmación del modal: la foto ya se subió (key); aplica "En delivery".
+  // Si falla, se relanza para que el modal muestre el error y no se cierre.
+  const onFotoConfirmada = async (key) => {
+    setMsg('')
+    setError('')
+    await aplicarEstado(fotoPedido, 'en_delivery', key)
+    setFotoPedido(null)
   }
 
   // Estados disponibles para este servicio (Meal Prep / Cocinera).
@@ -160,6 +188,14 @@ export default function AdminPedidos() {
           onCancel={() => setCreando(false)}
           onError={setError}
           on401={goLogin}
+        />
+      )}
+
+      {fotoPedido && (
+        <FotoEntregaModal
+          pedido={fotoPedido}
+          onConfirm={onFotoConfirmada}
+          onClose={() => setFotoPedido(null)}
         />
       )}
 

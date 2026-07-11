@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { fmtCLP, fmtFecha } from './adminHelpers'
 import { editarPedido, ApiError } from '../../lib/adminApi'
+import { imagenUrl } from '../../lib/publicApi'
 
 /**
  * Panel desplegable de un pedido: muestra TODO lo que pidió el cliente
@@ -152,6 +153,17 @@ export default function PedidoDetalle({ pedido, platosCatalogo = [], comunas = [
           {pedido.observaciones && (
             <Bloque titulo="Observaciones">
               <p className="text-espresso">{pedido.observaciones}</p>
+            </Bloque>
+          )}
+
+          {pedido.foto_entrega && (
+            <Bloque titulo="Foto de entrega">
+              <img
+                src={imagenUrl(pedido.foto_entrega)}
+                alt={`Foto de entrega del pedido #${pedido.id}`}
+                className="w-full max-w-xs rounded-xl border border-espresso/10 object-cover"
+                loading="lazy"
+              />
             </Bloque>
           )}
         </div>

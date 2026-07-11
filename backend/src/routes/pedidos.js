@@ -225,7 +225,7 @@ router.post('/consultar', async (req, res, next) => {
     }
     const { rows } = await query(
       `SELECT id, estado, fecha_entrega, total, servicio, tipo_entrega, comuna,
-              costo_despacho, platos, lista_compras, productos_hornear, adicionales, personas, observaciones, created_at
+              costo_despacho, platos, lista_compras, productos_hornear, adicionales, personas, observaciones, foto_entrega, created_at
          FROM pedidos
         WHERE id = $1 AND lower(email) = lower($2)`,
       [idNum, String(email).trim()]
@@ -295,7 +295,7 @@ router.get('/mis', authJWT, async (req, res, next) => {
   try {
     const { rows } = await query(
       `SELECT id, estado, fecha_entrega, total, servicio, tipo_entrega, comuna,
-              costo_despacho, platos, lista_compras, productos_hornear, adicionales, personas, observaciones, created_at
+              costo_despacho, platos, lista_compras, productos_hornear, adicionales, personas, observaciones, foto_entrega, created_at
          FROM pedidos
         WHERE usuario_id = $1
         ORDER BY fecha_entrega DESC, created_at DESC`,
@@ -344,16 +344,31 @@ router.get('/:id', requireAdmin, async (req, res, next) => {
  */
 router.patch('/:id/estado', requireAdmin, async (req, res, next) => {
   try {
-    const { estado } = req.body || {}
+    const b = req.body || {}
+    const { estado } = b
     if (!ESTADOS_VALIDOS.includes(estado)) {
       return res.status(400).json({
         error: `Estado inválido. Valores permitidos: ${ESTADOS_VALIDOS.join(', ')}`,
       })
     }
 
+    // Estado actual + foto ya cargada (para el enforcement de "en_delivery").
+    const actual = await query('SELECT foto_entrega FROM pedidos WHERE id = $1', [req.params.id])
+    if (!actual.rows[0]) return res.status(404).json({ error: 'Pedido no encontrado.' })
+
+    const fotoBody = typeof b.foto_entrega === 'string' && b.foto_entrega.trim() ? b.foto_entrega.trim() : null
+    const finalFoto = fotoBody || actual.rows[0].foto_entrega || null
+
+    // Regla: no se puede marcar "En delivery" sin una fotografía del pedido.
+    if (estado === 'en_delivery' && !finalFoto) {
+      return res.status(422).json({
+        error: 'Debes subir una fotografía del pedido antes de marcarlo "En delivery".',
+      })
+    }
+
     const { rows } = await query(
-      'UPDATE pedidos SET estado = $1 WHERE id = $2 RETURNING *',
-      [estado, req.params.id]
+      'UPDATE pedidos SET estado = $1, foto_entrega = $2 WHERE id = $3 RETURNING *',
+      [estado, finalFoto, req.params.id]
     )
     if (!rows[0]) return res.status(404).json({ error: 'Pedido no encontrado.' })
 
@@ -391,6 +406,7 @@ router.patch('/:id', requireAdmin, async (req, res, next) => {
     if (b.observaciones !== undefined) add('observaciones', b.observaciones || null)
     if (b.costo_despacho !== undefined) add('costo_despacho', Number(b.costo_despacho) || 0)
     if (b.total !== undefined) add('total', Number(b.total) || 0)
+    if (b.foto_entrega !== undefined) add('foto_entrega', b.foto_entrega || null)
     if (b.personas !== undefined) {
       add('personas', Number.isInteger(Number(b.personas)) && Number(b.personas) > 0 ? Number(b.personas) : null)
     }

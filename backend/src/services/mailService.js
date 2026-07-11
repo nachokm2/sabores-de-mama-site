@@ -1,6 +1,7 @@
 import nodemailer from 'nodemailer'
 import dotenv from 'dotenv'
 import { query } from '../models/index.js'
+import { presignGet } from './storage.js'
 
 dotenv.config()
 
@@ -299,14 +300,22 @@ const TEMPLATES = {
       }),
     }
   },
-  en_delivery(pedido) {
+  en_delivery(pedido, extra = {}) {
     const nombre = esc((pedido.nombre || '').split(' ')[0] || 'hola')
+    const fotoHtml = extra.fotoUrl
+      ? `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:16px;background:${CREAM};border:1px solid ${BORDER};border-radius:12px;">
+           <tr><td style="padding:16px 18px;">
+             <div style="font-weight:bold;color:${BRAND};margin-bottom:8px;font-size:14px;">Foto de tu pedido</div>
+             <img src="${esc(extra.fotoUrl)}" alt="Foto de tu pedido" style="display:block;width:100%;max-width:100%;border-radius:10px;" />
+           </td></tr>
+         </table>`
+      : ''
     return {
       subject: 'Tu pedido va en camino 🚗',
       html: baseTemplate({
         titulo: 'En delivery',
         intro: `¡${nombre}, tu pedido va en camino! 🚗 Pronto llegará a tu dirección${pedido.comuna ? ` en <strong>${esc(pedido.comuna)}</strong>` : ''}.`,
-        bodyHtml: resumenPedidoHtml(pedido),
+        bodyHtml: fotoHtml + resumenPedidoHtml(pedido),
         footerNota: 'Mantén tu teléfono a mano por si el repartidor necesita contactarte.',
       }),
     }
@@ -365,9 +374,18 @@ export async function sendEstadoEmail(pedido, estado) {
   if (!builder) return { ok: false, skipped: true, reason: `estado sin plantilla: ${estado}` }
   if (!pedido?.email) return { ok: false, skipped: true, reason: 'pedido sin email' }
 
-  // Datos extra por estado (ingredientes para "pagado").
+  // Datos extra por estado (ingredientes para "pagado"; foto para "en_delivery").
   const extra = {}
   if (estado === 'pagado') extra.platosConIng = await getPlatosConIngredientes(pedido)
+  if (estado === 'en_delivery' && pedido.foto_entrega) {
+    // URL firmada de larga duración (≈7 días) para embeber la foto en el correo.
+    // Si el almacenamiento no está configurado, se omite sin romper el envío.
+    try {
+      extra.fotoUrl = await presignGet(pedido.foto_entrega, 604800)
+    } catch (err) {
+      console.error('[mail] no se pudo firmar la foto de entrega:', err?.message || err)
+    }
+  }
 
   const { subject, html } = builder(pedido, extra)
   return dispatchMail({ to: pedido.email, subject, html, label: estado })
