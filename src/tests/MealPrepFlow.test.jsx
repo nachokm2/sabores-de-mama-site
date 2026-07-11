@@ -133,7 +133,7 @@ describe('MealPrepFlow (stepper)', () => {
     expect(continuar()).not.toBeDisabled()
   })
 
-  it('al cambiar de Delivery a Retiro el total se actualiza correctamente', async () => {
+  it('el paso de entrega (sólo delivery) muestra el total con base + despacho', async () => {
     renderFlow()
     await step1to2()
     await step2to3()
@@ -141,14 +141,14 @@ describe('MealPrepFlow (stepper)', () => {
     fireEvent.click(continuar()) // paso 3 → 4
     fireEvent.click(continuar()) // paso 4 → 5 (entrega)
 
-    // Delivery (por defecto): base + despacho.
+    // Único método: delivery a domicilio (ya no existe la opción "Retiro").
+    expect(screen.getByText('Delivery a domicilio')).toBeInTheDocument()
+    expect(screen.queryByRole('radio', { name: /Retiro/ })).toBeNull()
+
+    // Total = base + despacho.
     expect(screen.getByText('Total').closest('div').textContent).toContain(
       fmtCLP(MEAL_PREP_BASE + DELIVERY_COST)
     )
-
-    // Cambiar a Retiro → total = base (sin despacho).
-    fireEvent.click(screen.getByRole('radio', { name: /Retiro/ }))
-    expect(screen.getByText('Total').closest('div').textContent).toContain(fmtCLP(MEAL_PREP_BASE))
   })
 
   it('el paso de pago no puede retroceder al flujo (navegación con replace)', async () => {
