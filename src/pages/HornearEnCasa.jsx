@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import { Helmet } from 'react-helmet-async'
 import Navbar from '../components/layout/Navbar'
@@ -6,6 +7,35 @@ import PageHero from '../components/ui/PageHero'
 import SectionLabel from '../components/ui/SectionLabel'
 import { DULCES_FAMILIAR, DULCES_SNACKS } from '../data/menu'
 import { WHATSAPP, getWhatsAppLink } from '../data/siteConfig'
+import { getProductosHornear, imagenUrl } from '../lib/publicApi'
+import { fmtCLP } from '../lib/flowConfig'
+
+// Degradados para el fondo de las tarjetas sin foto (se rotan por índice).
+const GRADIENTS = [
+  'from-gold via-amber to-wheat',
+  'from-terracotta via-ember to-amber',
+  'from-espresso via-bark to-terracotta',
+  'from-bark via-ember to-gold',
+  'from-terracotta via-bark to-amber',
+  'from-bark via-amber to-wheat',
+]
+
+// Productos estáticos de respaldo (si aún no hay productos cargados en el admin
+// o si el backend no responde), para que la landing nunca quede vacía.
+const DULCES_FALLBACK = [...DULCES_FAMILIAR, ...DULCES_SNACKS]
+
+// Convierte un producto del admin (productos_hornear) al formato de la tarjeta.
+function mapProducto(p, i) {
+  return {
+    key: p.id,
+    name: p.nombre,
+    subtitle: [p.formato, p.porciones].filter(Boolean).join(' · ') || p.descripcion || '',
+    priceLabel: fmtCLP(p.precio),
+    image: p.imagen ? imagenUrl(p.imagen) : null,
+    emoji: '🧁',
+    gradient: GRADIENTS[i % GRADIENTS.length],
+  }
+}
 
 function DulceCard({ item, index }) {
   return (
@@ -34,6 +64,24 @@ function DulceCard({ item, index }) {
 
 export default function HornearEnCasa() {
   const pedir = () => window.open(getWhatsAppLink(WHATSAPP.horneadosMessage), '_blank', 'noopener')
+
+  // Productos administrables (pestaña "Hornear" del panel). Si no hay ninguno
+  // cargado o el backend no responde, se usan los estáticos de respaldo.
+  const [productos, setProductos] = useState([])
+  const [cargado, setCargado] = useState(false)
+
+  useEffect(() => {
+    let active = true
+    getProductosHornear()
+      .then((lista) => active && setProductos(Array.isArray(lista) ? lista : []))
+      .catch(() => active && setProductos([]))
+      .finally(() => active && setCargado(true))
+    return () => {
+      active = false
+    }
+  }, [])
+
+  const dulces = productos.length ? productos.map(mapProducto) : DULCES_FALLBACK
 
   return (
     <>
@@ -88,19 +136,15 @@ export default function HornearEnCasa() {
               </h2>
             </div>
 
-            <p className="font-body text-accent-600 text-xs font-semibold tracking-[0.15em] uppercase text-center mb-5">
-              Formato Familiar (Molde 20 cm) · 8 a 10 porciones
-            </p>
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mb-10">
-              {DULCES_FAMILIAR.map((d, i) => <DulceCard key={d.name} item={d} index={i} />)}
-            </div>
-
-            <p className="font-body text-accent-600 text-xs font-semibold tracking-[0.15em] uppercase text-center mb-5">
-              Formato Snacks (Bolsas de 10 unidades) · porción individual
-            </p>
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
-              {DULCES_SNACKS.map((d, i) => <DulceCard key={d.name} item={d} index={i} />)}
-            </div>
+            {!cargado && productos.length === 0 ? (
+              <p className="font-body text-warm-gray text-sm text-center py-8">Cargando dulces…</p>
+            ) : (
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+                {dulces.map((d, i) => (
+                  <DulceCard key={d.key || d.name} item={d} index={i} />
+                ))}
+              </div>
+            )}
           </div>
         </section>
 

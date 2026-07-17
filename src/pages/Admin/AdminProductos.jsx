@@ -145,7 +145,7 @@ export default function AdminProductos() {
     'w-full rounded-xl border border-espresso/15 bg-background px-3 py-2 text-sm text-espresso focus:outline-none focus:border-terracotta/60'
 
   return (
-    <AdminLayout title="Productos para hornear">
+    <AdminLayout title="Productos Healthy">
       {msg && (
         <div className="mb-4 text-sm text-[#15803D] bg-[#15803D]/10 border border-[#15803D]/30 rounded-lg px-4 py-2">
           {msg}
@@ -215,7 +215,7 @@ export default function AdminProductos() {
 
           <label className="flex items-center gap-2 mb-4 text-sm text-espresso">
             <input type="checkbox" checked={form.activo} onChange={(e) => setCampo('activo', e.target.checked)} />
-            Activo (visible en el flujo de pedido)
+            Activo (visible en la landing Healthy y en el flujo de pedido)
           </label>
 
           <div className="flex gap-2">
