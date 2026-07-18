@@ -279,7 +279,7 @@ export default function Nosotros() {
             <div className="text-center mb-14">
               <SectionLabel>Las personas detrás</SectionLabel>
               <h2 id="team-heading" className="section-title text-espresso mt-4">
-                Familia Palma,
+                Familia Zavalla,
                 <br />
                 <em className="not-italic text-amber">cocinando con alma.</em>
               </h2>
