@@ -49,13 +49,13 @@ function GalleryItem({ item, onClick }) {
       whileInView={{ opacity: 1, scale: 1 }}
       viewport={{ once: true, margin: '-40px' }}
       transition={{ duration: 0.6, ease: [0.19, 1, 0.22, 1] }}
-      aria-label={`Ver ${item.label}`}
+      aria-label="Ver foto"
     >
-      {/* Background: real photo or gradient */}
+      {/* Foto */}
       {item.image ? (
         <img
           src={item.image}
-          alt={item.label}
+          alt=""
           loading="lazy"
           decoding="async"
           className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 ease-[var(--ease-out-expo)] group-hover:scale-110"
@@ -67,27 +67,8 @@ function GalleryItem({ item, onClick }) {
         />
       )}
 
-      {/* Dark overlay */}
-      <div className="absolute inset-0 bg-espresso/40 group-hover:bg-espresso/20 transition-colors duration-500" />
-
-      {/* Label on hover */}
-      <div className="absolute inset-0 flex flex-col items-end justify-end p-3">
-        <span className="font-display text-ivory text-sm font-semibold text-right leading-tight opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-1 group-hover:translate-y-0 bg-espresso/60 backdrop-blur-sm px-2.5 py-1 rounded-lg">
-          {item.label}
-        </span>
-      </div>
-
-      {/* Emoji fallback for no-image items */}
-      {!item.image && (
-        <div className="absolute inset-0 flex items-center justify-center">
-          <span
-            className="text-4xl md:text-5xl drop-shadow-lg transition-transform duration-500 group-hover:scale-125 group-hover:-translate-y-1"
-            aria-hidden="true"
-          >
-            {item.emoji}
-          </span>
-        </div>
-      )}
+      {/* Realce sutil al pasar el mouse */}
+      <div className="absolute inset-0 bg-espresso/0 group-hover:bg-espresso/10 transition-colors duration-500" />
     </motion.button>
   )
 }
@@ -115,7 +96,7 @@ function Lightbox({ item, onClose }) {
             {item.image ? (
               <img
                 src={item.image}
-                alt={item.label}
+                alt=""
                 className="w-full h-full object-cover"
               />
             ) : (
@@ -123,10 +104,6 @@ function Lightbox({ item, onClose }) {
                 <span className="text-[100px] drop-shadow-2xl" aria-hidden="true">{item.emoji}</span>
               </div>
             )}
-            <div className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-espresso/90 to-transparent">
-              <p className="font-display text-ivory text-2xl font-bold">{item.label}</p>
-              <p className="font-body text-ivory/60 text-sm mt-1">Disponible en nuestro menú</p>
-            </div>
           </motion.div>
           <button
             className="absolute top-6 right-6 w-10 h-10 rounded-full border border-ivory/20 flex items-center justify-center text-ivory hover:bg-ivory/10 transition-colors"
