@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { Helmet } from 'react-helmet-async'
 import Navbar from '../components/layout/Navbar'
@@ -6,7 +7,6 @@ import Footer from '../components/layout/Footer'
 import PageHero from '../components/ui/PageHero'
 import SectionLabel from '../components/ui/SectionLabel'
 import { DULCES_FAMILIAR, DULCES_SNACKS } from '../data/menu'
-import { WHATSAPP, getWhatsAppLink } from '../data/siteConfig'
 import { getProductosHornear, imagenUrl } from '../lib/publicApi'
 import { fmtCLP } from '../lib/flowConfig'
 
@@ -63,7 +63,10 @@ function DulceCard({ item, index }) {
 }
 
 export default function HornearEnCasa() {
-  const pedir = () => window.open(getWhatsAppLink(WHATSAPP.horneadosMessage), '_blank', 'noopener')
+  const navigate = useNavigate()
+  // El flujo de pedido es el formulario de Meal Prep (/meal-prep); los dulces
+  // se suman como servicio adicional dentro de ese flujo.
+  const pedir = () => navigate('/meal-prep')
 
   // Productos administrables (pestaña "Hornear" del panel). Si no hay ninguno
   // cargado o el backend no responde, se usan los estáticos de respaldo.
@@ -104,8 +107,8 @@ export default function HornearEnCasa() {
           subtitle="Dulces saludables hechos en casa: los recibes listos para disfrutar, con ingredientes seleccionados y sin conservantes."
           breadcrumb={[{ label: 'Inicio', href: '/' }, { label: 'Healthy', href: '/healthy' }]}
         >
-          <button onClick={pedir} className="btn-whatsapp text-sm">
-            Pedir por WhatsApp
+          <button onClick={pedir} className="btn-primary text-sm">
+            Pedir ahora
           </button>
         </PageHero>
 
@@ -155,10 +158,10 @@ export default function HornearEnCasa() {
               ¿Se te antojó algo dulce?
             </h2>
             <p className="font-body text-warm-gray text-base mb-8">
-              Escríbenos por WhatsApp y coordinamos tus postres y galletas, listos para disfrutar.
+              Arma tu pedido en línea y suma tus postres y galletas favoritos, listos para disfrutar.
             </p>
-            <button onClick={pedir} className="btn-whatsapp">
-              Pedir por WhatsApp
+            <button onClick={pedir} className="btn-primary">
+              Pedir ahora
             </button>
           </div>
         </section>
