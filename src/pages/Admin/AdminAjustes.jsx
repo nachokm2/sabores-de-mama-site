@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import AdminLayout from '../../components/admin/AdminLayout'
 import { fmtCLP } from '../../components/admin/adminHelpers'
-import { getServiciosConfig, editarServicioConfig, ApiError } from '../../lib/adminApi'
+import { getServiciosConfig, editarServicioConfig, recargarCatalogo, ApiError } from '../../lib/adminApi'
 
 const SERVICIO_LABEL = { meal_prep: 'Meal Prep', cocinera: 'Cocinera a Domicilio' }
 
@@ -23,6 +23,11 @@ export default function AdminAjustes() {
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
   const [msg, setMsg] = useState('')
+  // Recarga del catálogo completo (acción destructiva con confirmación).
+  const [confirmCat, setConfirmCat] = useState('')
+  const [recargando, setRecargando] = useState(false)
+  const [catMsg, setCatMsg] = useState('')
+  const [catError, setCatError] = useState('')
 
   const handle401 = (err) => {
     if (err instanceof ApiError && err.status === 401) {
@@ -70,6 +75,27 @@ export default function AdminAjustes() {
       if (!handle401(err)) setError(err.message || 'No se pudieron guardar los ajustes.')
     } finally {
       setSaving(false)
+    }
+  }
+
+  const onRecargar = async () => {
+    setRecargando(true)
+    setCatMsg('')
+    setCatError('')
+    try {
+      const { resumen } = await recargarCatalogo(confirmCat)
+      setConfirmCat('')
+      const cats = Object.entries(resumen.porCategoria || {})
+        .map(([c, n]) => `${c}: ${n}`)
+        .join(' · ')
+      setCatMsg(
+        `Catálogo recargado: ${resumen.totalPlatos} platos ` +
+          `(Meal Prep ${resumen.porServicio.meal_prep} · Cocinera ${resumen.porServicio.cocinera}). ${cats}`
+      )
+    } catch (err) {
+      if (!handle401(err)) setCatError(err.message || 'No se pudo recargar el catálogo.')
+    } finally {
+      setRecargando(false)
     }
   }
 
@@ -167,6 +193,47 @@ export default function AdminAjustes() {
           </div>
         </form>
       )}
+
+      {/* Zona de recarga del catálogo completo (destructivo). */}
+      <div className="mt-10 max-w-xl bg-primary-50 border border-primary-200 rounded-2xl p-5">
+        <h2 className="font-display text-base font-bold text-primary-700 mb-1">
+          Recargar catálogo de platos
+        </h2>
+        <p className="text-sm text-warm-gray mb-3">
+          Reemplaza <strong>todos los platos</strong> (Meal Prep y Cocinera) por el catálogo
+          oficial del documento. No afecta pedidos ni cupos. Esta acción no se puede deshacer:
+          escribe <strong>REEMPLAZAR</strong> para habilitar el botón.
+        </p>
+
+        {catMsg && (
+          <div className="mb-3 text-sm text-[#15803D] bg-[#15803D]/10 border border-[#15803D]/30 rounded-lg px-4 py-2">
+            {catMsg}
+          </div>
+        )}
+        {catError && (
+          <div className="mb-3 text-sm text-primary-700 bg-primary-100 border border-primary-200 rounded-lg px-4 py-2">
+            {catError}
+          </div>
+        )}
+
+        <div className="flex flex-wrap items-center gap-3">
+          <input
+            className={inputCls + ' w-44'}
+            value={confirmCat}
+            onChange={(e) => setConfirmCat(e.target.value)}
+            placeholder="Escribe REEMPLAZAR"
+            aria-label="Confirmación para recargar el catálogo"
+          />
+          <button
+            type="button"
+            onClick={onRecargar}
+            disabled={recargando || confirmCat.trim().toUpperCase() !== 'REEMPLAZAR'}
+            className="bg-primary-600 text-ivory font-semibold rounded-full px-5 py-2.5 text-sm hover:bg-primary-700 transition-colors disabled:opacity-50"
+          >
+            {recargando ? 'Recargando…' : 'Recargar catálogo'}
+          </button>
+        </div>
+      </div>
     </AdminLayout>
   )
 }

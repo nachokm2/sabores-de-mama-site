@@ -15,10 +15,11 @@ vi.mock('../lib/publicApi', () => ({
 import { getIngredientesDePlatos } from '../lib/publicApi'
 import ShoppingList from '../components/flow/ShoppingList'
 
-// El endpoint devuelve ingredientes YA consolidados (Arroz proviene de 2 platos).
-const INGREDIENTES = [
-  { id: 1, nombre: 'Arroz', cantidad_total: 350, unidad: 'g', platos: [1, 2] },
-  { id: 2, nombre: 'Cebolla', cantidad_total: 2, unidad: 'u', platos: [1, 2] },
+// El endpoint devuelve ingredientes consolidados YA con la cantidad EXACTA para
+// el nº de personas consultado (Arroz proviene de 2 platos).
+const ingredientesPara = (ids, personas = 1) => [
+  { id: 1, nombre: 'Arroz', cantidad: 350 * personas, unidad: 'g', platos: [1, 2] },
+  { id: 2, nombre: 'Cebolla', cantidad: 2 * personas, unidad: 'u', platos: [1, 2] },
 ]
 
 function Wrapper({ ids = [1, 2] }) {
@@ -33,13 +34,15 @@ function Wrapper({ ids = [1, 2] }) {
 }
 
 beforeEach(() => {
-  getIngredientesDePlatos.mockReset().mockResolvedValue(INGREDIENTES)
+  getIngredientesDePlatos.mockReset().mockImplementation((ids, personas = 1) =>
+    Promise.resolve(ingredientesPara(ids, personas))
+  )
 })
 
 describe('ShoppingList', () => {
   it('llama a GET /api/platos/ingredientes (getIngredientesDePlatos) al montar', async () => {
     render(<Wrapper ids={[1, 2, 3]} />)
-    await waitFor(() => expect(getIngredientesDePlatos).toHaveBeenCalledWith([1, 2, 3]))
+    await waitFor(() => expect(getIngredientesDePlatos).toHaveBeenCalledWith([1, 2, 3], 1))
   })
 
   it('muestra los ingredientes consolidados (una sola fila por ingrediente, con el total sumado)', async () => {
@@ -80,12 +83,12 @@ describe('ShoppingList', () => {
     }
   })
 
-  it('escala las cantidades por el número de personas (cantidad por persona × comensales)', async () => {
+  it('actualiza las cantidades al cambiar el número de personas (valor exacto del backend)', async () => {
     render(<Wrapper />)
-    // Por defecto (1 persona) el total por persona se muestra tal cual.
+    // Por defecto (1 persona) se muestra la cantidad para 1.
     expect(await screen.findByLabelText('Cantidad de Arroz')).toHaveValue(350)
 
-    // Al elegir 4 personas, cada cantidad se multiplica por 4.
+    // Al elegir 4 personas, se re-consulta y se muestran las cantidades para 4.
     fireEvent.click(screen.getByRole('button', { name: '4' }))
     await waitFor(() => expect(screen.getByLabelText('Cantidad de Arroz')).toHaveValue(1400))
     expect(screen.getByLabelText('Cantidad de Cebolla')).toHaveValue(8)

@@ -11,6 +11,8 @@ import {
 } from '../../lib/adminApi'
 import { imagenUrl } from '../../lib/publicApi'
 
+const ING_VACIO = { nombre: '', unidad: '', p1: '', p2: '', p3: '', p4: '', p5: '' }
+
 const FORM_VACIO = {
   id: null,
   nombre: '',
@@ -18,8 +20,12 @@ const FORM_VACIO = {
   categoria: '',
   imagen: '',
   activo: true,
-  ingredientes: [{ nombre: '', cantidad: '', unidad: '' }],
+  meal_prep: true,
+  cocinera: true,
+  ingredientes: [{ ...ING_VACIO }],
 }
+
+const PERSONAS = ['p1', 'p2', 'p3', 'p4', 'p5']
 
 const SIN_CATEGORIA = 'Sin categoría'
 
@@ -59,9 +65,6 @@ function agruparPorCategoria(platos) {
 export default function AdminPlatos() {
   const navigate = useNavigate()
   const { servicio } = useParams()
-  // En Cocinera a Domicilio las cantidades de ingredientes son POR PERSONA: el
-  // flujo las multiplica por el nº de comensales que elija el cliente.
-  const esCocinera = servicio === 'cocinera'
   const [platos, setPlatos] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -84,7 +87,7 @@ export default function AdminPlatos() {
     setLoading(true)
     setError('')
     try {
-      const data = await getPlatos({ incluirInactivos: true })
+      const data = await getPlatos({ incluirInactivos: true, servicio })
       setPlatos(data.platos || [])
     } catch (err) {
       if (!handle401(err)) setError(err.message || 'No se pudieron cargar los platos.')
@@ -92,7 +95,7 @@ export default function AdminPlatos() {
       setLoading(false)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [navigate])
+  }, [navigate, servicio])
 
   useEffect(() => {
     cargar()
@@ -130,7 +133,7 @@ export default function AdminPlatos() {
     }))
 
   const addIngrediente = () =>
-    setForm((f) => ({ ...f, ingredientes: [...f.ingredientes, { nombre: '', cantidad: '', unidad: '' }] }))
+    setForm((f) => ({ ...f, ingredientes: [...f.ingredientes, { ...ING_VACIO }] }))
 
   const removeIngrediente = (i) =>
     setForm((f) => ({ ...f, ingredientes: f.ingredientes.filter((_, idx) => idx !== i) }))
@@ -145,10 +148,20 @@ export default function AdminPlatos() {
       categoria: p.categoria || '',
       imagen: p.imagen || '',
       activo: p.activo,
+      meal_prep: p.meal_prep !== false,
+      cocinera: p.cocinera !== false,
       ingredientes:
         p.ingredientes && p.ingredientes.length
-          ? p.ingredientes.map((i) => ({ nombre: i.nombre || '', cantidad: i.cantidad || '', unidad: i.unidad || '' }))
-          : [{ nombre: '', cantidad: '', unidad: '' }],
+          ? p.ingredientes.map((i) => ({
+              nombre: i.nombre || '',
+              unidad: i.unidad || '',
+              p1: i.p1 || '',
+              p2: i.p2 || '',
+              p3: i.p3 || '',
+              p4: i.p4 || '',
+              p5: i.p5 || '',
+            }))
+          : [{ ...ING_VACIO }],
     })
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
@@ -158,15 +171,26 @@ export default function AdminPlatos() {
     setSaving(true)
     setError('')
     setMsg('')
+    const limpiar = (v) => (typeof v === 'string' && v.trim() ? v.trim() : null)
     const payload = {
       nombre: form.nombre.trim(),
       descripcion: form.descripcion.trim() || null,
       categoria: form.categoria.trim() || null,
       imagen: form.imagen.trim() || null,
       activo: form.activo,
+      meal_prep: form.meal_prep,
+      cocinera: form.cocinera,
       ingredientes: form.ingredientes
         .filter((i) => i.nombre.trim())
-        .map((i) => ({ nombre: i.nombre.trim(), cantidad: i.cantidad.trim() || null, unidad: i.unidad.trim() || null })),
+        .map((i) => ({
+          nombre: i.nombre.trim(),
+          unidad: limpiar(i.unidad),
+          p1: limpiar(i.p1),
+          p2: limpiar(i.p2),
+          p3: limpiar(i.p3),
+          p4: limpiar(i.p4),
+          p5: limpiar(i.p5),
+        })),
     }
     try {
       if (editando) {
@@ -289,56 +313,74 @@ export default function AdminPlatos() {
             )}
           </div>
 
-          <label className="flex items-center gap-2 mb-4 text-sm text-espresso">
+          <label className="flex items-center gap-2 mb-3 text-sm text-espresso">
             <input type="checkbox" checked={form.activo} onChange={(e) => setField('activo', e.target.checked)} />
             Activo (visible en el menú público)
           </label>
 
+          {/* Servicios en los que aparece el plato */}
+          <div className="mb-4">
+            <span className="block text-espresso font-medium text-sm mb-2">Servicios</span>
+            <div className="flex flex-wrap gap-4">
+              <label className="flex items-center gap-2 text-sm text-espresso">
+                <input type="checkbox" checked={form.meal_prep} onChange={(e) => setField('meal_prep', e.target.checked)} />
+                Meal Prep
+              </label>
+              <label className="flex items-center gap-2 text-sm text-espresso">
+                <input type="checkbox" checked={form.cocinera} onChange={(e) => setField('cocinera', e.target.checked)} />
+                Cocinera a Domicilio
+              </label>
+            </div>
+          </div>
+
           <div className="mb-4">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-espresso font-medium text-sm">
-                Ingredientes{esCocinera ? ' (por persona)' : ''}
-              </span>
+              <span className="text-espresso font-medium text-sm">Ingredientes</span>
               <button type="button" onClick={addIngrediente} className="text-xs text-terracotta hover:underline">
                 + Añadir
               </button>
             </div>
-            {esCocinera && (
-              <p className="text-xs text-warm-gray mb-2">
-                Indica la cantidad <strong>por persona</strong>. El sistema la multiplica
-                automáticamente por el número de comensales que elija el cliente.
-              </p>
-            )}
+            <p className="text-xs text-warm-gray mb-2">
+              Cantidad por nº de personas (1 a 5). Deja en blanco las columnas que no apliquen.
+            </p>
             <div className="space-y-2">
               {form.ingredientes.map((ing, i) => (
-                <div key={i} className="flex gap-2">
-                  <input
-                    className={ingInputCls + ' flex-1 min-w-0'}
-                    placeholder="Ingrediente"
-                    value={ing.nombre}
-                    onChange={(e) => setIngrediente(i, 'nombre', e.target.value)}
-                  />
-                  <input
-                    className={ingInputCls + ' w-20 shrink-0'}
-                    placeholder={esCocinera ? 'x pers.' : 'Cant.'}
-                    title={esCocinera ? 'Cantidad por persona' : 'Cantidad'}
-                    value={ing.cantidad}
-                    onChange={(e) => setIngrediente(i, 'cantidad', e.target.value)}
-                  />
-                  <input
-                    className={ingInputCls + ' w-24 shrink-0'}
-                    placeholder="Unidad"
-                    value={ing.unidad}
-                    onChange={(e) => setIngrediente(i, 'unidad', e.target.value)}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => removeIngrediente(i)}
-                    className="text-warm-gray hover:text-primary-600 px-1"
-                    aria-label="Quitar ingrediente"
-                  >
-                    ✕
-                  </button>
+                <div key={i} className="rounded-xl border border-espresso/10 p-2 space-y-2">
+                  <div className="flex gap-2">
+                    <input
+                      className={ingInputCls + ' flex-1 min-w-0'}
+                      placeholder="Ingrediente"
+                      value={ing.nombre}
+                      onChange={(e) => setIngrediente(i, 'nombre', e.target.value)}
+                    />
+                    <input
+                      className={ingInputCls + ' w-24 shrink-0'}
+                      placeholder="Unidad"
+                      value={ing.unidad}
+                      onChange={(e) => setIngrediente(i, 'unidad', e.target.value)}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => removeIngrediente(i)}
+                      className="text-warm-gray hover:text-primary-600 px-1"
+                      aria-label="Quitar ingrediente"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                  <div className="grid grid-cols-5 gap-1">
+                    {PERSONAS.map((pk, idx) => (
+                      <label key={pk} className="text-2xs text-warm-gray">
+                        <span className="block text-center mb-0.5">{idx + 1}p</span>
+                        <input
+                          className={ingInputCls + ' w-full text-center px-1'}
+                          value={ing[pk]}
+                          onChange={(e) => setIngrediente(i, pk, e.target.value)}
+                          aria-label={`Cantidad para ${idx + 1} ${idx === 0 ? 'persona' : 'personas'}`}
+                        />
+                      </label>
+                    ))}
+                  </div>
                 </div>
               ))}
             </div>

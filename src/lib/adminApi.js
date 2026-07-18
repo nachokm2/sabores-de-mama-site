@@ -147,15 +147,21 @@ export function reenviarCorreo(pedidoId, estado) {
 }
 
 // Platos
-export function getPlatos({ incluirInactivos = false } = {}) {
-  const qs = incluirInactivos ? '?incluir_inactivos=true' : ''
-  return apiFetch(`/platos${qs}`)
+export function getPlatos({ incluirInactivos = false, servicio } = {}) {
+  const qs = new URLSearchParams({
+    ...(incluirInactivos ? { incluir_inactivos: 'true' } : {}),
+    ...(servicio ? { servicio } : {}),
+  }).toString()
+  return apiFetch(`/platos${qs ? `?${qs}` : ''}`)
 }
 export function crearPlato(data) {
   return apiFetch('/platos', { method: 'POST', body: data })
 }
 export function editarPlato(id, data) {
   return apiFetch(`/platos/${id}`, { method: 'PUT', body: data })
+}
+export function recargarCatalogo(confirmacion) {
+  return apiFetch('/platos/recargar-catalogo', { method: 'POST', body: { confirmacion } })
 }
 export function eliminarPlato(id) {
   return apiFetch(`/platos/${id}`, { method: 'DELETE' })

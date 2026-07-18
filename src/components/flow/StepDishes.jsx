@@ -39,14 +39,15 @@ export default function StepDishes({ data, update, onNext, onBack }) {
 
   useEffect(() => {
     let active = true
-    getPlatos()
+    getPlatos(data.servicio)
       .then((lista) => active && setPlatos(lista))
       .catch(() => active && setError('No pudimos cargar los platos. Intenta más tarde.'))
       .finally(() => active && setLoading(false))
     return () => {
       active = false
     }
-  }, [])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data.servicio])
 
   const grupos = useMemo(() => agrupar(platos), [platos])
   const seleccionados = data.platos || []

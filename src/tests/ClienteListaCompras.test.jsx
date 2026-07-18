@@ -20,10 +20,10 @@ const PLATOS = [
   { id: 1, nombre: 'Pollo al curry', categoria: 'Carnes', descripcion: 'rico' },
   { id: 2, nombre: 'Lasaña', categoria: 'Otros', descripcion: 'capas' },
 ]
-// Ingredientes consolidados POR PERSONA que devolvería el backend de Cocinera.
-const INGREDIENTES = [
-  { id: 1, nombre: 'Arroz', cantidad_total: 100, unidad: 'g', platos: [1, 2] },
-  { id: 2, nombre: 'Cebolla', cantidad_total: 1, unidad: 'u', platos: [1] },
+// El backend devuelve las cantidades EXACTAS para el nº de personas consultado.
+const ingredientesPara = (ids, personas = 1) => [
+  { id: 1, nombre: 'Arroz', cantidad: 100 * personas, unidad: 'g', platos: [1, 2] },
+  { id: 2, nombre: 'Cebolla', cantidad: 1 * personas, unidad: 'u', platos: [1] },
 ]
 
 function renderPage() {
@@ -38,7 +38,9 @@ function renderPage() {
 
 beforeEach(() => {
   getPlatos.mockReset().mockResolvedValue(PLATOS)
-  getIngredientesDePlatos.mockReset().mockResolvedValue(INGREDIENTES)
+  getIngredientesDePlatos.mockReset().mockImplementation((ids, personas = 1) =>
+    Promise.resolve(ingredientesPara(ids, personas))
+  )
 })
 
 describe('ClienteListaCompras · consultar lista de compras', () => {
@@ -56,15 +58,15 @@ describe('ClienteListaCompras · consultar lista de compras', () => {
     // Generar la lista (personas por defecto: 2).
     fireEvent.click(screen.getByRole('button', { name: /Generar lista/i }))
 
-    await waitFor(() => expect(getIngredientesDePlatos).toHaveBeenCalledWith([1, 2]))
+    await waitFor(() => expect(getIngredientesDePlatos).toHaveBeenCalledWith([1, 2], 2))
 
     const arroz = (await screen.findByText('Arroz')).closest('tr')
-    expect(within(arroz).getByText('200')).toBeInTheDocument() // 100 × 2
+    expect(within(arroz).getByText('200')).toBeInTheDocument() // exacto para 2 personas
     const cebolla = screen.getByText('Cebolla').closest('tr')
-    expect(within(cebolla).getByText('2')).toBeInTheDocument() // 1 × 2
+    expect(within(cebolla).getByText('2')).toBeInTheDocument()
   })
 
-  it('al cambiar el número de personas re-escala sin volver a consultar el backend', async () => {
+  it('al cambiar el número de personas re-consulta con las cantidades exactas', async () => {
     renderPage()
     fireEvent.click(await screen.findByRole('button', { name: /Pollo al curry/ }))
     fireEvent.click(screen.getByRole('button', { name: /Generar lista/i }))
@@ -72,9 +74,10 @@ describe('ClienteListaCompras · consultar lista de compras', () => {
     const arroz = (await screen.findByText('Arroz')).closest('tr')
     await waitFor(() => expect(within(arroz).getByText('200')).toBeInTheDocument())
 
-    // Elegir 4 personas → 100 × 4 = 400, sin nueva consulta al backend.
+    // Elegir 4 personas → re-consulta el backend con las cantidades exactas para 4.
     fireEvent.click(screen.getByRole('button', { name: '4' }))
     await waitFor(() => expect(within(arroz).getByText('400')).toBeInTheDocument())
-    expect(getIngredientesDePlatos).toHaveBeenCalledTimes(1)
+    expect(getIngredientesDePlatos).toHaveBeenCalledWith([1], 4)
+    expect(getIngredientesDePlatos).toHaveBeenCalledTimes(2)
   })
 })

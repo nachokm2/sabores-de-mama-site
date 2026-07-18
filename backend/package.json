@@ -13,6 +13,7 @@
     "migrate": "node src/models/migrations.js",
     "seed": "node src/models/seed.js",
     "seed:menu": "node src/models/seedMenu.js",
+    "seed:catalogo": "node src/models/seedCatalogo.js",
     "test": "vitest run"
   },
   "dependencies": {

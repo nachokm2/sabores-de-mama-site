@@ -295,6 +295,81 @@ describe('PATCH /api/pedidos/:id/estado', () => {
   })
 })
 
+describe('GET /api/platos (servicio y cantidades exactas)', () => {
+  async function seedPlato({ nombre, meal_prep = true, cocinera = true, ingredientes = [] }) {
+    const { rows } = await pool.query(
+      `INSERT INTO platos (nombre, categoria, activo, meal_prep, cocinera) VALUES ($1,'Cat',true,$2,$3) RETURNING id`,
+      [nombre, meal_prep, cocinera]
+    )
+    const id = rows[0].id
+    for (const ing of ingredientes) {
+      await pool.query(
+        `INSERT INTO ingredientes (plato_id, nombre, unidad, p1, p2, p3, p4, p5) VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`,
+        [id, ing.nombre, ing.unidad, ing.p1, ing.p2, ing.p3, ing.p4, ing.p5]
+      )
+    }
+    return id
+  }
+
+  it('?servicio=meal_prep excluye los platos solo-Cocinera', async () => {
+    await seedPlato({ nombre: 'Ambos', meal_prep: true, cocinera: true })
+    await seedPlato({ nombre: 'Solo Cocinera', meal_prep: false, cocinera: true })
+
+    const mp = await request(app).get('/api/platos?servicio=meal_prep')
+    const nombresMp = mp.body.platos.map((p) => p.nombre)
+    expect(nombresMp).toContain('Ambos')
+    expect(nombresMp).not.toContain('Solo Cocinera')
+
+    const coc = await request(app).get('/api/platos?servicio=cocinera')
+    expect(coc.body.platos.map((p) => p.nombre)).toEqual(expect.arrayContaining(['Ambos', 'Solo Cocinera']))
+  })
+
+  it('GET /ingredientes?personas=N usa la columna pN y consolida por nombre+unidad', async () => {
+    const id1 = await seedPlato({
+      nombre: 'P1', ingredientes: [{ nombre: 'Arroz', unidad: 'g', p1: '100', p2: '200', p3: '300', p4: '400', p5: '500' }],
+    })
+    const id2 = await seedPlato({
+      nombre: 'P2', ingredientes: [{ nombre: 'Arroz', unidad: 'g', p1: '50', p2: '50', p3: '50', p4: '50', p5: '50' }],
+    })
+
+    const res = await request(app).get(`/api/platos/ingredientes?platos=${id1},${id2}&personas=3`)
+    expect(res.status).toBe(200)
+    const arroz = res.body.ingredientes.find((i) => i.nombre === 'Arroz')
+    expect(arroz.cantidad).toBe(350) // 300 (p3 de P1) + 50 (p3 de P2)
+  })
+})
+
+describe('POST /api/platos/recargar-catalogo', () => {
+  it('sin token devuelve 401', async () => {
+    const res = await request(app).post('/api/platos/recargar-catalogo').send({ confirmacion: 'REEMPLAZAR' })
+    expect(res.status).toBe(401)
+  })
+
+  it('con confirmación inválida devuelve 400', async () => {
+    const token = await login()
+    const res = await request(app)
+      .post('/api/platos/recargar-catalogo')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ confirmacion: 'no' })
+    expect(res.status).toBe(400)
+  })
+
+  it('recarga el catálogo completo (200) y separa por servicio', async () => {
+    const token = await login()
+    const res = await request(app)
+      .post('/api/platos/recargar-catalogo')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ confirmacion: 'REEMPLAZAR' })
+    expect(res.status).toBe(200)
+    expect(res.body.resumen.totalPlatos).toBe(67)
+
+    const mp = await request(app).get('/api/platos?servicio=meal_prep')
+    const nombresMp = mp.body.platos.map((p) => p.nombre)
+    expect(nombresMp).toContain('Lasaña')
+    expect(nombresMp).not.toContain('Cazuela') // Cazuela es solo Cocinera
+  })
+})
+
 describe('Rate limiter (10 req/min por IP en /api/pedidos)', () => {
   it('permite 10 solicitudes y bloquea la 11ª con 429', async () => {
     const statuses = []

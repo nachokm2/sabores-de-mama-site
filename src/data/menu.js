@@ -1,3 +1,5 @@
+import { CATALOGO_PLATOS, CATEGORIAS } from './catalogoPlatos.js'
+
 // ── Servicios ────────────────────────────────────────────────────────────────
 export const SERVICES = [
   {
@@ -41,63 +43,25 @@ export const SERVICES = [
 ]
 
 // ── Categorías de platos (disponibles en ambos servicios) ─────────────────────
-export const DISH_CATEGORIES = [
-  {
-    id: 'carnes',
-    label: 'Carnes y Pollo',
-    icon: '🍗',
-    items: [
-      'Pollo al jugo', 'Pollo a la mostaza', 'Asado alemán', 'Escalopa',
-      'Albóndigas', 'Pollo asado', 'Strogonof', 'Pollo arvejado',
-      'Ají de gallina', 'Croquetas de atún', 'Carne mechada',
-      'Pollo al curry', 'Pollo teriyaki',
-    ],
-  },
-  {
-    id: 'legumbres',
-    label: 'Legumbres y Caldos',
-    icon: '🥘',
-    items: [
-      'Cazuela', 'Lentejas', 'Porotos', 'Garbanzos',
-      'Porotos granados', 'Ajiaco', 'Carbonada',
-      'Pantrucas', 'Crema de zapallo', 'Estofado', 'Lentejas guisadas',
-    ],
-  },
-  {
-    id: 'quiches',
-    label: 'Quiches y Tortillas',
-    icon: '🥧',
-    items: [
-      'Quiche queso jamón', 'Quiche cebolla tocino', 'Quiche espinaca pollo',
-      'Quiche pollo choclo espinaca', 'Quiche brócoli choclo', 'Quiche salmón espinaca',
-      'Tortilla española', 'Tortilla de espinaca', 'Tortilla de acelga',
-      'Tortilla de zanahoria', 'Tortilla de porotos verdes',
-    ],
-  },
-  {
-    id: 'otros',
-    label: 'Otros Platos',
-    icon: '🍽️',
-    items: [
-      'Lasaña boloñesa', 'Pasta Alfredo', 'Canelones boloñesa',
-      'Pastel de papa', 'Pastel de choclo', 'Budín de zapallo',
-      'Zapallo italiano relleno', 'Choclo a la crema', 'Charquicán',
-      'Tomaticán', 'Ceviche', 'Ensalada de fideos fría', 'Salpicón',
-      'Palta reina', 'Tomate relleno', 'Pimentón relleno',
-      'Canelones ricotta espinaca', 'Canelones pollo salsa blanca',
-      'Camote relleno champiñón', 'Camote asado', 'Ravioles con salsa',
-    ],
-  },
-  {
-    id: 'acompañamientos',
-    label: 'Acompañamientos',
-    icon: '🍚',
-    items: [
-      'Arroz', 'Arroz árabe', 'Fideos', 'Papas cocidas',
-      'Quinoa', 'Papas fritas', 'Puré', 'Cuscús', 'Zanahoria asada',
-    ],
-  },
-]
+// Iconos por categoría para el menú público.
+const CATEGORIA_ICONOS = {
+  'Carnes y Pollo': '🍗',
+  'Legumbres y Caldos': '🥘',
+  'Quiches y Tortillas': '🥧',
+  Pastas: '🍝',
+  Ensaladas: '🥗',
+  'Otros Platos': '🍽️',
+  Acompañamientos: '🍚',
+}
+
+// Categorías del menú público, DERIVADAS del catálogo (fuente única
+// src/data/catalogoPlatos.js). Muestra todos los platos ofrecidos.
+export const DISH_CATEGORIES = CATEGORIAS.map((label) => ({
+  id: label.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/\s+/g, '-'),
+  label,
+  icon: CATEGORIA_ICONOS[label] || '🍽️',
+  items: CATALOGO_PLATOS.filter((p) => p.categoria === label).map((p) => p.nombre),
+})).filter((c) => c.items.length > 0)
 
 // ── Descripciones breves por plato ───────────────────────────────────────────
 export const DISH_DESCRIPTIONS = {

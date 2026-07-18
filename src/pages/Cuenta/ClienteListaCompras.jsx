@@ -42,7 +42,8 @@ export default function ClienteListaCompras() {
   const [seleccionados, setSeleccionados] = useState([])
   const [personas, setPersonas] = useState(2)
 
-  // Ingredientes consolidados POR PERSONA de la última consulta (null = sin generar).
+  // Lista consolidada de la última consulta (null = sin generar). Las cantidades
+  // vienen EXACTAS del backend para el nº de personas elegido.
   const [base, setBase] = useState(null)
   const [generando, setGenerando] = useState(false)
 
@@ -59,30 +60,25 @@ export default function ClienteListaCompras() {
 
   const grupos = useMemo(() => agrupar(platos), [platos])
 
-  // Lista final = base por persona × nº de comensales (se recalcula al cambiar personas).
-  const lista = useMemo(
-    () => (base || []).map((b) => ({ ...b, cantidad: round2(b.cantidadPorPersona * personas) })),
-    [base, personas]
-  )
+  // La lista ya viene con las cantidades exactas para el nº de personas consultado.
+  const lista = base || []
 
   const toggle = (id) => {
     setSeleccionados((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]))
     setBase(null) // la selección cambió → la lista anterior queda obsoleta
   }
 
-  const onElegirPersonas = (n) => setPersonas(n)
-
-  const generar = async () => {
+  const generarCon = async (pers) => {
     if (!seleccionados.length) return
     setGenerando(true)
     setError('')
     try {
-      const ingredientes = await getIngredientesDePlatos(seleccionados)
+      const ingredientes = await getIngredientesDePlatos(seleccionados, pers)
       setBase(
         ingredientes.map((i) => ({
           nombre: i.nombre,
           unidad: i.unidad || '',
-          cantidadPorPersona: i.cantidad_total,
+          cantidad: typeof i.cantidad === 'number' ? round2(i.cantidad) : i.cantidad,
         }))
       )
     } catch {
@@ -91,6 +87,15 @@ export default function ClienteListaCompras() {
     } finally {
       setGenerando(false)
     }
+  }
+
+  const generar = () => generarCon(personas)
+
+  // Al cambiar el nº de personas se re-consulta con las cantidades EXACTAS (no lineales)
+  // si ya hay una lista generada.
+  const onElegirPersonas = (n) => {
+    setPersonas(n)
+    if (base) generarCon(n)
   }
 
   const descargarLista = () => {

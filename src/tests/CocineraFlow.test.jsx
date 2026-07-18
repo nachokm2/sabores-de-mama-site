@@ -26,17 +26,20 @@ import CocineraFlow from '../pages/CocineraFlow'
 const CUPOS = [{ id: 1, fecha: '2026-07-01T04:00:00.000Z', disponibles: 5, capacidad_maxima: 5 }]
 const DISH_NAMES = ['Pollo', 'Lasaña', 'Cazuela', 'Quiche', 'Tortilla']
 const PLATOS = DISH_NAMES.map((nombre, i) => ({ id: i + 1, nombre, descripcion: `d${i}`, categoria: 'Cat' }))
-// Ingredientes ya consolidados que devolvería el endpoint (Arroz de 2 platos).
-const INGREDIENTES = [
-  { id: 1, nombre: 'Arroz', cantidad_total: 350, unidad: 'g', platos: [1, 2] },
-  { id: 2, nombre: 'Cebolla', cantidad_total: 3, unidad: 'u', platos: [1, 2, 3] },
+// El endpoint devuelve las cantidades EXACTAS para el nº de personas consultado
+// (Arroz de 2 platos). El mock escala por personas para simular el backend.
+const ingredientesPara = (ids, personas = 1) => [
+  { id: 1, nombre: 'Arroz', cantidad: 350 * personas, unidad: 'g', platos: [1, 2] },
+  { id: 2, nombre: 'Cebolla', cantidad: 3 * personas, unidad: 'u', platos: [1, 2, 3] },
 ]
 
 beforeEach(() => {
   getCupos.mockReset().mockResolvedValue(CUPOS)
   getPlatos.mockReset().mockResolvedValue(PLATOS)
   getProductosHornear.mockReset().mockResolvedValue([])
-  getIngredientesDePlatos.mockReset().mockResolvedValue(INGREDIENTES)
+  getIngredientesDePlatos.mockReset().mockImplementation((ids, personas = 1) =>
+    Promise.resolve(ingredientesPara(ids, personas))
+  )
   createPedido.mockReset().mockResolvedValue({ id: 200, total: 60000 })
 })
 

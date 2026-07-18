@@ -35,17 +35,19 @@ import CocineraFlow from '../../pages/CocineraFlow'
 const CUPOS = [{ id: 1, fecha: '2026-07-01T04:00:00.000Z', disponibles: 5, capacidad_maxima: 5 }]
 const DISH_NAMES = ['Pollo', 'Lasaña', 'Cazuela', 'Quiche', 'Tortilla']
 const PLATOS = DISH_NAMES.map((nombre, i) => ({ id: i + 1, nombre, descripcion: `d${i}`, categoria: 'Cat' }))
-// Lista consolidada que generaría el backend a partir de los 5 platos.
-const INGREDIENTES = [
-  { id: 1, nombre: 'Arroz', cantidad_total: 350, unidad: 'g', platos: [1, 2] },
-  { id: 2, nombre: 'Cebolla', cantidad_total: 3, unidad: 'u', platos: [1, 2, 3] },
+// El backend devuelve las cantidades EXACTAS para el nº de personas consultado.
+const ingredientesPara = (ids, personas = 1) => [
+  { id: 1, nombre: 'Arroz', cantidad: 350 * personas, unidad: 'g', platos: [1, 2] },
+  { id: 2, nombre: 'Cebolla', cantidad: 3 * personas, unidad: 'u', platos: [1, 2, 3] },
 ]
 
 beforeEach(() => {
   getCupos.mockReset().mockResolvedValue(CUPOS)
   getPlatos.mockReset().mockResolvedValue(PLATOS)
   getProductosHornear.mockReset().mockResolvedValue([])
-  getIngredientesDePlatos.mockReset().mockResolvedValue(INGREDIENTES)
+  getIngredientesDePlatos.mockReset().mockImplementation((ids, personas = 1) =>
+    Promise.resolve(ingredientesPara(ids, personas))
+  )
   createPedido.mockReset().mockResolvedValue({ id: 321, total: 60000 })
 })
 
@@ -77,9 +79,9 @@ describe('Integración · flujo completo Cocinera a Domicilio', () => {
     fireEvent.click(continuar())
 
     // Paso 4 · Lista de compras generada a partir de los 5 platos. Por defecto
-    // 2 comensales → cada cantidad (por persona) se multiplica por 2.
+    // 2 comensales → cantidad exacta del backend para 2 personas.
     await screen.findByText('Tu lista de compras')
-    expect(getIngredientesDePlatos).toHaveBeenCalledWith([1, 2, 3, 4, 5])
+    expect(getIngredientesDePlatos).toHaveBeenCalledWith([1, 2, 3, 4, 5], 2)
     await waitFor(() => expect(screen.getByLabelText('Cantidad de Arroz')).toHaveValue(700))
 
     // → Edición de cantidad por el cliente: Arroz 700 → 999

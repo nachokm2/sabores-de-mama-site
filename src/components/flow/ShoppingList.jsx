@@ -31,17 +31,18 @@ export default function ShoppingList({ data, update, onNext, onBack, platosSelec
     let active = true
     setLoading(true)
     setError('')
-    getIngredientesDePlatos(ids)
+    getIngredientesDePlatos(ids, personas)
       .then((ingredientes) => {
         if (!active) return
-        // Cada cantidad del backend es POR PERSONA → se multiplica por comensales.
-        const escalada = ingredientes.map((ing) => ({
+        // El backend ya devuelve la cantidad EXACTA para el nº de personas elegido
+        // (número consolidado o texto como "A gusto").
+        const nueva = ingredientes.map((ing) => ({
           nombre: ing.nombre,
-          cantidad: round2(ing.cantidad_total * personas),
+          cantidad: typeof ing.cantidad === 'number' ? round2(ing.cantidad) : ing.cantidad,
           unidad: ing.unidad || '',
         }))
-        setLista(escalada)
-        update({ lista_compras: escalada })
+        setLista(nueva)
+        update({ lista_compras: nueva })
       })
       .catch(() => active && setError('No pudimos generar la lista de compras. Intenta más tarde.'))
       .finally(() => active && setLoading(false))
@@ -144,15 +145,19 @@ export default function ShoppingList({ data, update, onNext, onBack, platosSelec
                   <tr key={`${row.nombre}-${row.unidad}-${i}`} className="border-b border-espresso/5 last:border-0">
                     <td className="px-4 py-2 text-espresso">{row.nombre}</td>
                     <td className="px-4 py-2">
-                      <input
-                        type="number"
-                        min="0"
-                        step="any"
-                        value={row.cantidad}
-                        onChange={(e) => setCantidad(i, e.target.value)}
-                        aria-label={`Cantidad de ${row.nombre}`}
-                        className="w-24 rounded-lg border border-espresso/15 bg-background px-2 py-1.5 text-sm text-espresso focus:outline-none focus:border-terracotta/60"
-                      />
+                      {typeof row.cantidad === 'number' ? (
+                        <input
+                          type="number"
+                          min="0"
+                          step="any"
+                          value={row.cantidad}
+                          onChange={(e) => setCantidad(i, e.target.value)}
+                          aria-label={`Cantidad de ${row.nombre}`}
+                          className="w-24 rounded-lg border border-espresso/15 bg-background px-2 py-1.5 text-sm text-espresso focus:outline-none focus:border-terracotta/60"
+                        />
+                      ) : (
+                        <span className="text-sm text-espresso">{row.cantidad || '—'}</span>
+                      )}
                     </td>
                     <td className="px-4 py-2 text-warm-gray">{row.unidad || '—'}</td>
                   </tr>

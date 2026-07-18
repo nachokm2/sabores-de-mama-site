@@ -169,6 +169,15 @@ UPDATE servicios_config SET costo_porcionado   = 3000 WHERE servicio = 'meal_pre
 ALTER TABLE pedidos ADD COLUMN IF NOT EXISTS adicionales JSONB NOT NULL DEFAULT '[]'::jsonb;
 -- Foto de la entrega (obligatoria para pasar a "en_delivery"). Guarda la key del bucket.
 ALTER TABLE pedidos ADD COLUMN IF NOT EXISTS foto_entrega TEXT;
+-- Servicio por plato (un plato puede estar en Meal Prep, Cocinera o ambos).
+ALTER TABLE platos ADD COLUMN IF NOT EXISTS meal_prep BOOLEAN NOT NULL DEFAULT true;
+ALTER TABLE platos ADD COLUMN IF NOT EXISTS cocinera  BOOLEAN NOT NULL DEFAULT true;
+-- Cantidades EXACTAS por nº de personas (texto: admite "½", "A gusto", null).
+ALTER TABLE ingredientes ADD COLUMN IF NOT EXISTS p1 TEXT;
+ALTER TABLE ingredientes ADD COLUMN IF NOT EXISTS p2 TEXT;
+ALTER TABLE ingredientes ADD COLUMN IF NOT EXISTS p3 TEXT;
+ALTER TABLE ingredientes ADD COLUMN IF NOT EXISTS p4 TEXT;
+ALTER TABLE ingredientes ADD COLUMN IF NOT EXISTS p5 TEXT;
 
 -- Cupos: capacidad, confirmados y disponibilidad INDEPENDIENTES por servicio.
 ALTER TABLE cupos ADD COLUMN IF NOT EXISTS capacidad_meal_prep   INTEGER;

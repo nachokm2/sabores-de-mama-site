@@ -355,16 +355,19 @@ async function getPlatosConIngredientes(pedido) {
   if (!arr.length) return []
   const ids = arr.map((p) => (typeof p === 'object' && p ? p.id : null)).filter((x) => Number.isInteger(x))
 
+  // Cantidad exacta según nº de comensales (Cocinera); por defecto 5 (receta base).
+  const n = Math.min(Math.max(Number(pedido.personas) || 5, 1), 5)
+
   let porPlato = new Map()
   if (ids.length) {
     try {
       const { rows } = await query(
-        `SELECT plato_id, nombre, cantidad, unidad FROM ingredientes WHERE plato_id = ANY($1) ORDER BY id`,
+        `SELECT plato_id, nombre, unidad, p${n} AS cantidad, p5 FROM ingredientes WHERE plato_id = ANY($1) ORDER BY id`,
         [ids]
       )
       for (const r of rows) {
         if (!porPlato.has(r.plato_id)) porPlato.set(r.plato_id, [])
-        porPlato.get(r.plato_id).push({ nombre: r.nombre, cantidad: r.cantidad, unidad: r.unidad })
+        porPlato.get(r.plato_id).push({ nombre: r.nombre, cantidad: r.cantidad ?? r.p5, unidad: r.unidad })
       }
     } catch (err) {
       console.error('[mail] No se pudieron cargar ingredientes:', err.message)

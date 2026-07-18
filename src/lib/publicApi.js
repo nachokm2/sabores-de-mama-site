@@ -70,8 +70,9 @@ async function request(path, { method = 'GET', body } = {}) {
 }
 
 /** Platos activos con ingredientes. Devuelve [] si algo falla (el llamador hace fallback). */
-export async function getPlatos() {
-  const data = await request('/platos')
+export async function getPlatos(servicio) {
+  const qs = servicio ? `?servicio=${encodeURIComponent(servicio)}` : ''
+  const data = await request(`/platos${qs}`)
   return data?.platos || []
 }
 
@@ -140,10 +141,11 @@ export async function getProductosHornear() {
 }
 
 /** Ingredientes consolidados de un conjunto de platos (para la lista de compras). */
-export async function getIngredientesDePlatos(ids = []) {
+export async function getIngredientesDePlatos(ids = [], personas) {
   if (!ids.length) return []
   const qs = encodeURIComponent(ids.join(','))
-  const data = await request(`/platos/ingredientes?platos=${qs}`)
+  const pers = personas ? `&personas=${encodeURIComponent(personas)}` : ''
+  const data = await request(`/platos/ingredientes?platos=${qs}${pers}`)
   return data?.ingredientes || []
 }
 
