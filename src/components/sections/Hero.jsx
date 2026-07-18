@@ -3,6 +3,12 @@ import { motion } from 'framer-motion'
 import { gsap } from 'gsap'
 import { openChatBot } from '../../lib/openChatBot'
 import { useReducedMotion } from '../../hooks/useReducedMotion'
+import { imagenUrl } from '../../lib/publicApi'
+
+// URL/key del video del inicio (subido al bucket). Configurable por variable de
+// entorno; si está vacío se muestra la imagen de respaldo. imagenUrl() lo sirve
+// por el proxy firmado del backend (funciona aunque el bucket sea privado).
+const HERO_VIDEO = import.meta.env.VITE_HERO_VIDEO_URL || 'hero/2.mp4'
 
 /* ── Smoke particle ──────────────────────────────────────────────────────── */
 function SmokeParticle({ style }) {
@@ -139,7 +145,31 @@ export default function Hero() {
 
       {/* ── Content ── */}
       <div className="relative z-10 container-site pt-28 pb-24 md:pt-36 md:pb-32">
-        <div className="max-w-3xl">
+        <div className="grid lg:grid-cols-2 gap-10 lg:gap-14 items-center">
+          {/* Video (izquierda en desktop; debajo del texto en móvil) */}
+          <div className="order-2 lg:order-1">
+            {HERO_VIDEO ? (
+              <video
+                src={imagenUrl(HERO_VIDEO)}
+                className="w-full rounded-3xl shadow-xl object-cover aspect-[4/5] sm:aspect-video lg:aspect-[4/5] bg-espresso/5"
+                autoPlay
+                muted
+                loop
+                playsInline
+                preload="metadata"
+                poster="/assets/images/hero-bg.png"
+              />
+            ) : (
+              <img
+                src="/assets/images/hero-bg.png"
+                alt=""
+                className="w-full rounded-3xl shadow-xl object-cover aspect-[4/5] lg:aspect-[4/5]"
+              />
+            )}
+          </div>
+
+          {/* Texto (derecha) */}
+          <div className="order-1 lg:order-2 max-w-xl">
 
           {/* Label */}
           <motion.div
@@ -158,7 +188,7 @@ export default function Hero() {
           <h1
             id="hero-heading"
             ref={titleRef}
-            className="font-display text-5xl sm:text-6xl md:text-7xl lg:text-8xl text-espresso leading-[1.0] tracking-tighter-display mb-6"
+            className="font-display text-4xl sm:text-5xl lg:text-6xl text-espresso leading-[1.03] tracking-tighter-display mb-6"
           >
             {['Volver a comer', 'casero,', 'sin tener que', 'cocinar.'].map((word, i) => (
               <span
@@ -218,6 +248,7 @@ export default function Hero() {
             <FoodBadge emoji="🌿" label="Ingredientes frescos" delay={1.85} />
             <FoodBadge emoji="⚡" label="Entrega rápida"    delay={2.0} />
           </motion.div>
+          </div>
         </div>
       </div>
 
