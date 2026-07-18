@@ -142,7 +142,7 @@ export default function VideoSection() {
           <div className="flex-1 text-center lg:text-left">
             <div className="space-y-6 mb-8">
               {[
-                { icon: '🌿', title: 'Ingredientes frescos', text: 'Compramos cada mañana. Nada de congelados ni conservantes.' },
+                { icon: '🌿', title: 'Ingredientes frescos', text: 'Ingredientes que tú nos envías, frescos. Nada de congelados ni conservantes.' },
                 { icon: '🔥', title: 'Cocción lenta', text: 'Tiempo y fuego bajo. El secreto del sabor de casa.' },
                 { icon: '❤️', title: 'Hecho con cariño', text: 'Cada plato preparado con dedicación y recetas de familia.' },
               ].map((feat, i) => (
