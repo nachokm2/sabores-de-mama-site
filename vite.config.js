@@ -3,8 +3,28 @@ import react from '@vitejs/plugin-react'
 import compression from 'vite-plugin-compression2'
 import path from 'path'
 
+// Redirige www.<dominio> → <dominio> (301) en el servidor de `vite preview`
+// (producción en Railway), para tener una sola URL canónica.
+function wwwRedirect() {
+  return {
+    name: 'www-redirect',
+    configurePreviewServer(server) {
+      server.middlewares.use((req, res, next) => {
+        const host = req.headers.host || ''
+        if (host.startsWith('www.')) {
+          res.writeHead(301, { Location: `https://${host.slice(4)}${req.url}` })
+          res.end()
+          return
+        }
+        next()
+      })
+    },
+  }
+}
+
 export default defineConfig({
   plugins: [
+    wwwRedirect(),
     react(),
     compression({ algorithm: 'gzip', exclude: [/\.(png|jpg|jpeg|gif|svg|webp|avif)$/] }),
     compression({ algorithm: 'brotliCompress', exclude: [/\.(png|jpg|jpeg|gif|svg|webp|avif)$/] }),
