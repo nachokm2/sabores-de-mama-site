@@ -3,7 +3,33 @@ import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { SERVICES, DISH_CATEGORIES, DULCES_FAMILIAR, DULCES_SNACKS, DISH_DESCRIPTIONS } from '../../data/menu'
 import SectionLabel from '../ui/SectionLabel'
-import { getPlatos, getComunas, imagenUrl } from '../../lib/publicApi'
+import { getPlatos, getComunas, getProductosHornear, imagenUrl } from '../../lib/publicApi'
+import { fmtCLP } from '../../lib/flowConfig'
+
+// Degradados para las tarjetas de dulces sin foto (se rotan por índice).
+const DULCE_GRADIENTS = [
+  'from-gold via-amber to-wheat',
+  'from-terracotta via-ember to-amber',
+  'from-espresso via-bark to-terracotta',
+  'from-bark via-ember to-gold',
+  'from-terracotta via-bark to-amber',
+  'from-bark via-amber to-wheat',
+]
+
+// Producto Healthy (productos_hornear) → formato de la tarjeta DulceCard.
+function mapDulce(p, i) {
+  return {
+    name: p.nombre,
+    subtitle: [p.formato, p.porciones].filter(Boolean).join(' · ') || p.descripcion || '',
+    priceLabel: fmtCLP(p.precio),
+    image: p.imagen ? imagenUrl(p.imagen) : null,
+    emoji: '🧁',
+    gradient: DULCE_GRADIENTS[i % DULCE_GRADIENTS.length],
+  }
+}
+
+// Respaldo estático si aún no hay productos Healthy cargados / backend caído.
+const DULCES_FALLBACK = [...DULCES_FAMILIAR, ...DULCES_SNACKS]
 import { useScrollReveal } from '../../hooks/useScrollAnimation'
 import { WHATSAPP, getWhatsAppLink } from '../../data/siteConfig'
 
@@ -333,6 +359,8 @@ export default function MenuSection() {
   const [categories, setCategories] = useState(DISH_CATEGORIES)
   const [descriptions, setDescriptions] = useState(DISH_DESCRIPTIONS)
   const [images, setImages] = useState({})
+  // Dulces Saludables: productos administrables (pestaña Healthy del panel).
+  const [dulces, setDulces] = useState([])
 
   useEffect(() => {
     let active = true
@@ -346,10 +374,16 @@ export default function MenuSection() {
       .catch(() => {
         /* Sin conexión / error → se mantienen los datos estáticos. */
       })
+    getProductosHornear()
+      .then((lista) => active && setDulces(Array.isArray(lista) ? lista : []))
+      .catch(() => active && setDulces([]))
     return () => {
       active = false
     }
   }, [])
+
+  // Si hay productos Healthy cargados, se muestran; si no, los estáticos.
+  const dulcesShow = dulces.length ? dulces.map(mapDulce) : DULCES_FALLBACK
 
   return (
     <section
@@ -421,23 +455,10 @@ export default function MenuSection() {
             </p>
           </div>
 
-          {/* Familiar */}
-          <p className="font-body text-accent-600 text-xs font-semibold tracking-[0.15em] uppercase text-center mb-4">
-            Formato Familiar (Molde 20 cm) · 8 a 10 porciones
-          </p>
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mb-8">
-            {DULCES_FAMILIAR.map((d, i) => (
-              <DulceCard key={d.name} item={d} index={i} />
-            ))}
-          </div>
-
-          {/* Snacks */}
-          <p className="font-body text-accent-600 text-xs font-semibold tracking-[0.15em] uppercase text-center mb-4">
-            Formato Snacks (Bolsas de 10 unidades) · 1 porción individual
-          </p>
+          {/* Productos Healthy (administrables desde el panel) */}
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mb-14">
-            {DULCES_SNACKS.map((d, i) => (
-              <DulceCard key={d.name} item={d} index={i} />
+            {dulcesShow.map((d, i) => (
+              <DulceCard key={`${d.name}-${i}`} item={d} index={i} />
             ))}
           </div>
 
