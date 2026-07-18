@@ -49,6 +49,16 @@ export default function Hero() {
   const prefersReduced = useReducedMotion()
   const bgRef = useRef(null)
   const titleRef = useRef(null)
+  const videoRef = useRef(null)
+
+  // React a veces no aplica el atributo `muted`, lo que hace que el navegador
+  // bloquee el autoplay. Lo forzamos por ref y disparamos la reproducción.
+  useEffect(() => {
+    const v = videoRef.current
+    if (!v) return
+    v.muted = true
+    if (!prefersReduced) v.play().catch(() => {})
+  }, [prefersReduced])
 
   useEffect(() => {
     if (prefersReduced) return
@@ -150,14 +160,14 @@ export default function Hero() {
           <div className="order-2 lg:order-1">
             {HERO_VIDEO ? (
               <video
+                ref={videoRef}
                 src={imagenUrl(HERO_VIDEO)}
                 className="w-full rounded-3xl shadow-xl object-cover aspect-[4/5] sm:aspect-video lg:aspect-[4/5] bg-espresso/5"
                 autoPlay
                 muted
                 loop
                 playsInline
-                preload="metadata"
-                poster="/assets/images/hero-bg.png"
+                preload="auto"
               />
             ) : (
               <img
