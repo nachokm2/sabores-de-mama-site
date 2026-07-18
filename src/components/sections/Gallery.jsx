@@ -1,13 +1,14 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import SectionLabel from '../ui/SectionLabel'
+import { imagenUrl } from '../../lib/publicApi'
 
 const GALLERY_ITEMS = [
   {
     id: 1,
     emoji: '🥔',
     label: 'Papa Rellena',
-    image: '/assets/images/papa-rellena.jpg',
+    image: imagenUrl('home/7.png'),
     gradient: 'from-bark via-ember to-amber',
     span: 'col-span-1 row-span-2',
   },
@@ -15,7 +16,7 @@ const GALLERY_ITEMS = [
     id: 2,
     emoji: '🥘',
     label: 'Pastel de Papas',
-    image: '/assets/images/pastel-de-papas.jpg',
+    image: imagenUrl('home/8.jpg'),
     gradient: 'from-espresso via-bark to-terracotta',
     span: 'col-span-1 row-span-1',
   },
@@ -23,7 +24,7 @@ const GALLERY_ITEMS = [
     id: 3,
     emoji: '🐓',
     label: 'Pollo Asado',
-    image: '/assets/images/pollo-asado.jpg',
+    image: imagenUrl('home/9.jpg'),
     gradient: 'from-terracotta via-ember to-gold',
     span: 'col-span-1 row-span-1',
   },
@@ -31,7 +32,7 @@ const GALLERY_ITEMS = [
     id: 4,
     emoji: '🐟',
     label: 'Pescado a la Plancha',
-    image: '/assets/images/pescado-plancha.jpg',
+    image: imagenUrl('home/10.png'),
     gradient: 'from-amber via-gold to-wheat',
     span: 'col-span-2 row-span-1',
   },
