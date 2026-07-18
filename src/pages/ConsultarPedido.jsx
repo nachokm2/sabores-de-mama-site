@@ -177,7 +177,12 @@ export default function ConsultarPedido() {
               {platos.length > 0 && (
                 <Bloque titulo="Platos">
                   <ul className="list-disc pl-5 text-espresso text-sm space-y-0.5">
-                    {platos.map((p, i) => <li key={i}>{platoNombre(p)}</li>)}
+                    {platos.map((p, i) => (
+                      <li key={i}>
+                        {platoNombre(p)}
+                        {p?.acompanamiento?.nombre ? ` (con ${p.acompanamiento.nombre})` : ''}
+                      </li>
+                    ))}
                   </ul>
                 </Bloque>
               )}

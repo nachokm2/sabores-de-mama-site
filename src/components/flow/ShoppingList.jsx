@@ -21,7 +21,11 @@ const OPCIONES_PERSONAS = [1, 2, 3, 4, 5]
  *    eliminar ingredientes) y se guarda en el estado del flujo.
  */
 export default function ShoppingList({ data, update, onNext, onBack, platosSeleccionados }) {
-  const ids = platosSeleccionados ?? data?.platos ?? []
+  // Platos principales + acompañamientos elegidos (sus ingredientes también van
+  // a la lista de compras).
+  const mainIds = platosSeleccionados ?? data?.platos ?? []
+  const sideIds = data?.acompanamientoIds ?? []
+  const ids = [...new Set([...mainIds, ...sideIds])]
   const personas = Number(data?.personas) || 1
   const [lista, setLista] = useState([])
   const [loading, setLoading] = useState(true)

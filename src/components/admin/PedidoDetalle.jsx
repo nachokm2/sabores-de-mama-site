@@ -99,7 +99,12 @@ export default function PedidoDetalle({ pedido, platosCatalogo = [], comunas = [
           <Bloque titulo="Platos">
             {platos.length ? (
               <ul className="list-disc pl-5 text-espresso space-y-0.5">
-                {platos.map((p, i) => <li key={i}>{platoNombre(p)}</li>)}
+                {platos.map((p, i) => (
+                  <li key={i}>
+                    {platoNombre(p)}
+                    {p?.acompanamiento?.nombre ? ` (con ${p.acompanamiento.nombre})` : ''}
+                  </li>
+                ))}
               </ul>
             ) : (
               <p className="text-warm-gray">—</p>

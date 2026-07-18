@@ -59,7 +59,7 @@ export default function StepSummary({ data, update, onBack }) {
         fecha_entrega: data.fecha_entrega,
         // Servicio parametrizado por el flujo (meal_prep | cocinera).
         servicio: data.servicio || 'meal_prep',
-        platos: platosDetalle.map((p) => ({ id: p.id, nombre: p.nombre })),
+        platos: platosDetalle.map((p) => ({ id: p.id, nombre: p.nombre, acompanamiento: p.acompanamiento || null })),
         restricciones,
         observaciones: data.observaciones || null,
         tipo_entrega: data.tipo_entrega,
@@ -110,7 +110,10 @@ export default function StepSummary({ data, update, onBack }) {
           <span className="text-warm-gray block mb-1">Platos ({platosDetalle.length})</span>
           <ul className="list-disc pl-5 text-espresso">
             {platosDetalle.map((p) => (
-              <li key={p.id}>{p.nombre}</li>
+              <li key={p.id}>
+                {p.nombre}
+                {p.acompanamiento ? <span className="text-warm-gray"> (con {p.acompanamiento.nombre})</span> : ''}
+              </li>
             ))}
           </ul>
         </div>

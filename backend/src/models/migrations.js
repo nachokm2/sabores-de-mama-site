@@ -172,6 +172,9 @@ ALTER TABLE pedidos ADD COLUMN IF NOT EXISTS foto_entrega TEXT;
 -- Servicio por plato (un plato puede estar en Meal Prep, Cocinera o ambos).
 ALTER TABLE platos ADD COLUMN IF NOT EXISTS meal_prep BOOLEAN NOT NULL DEFAULT true;
 ALTER TABLE platos ADD COLUMN IF NOT EXISTS cocinera  BOOLEAN NOT NULL DEFAULT true;
+-- ¿El plato viene con un acompañamiento que el cliente elige? (los Acompañamientos
+-- no cuentan para los 5 platos; son la guarnición de los que la llevan).
+ALTER TABLE platos ADD COLUMN IF NOT EXISTS lleva_acompanamiento BOOLEAN NOT NULL DEFAULT false;
 -- Cantidades EXACTAS por nº de personas (texto: admite "½", "A gusto", null).
 ALTER TABLE ingredientes ADD COLUMN IF NOT EXISTS p1 TEXT;
 ALTER TABLE ingredientes ADD COLUMN IF NOT EXISTS p2 TEXT;

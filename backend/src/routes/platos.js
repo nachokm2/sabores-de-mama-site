@@ -9,7 +9,7 @@ const router = Router()
 function selectPlatosSQL(whereSql = '') {
   return `
     SELECT p.id, p.nombre, p.descripcion, p.categoria, p.imagen, p.activo,
-           p.meal_prep, p.cocinera, p.created_at,
+           p.meal_prep, p.cocinera, p.lleva_acompanamiento, p.created_at,
            COALESCE(
              json_agg(
                json_build_object(
@@ -173,8 +173,8 @@ router.post('/', requireAdmin, async (req, res, next) => {
 
     const platoId = await withTransaction(async (client) => {
       const ins = await client.query(
-        `INSERT INTO platos (nombre, descripcion, categoria, imagen, activo, meal_prep, cocinera)
-         VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id`,
+        `INSERT INTO platos (nombre, descripcion, categoria, imagen, activo, meal_prep, cocinera, lleva_acompanamiento)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id`,
         [
           b.nombre,
           b.descripcion || null,
@@ -183,6 +183,7 @@ router.post('/', requireAdmin, async (req, res, next) => {
           b.activo !== false,
           b.meal_prep !== false,
           b.cocinera !== false,
+          b.lleva_acompanamiento === true,
         ]
       )
       const id = ins.rows[0].id
@@ -215,8 +216,9 @@ router.put('/:id', requireAdmin, async (req, res, next) => {
                 imagen      = COALESCE($4, imagen),
                 activo      = COALESCE($5, activo),
                 meal_prep   = COALESCE($6, meal_prep),
-                cocinera    = COALESCE($7, cocinera)
-          WHERE id = $8
+                cocinera    = COALESCE($7, cocinera),
+                lleva_acompanamiento = COALESCE($8, lleva_acompanamiento)
+          WHERE id = $9
         RETURNING id`,
         [
           b.nombre ?? null,
@@ -226,6 +228,7 @@ router.put('/:id', requireAdmin, async (req, res, next) => {
           b.activo ?? null,
           b.meal_prep ?? null,
           b.cocinera ?? null,
+          b.lleva_acompanamiento ?? null,
           id,
         ]
       )

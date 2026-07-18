@@ -123,7 +123,10 @@ function listaPlatosHtml(platos) {
   const arr = Array.isArray(platos) ? platos : []
   if (!arr.length) return `<p style="margin:0;color:${MUTED}">—</p>`
   const items = arr
-    .map((p) => `<li style="margin:2px 0;color:${INK}">${esc(platoNombre(p))}</li>`)
+    .map((p) => {
+      const acomp = p && p.acompanamiento && p.acompanamiento.nombre ? ` (con ${esc(p.acompanamiento.nombre)})` : ''
+      return `<li style="margin:2px 0;color:${INK}">${esc(platoNombre(p))}${acomp}</li>`
+    })
     .join('')
   return `<ul style="margin:6px 0 0;padding-left:18px">${items}</ul>`
 }

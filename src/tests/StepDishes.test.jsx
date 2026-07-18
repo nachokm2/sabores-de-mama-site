@@ -15,19 +15,27 @@ import { getPlatos } from '../lib/publicApi'
 import StepDishes from '../components/flow/StepDishes'
 
 const PLATOS = [
-  { id: 1, nombre: 'Pollo al Curry', descripcion: 'curry', categoria: 'Carnes y Pollo' },
+  { id: 1, nombre: 'Pollo al Curry', descripcion: 'curry', categoria: 'Carnes y Pollo', lleva_acompanamiento: true },
   { id: 2, nombre: 'Lasaña', descripcion: 'pasta', categoria: 'Otros Platos' },
   { id: 3, nombre: 'Cazuela', descripcion: 'caldo', categoria: 'Legumbres y Caldos' },
   { id: 4, nombre: 'Quiche', descripcion: 'tarta', categoria: 'Quiches y Tortillas' },
   { id: 5, nombre: 'Tortilla', descripcion: 'huevo', categoria: 'Quiches y Tortillas' },
   { id: 6, nombre: 'Charquicán', descripcion: 'guiso', categoria: 'Otros Platos' },
+  // Acompañamientos: NO cuentan para los 5 ni aparecen en la selección.
+  { id: 7, nombre: 'Arroz', descripcion: '', categoria: 'Acompañamientos' },
+  { id: 8, nombre: 'Puré', descripcion: '', categoria: 'Acompañamientos' },
 ]
 
 // Wrapper con estado: StepDishes es controlado, así reflejamos las selecciones.
 function Wrapper() {
   const [data, setData] = useState({ platos: [], platosDetalle: [] })
   const update = (partial) => setData((d) => ({ ...d, ...partial }))
-  return <StepDishes data={data} update={update} onNext={vi.fn()} onBack={vi.fn()} />
+  return (
+    <>
+      <StepDishes data={data} update={update} onNext={vi.fn()} onBack={vi.fn()} />
+      <pre data-testid="pd">{JSON.stringify(data.platosDetalle)}</pre>
+    </>
+  )
 }
 
 const contador = () => screen.getByText(/de 5 platos seleccionados/)
@@ -101,6 +109,32 @@ describe('StepDishes', () => {
     // Deseleccionar
     fireEvent.click(platoBtn('Pollo al Curry'))
     expect(contador()).toHaveTextContent('1 de 5 platos seleccionados')
+  })
+
+  it('los acompañamientos no aparecen en la selección (no son platos)', async () => {
+    render(<Wrapper />)
+    await loadAndExpand()
+    // "Arroz"/"Puré" son acompañamientos → no se pueden elegir como plato.
+    expect(screen.queryByRole('button', { name: /^Arroz/ })).toBeNull()
+    expect(screen.queryByRole('button', { name: /^Puré/ })).toBeNull()
+    // Tampoco existe el acordeón de la categoría Acompañamientos.
+    expect(screen.queryByRole('button', { name: /Acompañamientos/ })).toBeNull()
+  })
+
+  it('al elegir un plato que lleva acompañamiento aparece el selector y se guarda', async () => {
+    render(<Wrapper />)
+    await loadAndExpand()
+
+    fireEvent.click(platoBtn('Pollo al Curry'))
+
+    // Aparece el selector de guarnición para ese plato (autoselecciona el 1º).
+    const select = await screen.findByLabelText('Acompañamiento para Pollo al Curry')
+    expect(select).toBeInTheDocument()
+    expect(screen.getByTestId('pd')).toHaveTextContent('"acompanamiento":{"id":7,"nombre":"Arroz"}')
+
+    // Cambiar a Puré se refleja en el estado del flujo.
+    fireEvent.change(select, { target: { value: '8' } })
+    expect(screen.getByTestId('pd')).toHaveTextContent('"acompanamiento":{"id":8,"nombre":"Puré"}')
   })
 
   it('no permite seleccionar más de 5 platos (el 6to click no tiene efecto)', async () => {

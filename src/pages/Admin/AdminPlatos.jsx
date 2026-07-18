@@ -22,6 +22,7 @@ const FORM_VACIO = {
   activo: true,
   meal_prep: true,
   cocinera: true,
+  lleva_acompanamiento: false,
   ingredientes: [{ ...ING_VACIO }],
 }
 
@@ -150,6 +151,7 @@ export default function AdminPlatos() {
       activo: p.activo,
       meal_prep: p.meal_prep !== false,
       cocinera: p.cocinera !== false,
+      lleva_acompanamiento: p.lleva_acompanamiento === true,
       ingredientes:
         p.ingredientes && p.ingredientes.length
           ? p.ingredientes.map((i) => ({
@@ -180,6 +182,7 @@ export default function AdminPlatos() {
       activo: form.activo,
       meal_prep: form.meal_prep,
       cocinera: form.cocinera,
+      lleva_acompanamiento: form.lleva_acompanamiento,
       ingredientes: form.ingredientes
         .filter((i) => i.nombre.trim())
         .map((i) => ({
@@ -331,6 +334,14 @@ export default function AdminPlatos() {
                 Cocinera a Domicilio
               </label>
             </div>
+            <label className="flex items-center gap-2 text-sm text-espresso mt-3">
+              <input
+                type="checkbox"
+                checked={form.lleva_acompanamiento}
+                onChange={(e) => setField('lleva_acompanamiento', e.target.checked)}
+              />
+              Lleva acompañamiento (el cliente elige una guarnición)
+            </label>
           </div>
 
           <div className="mb-4">

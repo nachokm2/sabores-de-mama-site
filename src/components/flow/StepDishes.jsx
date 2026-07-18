@@ -2,6 +2,9 @@ import { useEffect, useMemo, useState } from 'react'
 import { getPlatos, imagenUrl } from '../../lib/publicApi'
 
 const MAX = 5
+// Los acompañamientos NO son platos: no cuentan para los 5 y son la guarnición
+// de los platos que la llevan.
+const ACOMP_CAT = 'Acompañamientos'
 
 // Normaliza para búsqueda: minúsculas y sin tildes (acento-insensible).
 const norm = (s) =>
@@ -49,26 +52,61 @@ export default function StepDishes({ data, update, onNext, onBack }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data.servicio])
 
-  const grupos = useMemo(() => agrupar(platos), [platos])
+  // Principales (cuentan para los 5) vs. acompañamientos (guarnición a elección).
+  const principales = useMemo(() => platos.filter((p) => (p.categoria || '') !== ACOMP_CAT), [platos])
+  const acompanamientos = useMemo(() => platos.filter((p) => (p.categoria || '') === ACOMP_CAT), [platos])
+  const grupos = useMemo(() => agrupar(principales), [principales])
+
   const seleccionados = data.platos || []
+  const acompSel = data.acompSel || {} // { [platoId]: acompanamientoId }
   const count = seleccionados.length
   const completo = count === MAX
 
   const q = norm(query.trim())
   const buscando = q.length > 0
 
+  // Recalcula platosDetalle (con su acompañamiento) + ids de guarniciones elegidas.
+  const rebuild = (nextIds, nextAcompSel) => {
+    const detalle = principales
+      .filter((x) => nextIds.includes(x.id))
+      .map((x) => {
+        const sideId = x.lleva_acompanamiento ? nextAcompSel[x.id] : null
+        const side = sideId ? acompanamientos.find((a) => a.id === sideId) : null
+        return {
+          id: x.id,
+          nombre: x.nombre,
+          descripcion: x.descripcion,
+          lleva_acompanamiento: !!x.lleva_acompanamiento,
+          acompanamiento: side ? { id: side.id, nombre: side.nombre } : null,
+        }
+      })
+    const acompanamientoIds = [...new Set(detalle.map((d) => d.acompanamiento?.id).filter(Boolean))]
+    update({ platos: nextIds, platosDetalle: detalle, acompSel: nextAcompSel, acompanamientoIds })
+  }
+
   const toggle = (p) => {
     const isSel = seleccionados.includes(p.id)
     let nextIds
-    if (isSel) nextIds = seleccionados.filter((id) => id !== p.id)
-    else if (count >= MAX) return
-    else nextIds = [...seleccionados, p.id]
-
-    const detalle = platos
-      .filter((x) => nextIds.includes(x.id))
-      .map((x) => ({ id: x.id, nombre: x.nombre, descripcion: x.descripcion }))
-    update({ platos: nextIds, platosDetalle: detalle })
+    const nextAcompSel = { ...acompSel }
+    if (isSel) {
+      nextIds = seleccionados.filter((id) => id !== p.id)
+      delete nextAcompSel[p.id]
+    } else if (count >= MAX) {
+      return
+    } else {
+      nextIds = [...seleccionados, p.id]
+      // Autoselecciona la primera guarnición si el plato la lleva.
+      if (p.lleva_acompanamiento && acompanamientos.length && !nextAcompSel[p.id]) {
+        nextAcompSel[p.id] = acompanamientos[0].id
+      }
+    }
+    rebuild(nextIds, nextAcompSel)
   }
+
+  const setAcomp = (platoId, sideId) => rebuild(seleccionados, { ...acompSel, [platoId]: sideId })
+
+  // Platos elegidos que llevan acompañamiento (para el selector de guarnición).
+  const platosConAcomp = principales.filter((p) => seleccionados.includes(p.id) && p.lleva_acompanamiento)
 
   const toggleCat = (cat) =>
     setExpanded((prev) => {
@@ -213,6 +251,32 @@ export default function StepDishes({ data, update, onNext, onBack }) {
               No encontramos platos con “{query.trim()}”.
             </p>
           )}
+        </div>
+      )}
+
+      {!loading && !error && platosConAcomp.length > 0 && acompanamientos.length > 0 && (
+        <div className="mb-6 rounded-2xl border border-amber/30 bg-amber/[0.05] p-4">
+          <h3 className="font-display text-base font-bold text-espresso mb-1">Elige el acompañamiento</h3>
+          <p className="text-xs text-warm-gray mb-3">Estos platos vienen con una guarnición a elección.</p>
+          <div className="space-y-2">
+            {platosConAcomp.map((p) => (
+              <div key={p.id} className="flex items-center justify-between gap-3">
+                <span className="text-sm text-espresso min-w-0 truncate">{p.nombre}</span>
+                <select
+                  value={acompSel[p.id] || ''}
+                  onChange={(e) => setAcomp(p.id, Number(e.target.value))}
+                  aria-label={`Acompañamiento para ${p.nombre}`}
+                  className="rounded-lg border border-espresso/15 bg-background px-2 py-1.5 text-sm text-espresso shrink-0"
+                >
+                  {acompanamientos.map((a) => (
+                    <option key={a.id} value={a.id}>
+                      {a.nombre}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            ))}
+          </div>
         </div>
       )}
 

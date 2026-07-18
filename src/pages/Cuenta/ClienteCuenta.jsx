@@ -51,7 +51,10 @@ function ReservaCard({ r }) {
       </div>
       {platos.length > 0 && (
         <p className="text-sm text-warm-gray mt-2">
-          <span className="text-espresso font-medium">Platos:</span> {platos.map(platoNombre).join(', ')}
+          <span className="text-espresso font-medium">Platos:</span>{' '}
+          {platos
+            .map((p) => platoNombre(p) + (p?.acompanamiento?.nombre ? ` (con ${p.acompanamiento.nombre})` : ''))
+            .join(', ')}
         </p>
       )}
       {lista.length > 0 && <p className="text-xs text-warm-gray mt-1">{lista.length} ingredientes en tu lista de compras</p>}
