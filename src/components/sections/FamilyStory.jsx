@@ -1,6 +1,10 @@
 import { useRef } from 'react'
 import { motion, useScroll, useTransform } from 'framer-motion'
 import SectionLabel from '../ui/SectionLabel'
+import { imagenUrl } from '../../lib/publicApi'
+
+// Imagen de la sección "Nuestra Esencia" del inicio (servida desde el bucket).
+const FAMILY_IMG = import.meta.env.VITE_HOME_FAMILY_IMG || 'home/6.jpg'
 
 const AUDIENCIAS = [
   { emoji: '💼', title: 'Quienes trabajan todo el día', text: 'Llegan a casa con ganas de disfrutar una buena comida, no de pasar horas cocinando.' },
@@ -57,7 +61,7 @@ export default function FamilyStory() {
       ref={sectionRef}
       className="relative section-padding overflow-hidden"
       style={{ background: 'linear-gradient(160deg, #FFFCF7 0%, #FBF6EE 50%, #F4EADB 100%)' }}
-      aria-labelledby="family-story-heading"
+      aria-label="Nuestra esencia"
     >
       {/* Grain overlay */}
       <div
@@ -78,41 +82,14 @@ export default function FamilyStory() {
       <div className="container-site relative z-10">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 lg:gap-20 items-center">
 
-          {/* ── Left: Text ── */}
+          {/* ── Left: Imagen ── */}
           <motion.div style={{ y: textY }}>
-            <SectionLabel light>Nuestra Esencia</SectionLabel>
-
-            <h2
-              id="family-story-heading"
-              className="section-title-light mt-5 mb-7"
-            >
-              La comida de mamá
-              <br />
-              <em className="not-italic text-gradient-gold">nunca se olvida.</em>
-            </h2>
-
-            <p className="font-body text-warm-gray text-base md:text-lg leading-relaxed mb-8">
-              Hay algo mágico en la comida casera. No es solo el sabor —
-              es el recuerdo de una cocina llena de vapor, el sonido de la olla
-              en el fuego, y la voz que dice "ya está lista la comida".
-            </p>
-
-            <p className="font-body text-warm-gray text-base leading-relaxed mb-10">
-              En Sabores de Mamá recreamos esa magia. Cada plato que preparamos
-              carga una historia familiar, un secreto culinario y una gran dosis
-              de amor. Porque creemos que comer bien es también cuidarse,
-              y cuidar a los que queremos.
-            </p>
-
-            {/* Pull quote */}
-            <div className="border-l-2 border-terracotta pl-5">
-              <p className="font-display text-xl text-espresso italic">
-                "Siempre he creído que una buena comida puede cambiar el día de una persona.
-                Por eso preparamos cada pedido con el mismo cuidado y cariño con el que
-                cocinaríamos para nuestra propia familia."
-              </p>
-              <p className="font-body text-warm-gray text-sm mt-2">— Fundadora, Sabores de Mamá</p>
-            </div>
+            <img
+              src={imagenUrl(FAMILY_IMG)}
+              alt="La comida de mamá, hecha con cariño"
+              className="w-full aspect-[4/5] object-cover rounded-3xl shadow-xl"
+              loading="lazy"
+            />
           </motion.div>
 
           {/* ── Right: Timeline moments ── */}
