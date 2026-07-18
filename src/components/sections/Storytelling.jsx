@@ -2,21 +2,10 @@ import { useRef } from 'react'
 import { motion, useScroll, useTransform } from 'framer-motion'
 import SectionLabel from '../ui/SectionLabel'
 import { useScrollReveal } from '../../hooks/useScrollAnimation'
+import { imagenUrl } from '../../lib/publicApi'
 
-/* ── Decorative plate illustration ──────────────────────────────────────── */
-function PlateIllustration({ className }) {
-  return (
-    <svg viewBox="0 0 280 280" fill="none" className={className} aria-hidden="true">
-      <circle cx="140" cy="140" r="130" fill="rgba(200,135,58,0.06)" stroke="rgba(200,135,58,0.2)" strokeWidth="1"/>
-      <circle cx="140" cy="140" r="95"  fill="rgba(200,135,58,0.04)" stroke="rgba(200,135,58,0.15)" strokeWidth="1"/>
-      <circle cx="140" cy="140" r="55"  fill="rgba(200,135,58,0.07)" />
-      {/* Steam */}
-      <path d="M115 80 Q120 65 115 50" stroke="rgba(200,135,58,0.4)" strokeWidth="2" strokeLinecap="round" fill="none"/>
-      <path d="M140 75 Q145 58 140 42" stroke="rgba(200,135,58,0.5)" strokeWidth="2" strokeLinecap="round" fill="none"/>
-      <path d="M165 80 Q170 65 165 50" stroke="rgba(200,135,58,0.4)" strokeWidth="2" strokeLinecap="round" fill="none"/>
-    </svg>
-  )
-}
+// Imagen de la sección "Nuestra Historia" del inicio (servida desde el bucket).
+const HOME_STORY_IMG = import.meta.env.VITE_HOME_STORY_IMG || 'home/3.png'
 
 /* ── Stat card ───────────────────────────────────────────────────────────── */
 function StatCard({ number, label, delay }) {
@@ -104,8 +93,13 @@ export default function Storytelling() {
               aria-hidden="true"
             />
 
-            {/* Main plate illustration */}
-            <PlateIllustration className="w-60 h-60 md:w-80 md:h-80 relative z-10" />
+            {/* Imagen principal */}
+            <img
+              src={imagenUrl(HOME_STORY_IMG)}
+              alt="Cocina casera de Sabores de Mamá"
+              className="w-60 h-60 md:w-80 md:h-80 object-contain relative z-10"
+              loading="lazy"
+            />
 
             {/* Floating recipe card */}
             <motion.div
