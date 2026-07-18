@@ -44,10 +44,13 @@ export default defineConfig({
     open: true,
   },
   // `vite preview` (usado en producción en Railway) bloquea hosts desconocidos.
-  // Permitimos los dominios de Railway; para un dominio propio agrega su valor a
-  // PREVIEW_ALLOWED_HOSTS (separado por comas) en las variables del servicio.
+  // El punto inicial permite el dominio y todos sus subdominios (ej. www).
+  // Se puede sobrescribir con PREVIEW_ALLOWED_HOSTS (separado por comas) en las
+  // variables del servicio.
   preview: {
     host: true,
-    allowedHosts: (process.env.PREVIEW_ALLOWED_HOSTS || '.up.railway.app').split(','),
+    allowedHosts: (
+      process.env.PREVIEW_ALLOWED_HOSTS || '.saboresdemama.com,.up.railway.app'
+    ).split(','),
   },
 })
