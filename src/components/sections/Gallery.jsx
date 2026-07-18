@@ -36,30 +36,6 @@ const GALLERY_ITEMS = [
     gradient: 'from-amber via-gold to-wheat',
     span: 'col-span-2 row-span-1',
   },
-  {
-    id: 5,
-    emoji: '🧅',
-    label: 'Quiche de Cebolla',
-    image: '/assets/images/quiche-de-cebolla.jpg',
-    gradient: 'from-bark via-terracotta to-amber',
-    span: 'col-span-1 row-span-1',
-  },
-  {
-    id: 6,
-    emoji: '🍓',
-    label: 'Tartaleta de Frutas',
-    image: '/assets/images/tartaleta-de-frutas.jpg',
-    gradient: 'from-espresso via-ember to-gold',
-    span: 'col-span-1 row-span-1',
-  },
-  {
-    id: 7,
-    emoji: '🥟',
-    label: 'Empanadas de Pino',
-    image: '/assets/images/empanadas.jpg',
-    gradient: 'from-bark via-bark to-terracotta',
-    span: 'col-span-1 row-span-1',
-  },
 ]
 
 function GalleryItem({ item, onClick }) {
