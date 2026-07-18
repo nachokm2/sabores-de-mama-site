@@ -57,7 +57,13 @@ export default function Hero() {
     const v = videoRef.current
     if (!v) return
     v.muted = true
-    if (!prefersReduced) v.play().catch(() => {})
+    if (prefersReduced) return
+    try {
+      const p = v.play()
+      if (p && typeof p.catch === 'function') p.catch(() => {})
+    } catch {
+      /* jsdom / autoplay bloqueado */
+    }
   }, [prefersReduced])
 
   useEffect(() => {

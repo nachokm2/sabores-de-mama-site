@@ -1,10 +1,14 @@
+import { useEffect, useRef } from 'react'
 import { motion } from 'framer-motion'
 import { Link } from 'react-router-dom'
 import SectionLabel from './SectionLabel'
+import { imagenUrl } from '../../lib/publicApi'
 
 /**
  * Cinematic page hero for inner pages.
- * Keeps the espresso/amber brand look but is lighter than the full home Hero.
+ * Mantiene el look espresso/amber. Si se pasa `video` (key/URL del bucket),
+ * usa un layout de 2 columnas: video a la izquierda y texto a la derecha
+ * (en móvil se apilan con el texto primero).
  */
 export default function PageHero({
   label,
@@ -13,13 +17,108 @@ export default function PageHero({
   subtitle,
   breadcrumb,        // [{ label, href }]
   align = 'center',  // 'center' | 'left'
+  video,             // key/URL del bucket (opcional)
   children,
 }) {
-  const isCenter = align === 'center'
+  const hasVideo = Boolean(video)
+  const isCenter = align === 'center' && !hasVideo
+  const videoRef = useRef(null)
+
+  // Fuerza `muted` (React no siempre aplica el atributo) para permitir autoplay.
+  useEffect(() => {
+    const v = videoRef.current
+    if (!v) return
+    v.muted = true
+    try {
+      const p = v.play()
+      if (p && typeof p.catch === 'function') p.catch(() => {})
+    } catch {
+      /* jsdom / autoplay bloqueado */
+    }
+  }, [])
+
+  const contenido = (
+    <>
+      {/* Breadcrumb */}
+      {breadcrumb && (
+        <motion.nav
+          aria-label="Breadcrumb"
+          className={`flex items-center gap-2 text-xs font-body text-warm-gray mb-6 ${isCenter ? 'justify-center' : ''}`}
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+        >
+          {breadcrumb.map((crumb, i) => (
+            <span key={crumb.href} className="flex items-center gap-2">
+              {i > 0 && <span aria-hidden="true" className="text-warm-gray/40">›</span>}
+              {i === breadcrumb.length - 1 ? (
+                <span className="text-accent-600" aria-current="page">{crumb.label}</span>
+              ) : (
+                <Link to={crumb.href} className="hover:text-espresso transition-colors duration-200">
+                  {crumb.label}
+                </Link>
+              )}
+            </span>
+          ))}
+        </motion.nav>
+      )}
+
+      {/* Label */}
+      {label && (
+        <div className={isCenter ? 'flex justify-center mb-4' : 'mb-4'}>
+          <SectionLabel light>{label}</SectionLabel>
+        </div>
+      )}
+
+      {/* Title */}
+      <motion.h1
+        className={`font-display ${
+          hasVideo ? 'text-4xl sm:text-5xl lg:text-6xl' : 'text-4xl sm:text-5xl md:text-6xl lg:text-7xl'
+        } text-espresso leading-[1.05] tracking-tighter-display mb-5 ${isCenter ? 'mx-auto max-w-3xl' : 'max-w-2xl'}`}
+        initial={{ opacity: 0, y: 40 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.8, delay: 0.1, ease: [0.19, 1, 0.22, 1] }}
+      >
+        {title}
+        {titleHighlight && (
+          <>
+            <br />
+            <span className="text-gradient-gold">{titleHighlight}</span>
+          </>
+        )}
+      </motion.h1>
+
+      {/* Subtitle */}
+      {subtitle && (
+        <motion.p
+          className={`font-body text-warm-gray text-base md:text-lg leading-relaxed ${isCenter ? 'max-w-xl mx-auto' : 'max-w-md'}`}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.7, delay: 0.25 }}
+        >
+          {subtitle}
+        </motion.p>
+      )}
+
+      {/* Extra content (buttons, etc.) */}
+      {children && (
+        <motion.div
+          className={`mt-8 ${isCenter ? 'flex justify-center' : ''}`}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.7, delay: 0.4 }}
+        >
+          {children}
+        </motion.div>
+      )}
+    </>
+  )
 
   return (
     <section
-      className="relative min-h-[52vh] flex flex-col justify-end overflow-hidden bg-background pt-20"
+      className={`relative flex flex-col overflow-hidden bg-background ${
+        hasVideo ? 'min-h-[60vh] justify-center pt-28 pb-14' : 'min-h-[52vh] justify-end pt-20'
+      }`}
       aria-label={`Página: ${label || title}`}
     >
       {/* Background gradient */}
@@ -51,77 +150,27 @@ export default function PageHero({
         aria-hidden="true"
       />
 
-      <div className={`container-site relative z-10 pb-14 md:pb-18 ${isCenter ? 'text-center' : ''}`}>
-
-        {/* Breadcrumb */}
-        {breadcrumb && (
-          <motion.nav
-            aria-label="Breadcrumb"
-            className={`flex items-center gap-2 text-xs font-body text-warm-gray mb-6 ${isCenter ? 'justify-center' : ''}`}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-          >
-            {breadcrumb.map((crumb, i) => (
-              <span key={crumb.href} className="flex items-center gap-2">
-                {i > 0 && <span aria-hidden="true" className="text-warm-gray/40">›</span>}
-                {i === breadcrumb.length - 1 ? (
-                  <span className="text-accent-600" aria-current="page">{crumb.label}</span>
-                ) : (
-                  <Link to={crumb.href} className="hover:text-espresso transition-colors duration-200">
-                    {crumb.label}
-                  </Link>
-                )}
-              </span>
-            ))}
-          </motion.nav>
-        )}
-
-        {/* Label */}
-        {label && (
-          <div className={isCenter ? 'flex justify-center mb-4' : 'mb-4'}>
-            <SectionLabel light>{label}</SectionLabel>
+      <div className="container-site relative z-10 pb-14 md:pb-18">
+        {hasVideo ? (
+          <div className="grid lg:grid-cols-2 gap-10 lg:gap-14 items-center">
+            {/* Video (izquierda en desktop; debajo del texto en móvil) */}
+            <div className="order-2 lg:order-1">
+              <video
+                ref={videoRef}
+                src={imagenUrl(video)}
+                className="w-full rounded-3xl shadow-xl object-cover aspect-[4/5] sm:aspect-video lg:aspect-[4/5] bg-espresso/5"
+                autoPlay
+                muted
+                loop
+                playsInline
+                preload="auto"
+              />
+            </div>
+            {/* Texto (derecha) */}
+            <div className="order-1 lg:order-2">{contenido}</div>
           </div>
-        )}
-
-        {/* Title */}
-        <motion.h1
-          className={`font-display text-4xl sm:text-5xl md:text-6xl lg:text-7xl text-espresso leading-[1.05] tracking-tighter-display mb-5 ${isCenter ? 'mx-auto max-w-3xl' : 'max-w-2xl'}`}
-          initial={{ opacity: 0, y: 40 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.1, ease: [0.19, 1, 0.22, 1] }}
-        >
-          {title}
-          {titleHighlight && (
-            <>
-              <br />
-              <span className="text-gradient-gold">{titleHighlight}</span>
-            </>
-          )}
-        </motion.h1>
-
-        {/* Subtitle */}
-        {subtitle && (
-          <motion.p
-            className={`font-body text-warm-gray text-base md:text-lg leading-relaxed ${isCenter ? 'max-w-xl mx-auto' : 'max-w-md'}`}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7, delay: 0.25 }}
-          >
-            {subtitle}
-          </motion.p>
-        )}
-
-        {/* Extra content (buttons, etc.) */}
-        {children && (
-          <motion.div
-            className={`mt-8 ${isCenter ? 'flex justify-center' : ''}`}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7, delay: 0.4 }}
-          >
-            {children}
-          </motion.div>
+        ) : (
+          <div className={isCenter ? 'text-center' : ''}>{contenido}</div>
         )}
       </div>
 
