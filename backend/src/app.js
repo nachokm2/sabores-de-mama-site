@@ -24,27 +24,33 @@ const app = express()
 app.set('trust proxy', 1)
 
 // ── CORS ──
-// Whitelist por CORS_ORIGIN (coma-separado). Si no se define, cae a CLIENT_URL
-// (el dominio del frontend). Sólo permite todos los orígenes si se pide '*'
-// explícitamente; en producción se advierte para evitar configuraciones abiertas.
-const corsOriginEnv = process.env.CORS_ORIGIN || process.env.CLIENT_URL || '*'
-const rawOrigins = corsOriginEnv.split(',').map((o) => o.trim()).filter(Boolean)
-const allowAll = rawOrigins.includes('*')
+// Orígenes permitidos = CORS_ORIGIN/CLIENT_URL (coma-separado) + los dominios del
+// sitio + cualquier subdominio *.up.railway.app. Así funciona en el dominio propio
+// sin depender de variables. '*' abre todo (se desaconseja en producción).
+const corsOriginEnv = process.env.CORS_ORIGIN || process.env.CLIENT_URL || ''
+const envOrigins = corsOriginEnv.split(',').map((o) => o.trim()).filter(Boolean)
+const allowAll = envOrigins.includes('*')
+const DEFAULT_ORIGINS = ['https://saboresdemama.com', 'https://www.saboresdemama.com']
+const allowedOrigins = [...new Set([...envOrigins.filter((o) => o !== '*'), ...DEFAULT_ORIGINS])]
+
+function corsPermitido(origin) {
+  if (!origin) return true // curl / health checks / same-origin
+  if (allowAll || allowedOrigins.includes(origin)) return true
+  try {
+    return /\.up\.railway\.app$/i.test(new URL(origin).host)
+  } catch {
+    return false
+  }
+}
+
 if (process.env.NODE_ENV === 'production' && allowAll) {
-  console.warn(
-    '[cors] ADVERTENCIA: se permiten TODOS los orígenes (*) en producción. ' +
-      'Define CORS_ORIGIN con el dominio del frontend (p. ej. https://saboresdemama.com).'
-  )
+  console.warn('[cors] ADVERTENCIA: se permiten TODOS los orígenes (*) en producción.')
 }
 app.use(
   cors({
-    origin(origin, callback) {
-      // Permitir herramientas sin origin (curl, health checks) y la lista blanca.
-      if (allowAll || !origin || rawOrigins.includes(origin)) {
-        return callback(null, true)
-      }
-      return callback(new Error('Origen no permitido por CORS: ' + origin))
-    },
+    // Denegar con callback(null, false) (sin cabecera CORS) en vez de lanzar
+    // error, para no responder 500 a orígenes no permitidos.
+    origin: (origin, callback) => callback(null, corsPermitido(origin)),
     credentials: true,
   })
 )
