@@ -97,7 +97,7 @@ export default function Storytelling() {
             <img
               src={imagenUrl(HOME_STORY_IMG)}
               alt="Cocina casera de Sabores de Mamá"
-              className="w-60 h-60 md:w-80 md:h-80 object-contain relative z-10"
+              className="w-full max-w-md lg:max-w-lg max-h-[620px] rounded-3xl shadow-xl relative z-10"
               loading="lazy"
             />
 
