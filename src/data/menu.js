@@ -1,4 +1,6 @@
-import { CATALOGO_PLATOS, CATEGORIAS } from './catalogoPlatos.js'
+// Fuente única del catálogo (vive en el backend para que el servidor sea
+// autocontenido; el frontend la importa en build).
+import { CATALOGO_PLATOS, CATEGORIAS } from '../../backend/src/data/catalogoPlatos.js'
 
 // ── Servicios ────────────────────────────────────────────────────────────────
 export const SERVICES = [

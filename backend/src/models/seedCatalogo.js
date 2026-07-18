@@ -1,8 +1,6 @@
 import dotenv from 'dotenv'
 import { pool, withTransaction } from './index.js'
 import { runMigrations } from './migrations.js'
-// Fuente única: catálogo transcrito del documento de recetas.
-import { CATALOGO_PLATOS } from '../../../src/data/catalogoPlatos.js'
 
 dotenv.config()
 
@@ -18,6 +16,9 @@ dotenv.config()
  * Asume que las migraciones ya corrieron (columnas meal_prep/cocinera, p1..p5).
  */
 export async function cargarCatalogo() {
+  // Import dinámico y backend-local: el servidor arranca sin depender de este
+  // archivo; sólo se carga cuando se ejecuta la recarga del catálogo.
+  const { CATALOGO_PLATOS } = await import('../data/catalogoPlatos.js')
   return withTransaction(async (client) => {
     await client.query('TRUNCATE platos RESTART IDENTITY CASCADE')
 
