@@ -17,6 +17,12 @@ const norm = (s) =>
     .replace(/[úùüû]/g, 'u')
     .replace(/ñ/g, 'n')
 
+// Categorías cuyos platos llevan guarnición a elección. La regla de negocio es
+// que las carnes y pollos van acompañados. Se mantiene el flag manual por plato
+// (lleva_acompanamiento) como excepción configurable desde el admin.
+const CATS_CON_ACOMP = new Set(['carnes y pollo'])
+const llevaAcomp = (p) => CATS_CON_ACOMP.has(norm(p.categoria)) || !!p.lleva_acompanamiento
+
 function agrupar(platos) {
   const map = new Map()
   for (const p of platos) {
@@ -70,13 +76,13 @@ export default function StepDishes({ data, update, onNext, onBack }) {
     const detalle = principales
       .filter((x) => nextIds.includes(x.id))
       .map((x) => {
-        const sideId = x.lleva_acompanamiento ? nextAcompSel[x.id] : null
+        const sideId = llevaAcomp(x) ? nextAcompSel[x.id] : null
         const side = sideId ? acompanamientos.find((a) => a.id === sideId) : null
         return {
           id: x.id,
           nombre: x.nombre,
           descripcion: x.descripcion,
-          lleva_acompanamiento: !!x.lleva_acompanamiento,
+          lleva_acompanamiento: llevaAcomp(x),
           acompanamiento: side ? { id: side.id, nombre: side.nombre } : null,
         }
       })
@@ -96,7 +102,7 @@ export default function StepDishes({ data, update, onNext, onBack }) {
     } else {
       nextIds = [...seleccionados, p.id]
       // Autoselecciona la primera guarnición si el plato la lleva.
-      if (p.lleva_acompanamiento && acompanamientos.length && !nextAcompSel[p.id]) {
+      if (llevaAcomp(p) && acompanamientos.length && !nextAcompSel[p.id]) {
         nextAcompSel[p.id] = acompanamientos[0].id
       }
     }
@@ -106,7 +112,7 @@ export default function StepDishes({ data, update, onNext, onBack }) {
   const setAcomp = (platoId, sideId) => rebuild(seleccionados, { ...acompSel, [platoId]: sideId })
 
   // Platos elegidos que llevan acompañamiento (para el selector de guarnición).
-  const platosConAcomp = principales.filter((p) => seleccionados.includes(p.id) && p.lleva_acompanamiento)
+  const platosConAcomp = principales.filter((p) => seleccionados.includes(p.id) && llevaAcomp(p))
 
   const toggleCat = (cat) =>
     setExpanded((prev) => {

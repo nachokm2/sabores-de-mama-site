@@ -15,12 +15,15 @@ import { getPlatos } from '../lib/publicApi'
 import StepDishes from '../components/flow/StepDishes'
 
 const PLATOS = [
-  { id: 1, nombre: 'Pollo al Curry', descripcion: 'curry', categoria: 'Carnes y Pollo', lleva_acompanamiento: true },
+  // Carnes y Pollo lleva guarnición por categoría (sin flag manual).
+  { id: 1, nombre: 'Pollo al Curry', descripcion: 'curry', categoria: 'Carnes y Pollo' },
   { id: 2, nombre: 'Lasaña', descripcion: 'pasta', categoria: 'Otros Platos' },
   { id: 3, nombre: 'Cazuela', descripcion: 'caldo', categoria: 'Legumbres y Caldos' },
   { id: 4, nombre: 'Quiche', descripcion: 'tarta', categoria: 'Quiches y Tortillas' },
   { id: 5, nombre: 'Tortilla', descripcion: 'huevo', categoria: 'Quiches y Tortillas' },
   { id: 6, nombre: 'Charquicán', descripcion: 'guiso', categoria: 'Otros Platos' },
+  // Excepción configurable: flag manual en una categoría que normalmente no lleva.
+  { id: 9, nombre: 'Especial de la casa', descripcion: 'x', categoria: 'Otros Platos', lleva_acompanamiento: true },
   // Acompañamientos: NO cuentan para los 5 ni aparecen en la selección.
   { id: 7, nombre: 'Arroz', descripcion: '', categoria: 'Acompañamientos' },
   { id: 8, nombre: 'Puré', descripcion: '', categoria: 'Acompañamientos' },
@@ -121,7 +124,7 @@ describe('StepDishes', () => {
     expect(screen.queryByRole('button', { name: /Acompañamientos/ })).toBeNull()
   })
 
-  it('al elegir un plato que lleva acompañamiento aparece el selector y se guarda', async () => {
+  it('un plato de "Carnes y Pollo" lleva acompañamiento por categoría (sin flag)', async () => {
     render(<Wrapper />)
     await loadAndExpand()
 
@@ -135,6 +138,25 @@ describe('StepDishes', () => {
     // Cambiar a Puré se refleja en el estado del flujo.
     fireEvent.change(select, { target: { value: '8' } })
     expect(screen.getByTestId('pd')).toHaveTextContent('"acompanamiento":{"id":8,"nombre":"Puré"}')
+  })
+
+  it('un plato de otra categoría NO muestra selector de guarnición', async () => {
+    render(<Wrapper />)
+    await loadAndExpand()
+
+    fireEvent.click(platoBtn('Lasaña')) // Otros Platos, sin flag
+    expect(screen.queryByText('Elige el acompañamiento')).toBeNull()
+    expect(screen.queryByLabelText(/Acompañamiento para/)).toBeNull()
+    expect(screen.getByTestId('pd')).toHaveTextContent('"acompanamiento":null')
+  })
+
+  it('el flag manual funciona como excepción (override) en categorías sin acompañamiento', async () => {
+    render(<Wrapper />)
+    await loadAndExpand()
+
+    fireEvent.click(platoBtn('Especial de la casa')) // Otros Platos, lleva_acompanamiento: true
+    const select = await screen.findByLabelText('Acompañamiento para Especial de la casa')
+    expect(select).toBeInTheDocument()
   })
 
   it('no permite seleccionar más de 5 platos (el 6to click no tiene efecto)', async () => {
