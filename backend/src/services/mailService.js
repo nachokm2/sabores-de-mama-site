@@ -99,11 +99,25 @@ function fmtCLP(n) {
 function fmtFecha(fecha) {
   if (!fecha) return ''
   try {
-    return new Date(String(fecha).slice(0, 10) + 'T00:00:00').toLocaleDateString('es-CL', {
+    // `fecha` puede llegar como objeto Date (node-postgres parsea las columnas
+    // DATE a Date) o como string ISO/"YYYY-MM-DD". Antes se hacía
+    // String(fecha).slice(0,10), que sobre un Date daba "Sat Aug 0" → Invalid Date.
+    let y, m, d
+    if (fecha instanceof Date && !isNaN(fecha.getTime())) {
+      ;[y, m, d] = [fecha.getUTCFullYear(), fecha.getUTCMonth() + 1, fecha.getUTCDate()]
+    } else {
+      const match = String(fecha).slice(0, 10).match(/^(\d{4})-(\d{2})-(\d{2})$/)
+      if (!match) return String(fecha)
+      ;[, y, m, d] = match.map(Number)
+    }
+    const dt = new Date(Date.UTC(y, m - 1, d))
+    if (isNaN(dt.getTime())) return String(fecha)
+    return dt.toLocaleDateString('es-CL', {
       weekday: 'long',
       day: 'numeric',
       month: 'long',
       year: 'numeric',
+      timeZone: 'UTC',
     })
   } catch {
     return String(fecha)
