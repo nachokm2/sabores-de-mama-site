@@ -4,76 +4,13 @@ import SectionLabel from '../ui/SectionLabel'
 import { imagenUrl } from '../../lib/publicApi'
 
 const GALLERY_ITEMS = [
-  {
-    id: 1,
-    emoji: '🥔',
-    label: 'Papa Rellena',
-    image: imagenUrl('home/7.png'),
-    gradient: 'from-bark via-ember to-amber',
-    span: 'col-span-1 row-span-2',
-  },
-  {
-    id: 2,
-    emoji: '🥘',
-    label: 'Pastel de Papas',
-    image: imagenUrl('home/8.jpg'),
-    gradient: 'from-espresso via-bark to-terracotta',
-    span: 'col-span-1 row-span-1',
-  },
-  {
-    id: 3,
-    emoji: '🐓',
-    label: 'Pollo Asado',
-    image: imagenUrl('home/9.jpg'),
-    gradient: 'from-terracotta via-ember to-gold',
-    span: 'col-span-1 row-span-1',
-  },
-  {
-    id: 4,
-    emoji: '🐟',
-    label: 'Pescado a la Plancha',
-    image: imagenUrl('home/10.png'),
-    gradient: 'from-amber via-gold to-wheat',
-    span: 'col-span-2 row-span-1',
-  },
+  { id: 1, label: 'Papa Rellena', image: imagenUrl('home/7.png') },
+  { id: 2, label: 'Pastel de Papas', image: imagenUrl('home/8.jpg') },
+  { id: 3, label: 'Pollo Asado', image: imagenUrl('home/9.jpg') },
+  { id: 4, label: 'Pescado a la Plancha', image: imagenUrl('home/10.png') },
 ]
 
-function GalleryItem({ item, onClick }) {
-  return (
-    <motion.button
-      className={`${item.span} relative overflow-hidden rounded-2xl cursor-pointer group min-h-[140px] md:min-h-[160px]`}
-      onClick={() => onClick(item)}
-      whileHover={{ scale: 1.02 }}
-      whileTap={{ scale: 0.98 }}
-      initial={{ opacity: 0, scale: 0.95 }}
-      whileInView={{ opacity: 1, scale: 1 }}
-      viewport={{ once: true, margin: '-40px' }}
-      transition={{ duration: 0.6, ease: [0.19, 1, 0.22, 1] }}
-      aria-label="Ver foto"
-    >
-      {/* Foto */}
-      {item.image ? (
-        <img
-          src={item.image}
-          alt=""
-          loading="lazy"
-          decoding="async"
-          className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 ease-[var(--ease-out-expo)] group-hover:scale-110"
-        />
-      ) : (
-        <div
-          className={`absolute inset-0 bg-gradient-to-br ${item.gradient} transition-transform duration-700 ease-[var(--ease-out-expo)] group-hover:scale-110`}
-          aria-hidden="true"
-        />
-      )}
-
-      {/* Realce sutil al pasar el mouse */}
-      <div className="absolute inset-0 bg-espresso/0 group-hover:bg-espresso/10 transition-colors duration-500" />
-    </motion.button>
-  )
-}
-
-/* ── Lightbox ─────────────────────────────────────────────────────────────── */
+/* ── Lightbox: imagen completa a pantalla, sin recortes ──────────────────────── */
 function Lightbox({ item, onClose }) {
   return (
     <AnimatePresence>
@@ -85,26 +22,16 @@ function Lightbox({ item, onClose }) {
           exit={{ opacity: 0 }}
           onClick={onClose}
         >
-          <motion.div
-            className={`relative w-full max-w-md aspect-square rounded-3xl overflow-hidden ${!item.image ? `bg-gradient-to-br ${item.gradient}` : 'bg-espresso'}`}
-            initial={{ scale: 0.7, opacity: 0 }}
+          <motion.img
+            src={item.image}
+            alt={item.label || ''}
+            className="max-w-full max-h-[85vh] w-auto h-auto rounded-2xl object-contain"
+            initial={{ scale: 0.85, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            exit={{ scale: 0.7, opacity: 0 }}
+            exit={{ scale: 0.85, opacity: 0 }}
             transition={{ type: 'spring', stiffness: 300, damping: 28 }}
             onClick={(e) => e.stopPropagation()}
-          >
-            {item.image ? (
-              <img
-                src={item.image}
-                alt=""
-                className="w-full h-full object-cover"
-              />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center">
-                <span className="text-[100px] drop-shadow-2xl" aria-hidden="true">{item.emoji}</span>
-              </div>
-            )}
-          </motion.div>
+          />
           <button
             className="absolute top-6 right-6 w-10 h-10 rounded-full border border-ivory/20 flex items-center justify-center text-ivory hover:bg-ivory/10 transition-colors"
             onClick={onClose}
@@ -119,7 +46,11 @@ function Lightbox({ item, onClose }) {
 }
 
 export default function Gallery() {
+  const [index, setIndex] = useState(0)
   const [selected, setSelected] = useState(null)
+  const n = GALLERY_ITEMS.length
+  const go = (dir) => setIndex((i) => (i + dir + n) % n)
+  const item = GALLERY_ITEMS[index]
 
   return (
     <section
@@ -139,10 +70,7 @@ export default function Gallery() {
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
           <div>
             <SectionLabel light>Galería</SectionLabel>
-            <h2
-              id="gallery-heading"
-              className="section-title-light mt-4"
-            >
+            <h2 id="gallery-heading" className="section-title-light mt-4">
               Cada plato,
               <br />
               <span className="text-gradient-gold">una obra de arte.</span>
@@ -153,11 +81,73 @@ export default function Gallery() {
           </p>
         </div>
 
-        {/* Grid */}
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4 auto-rows-[160px] md:auto-rows-[200px]">
-          {GALLERY_ITEMS.map((item) => (
-            <GalleryItem key={item.id} item={item} onClick={setSelected} />
-          ))}
+        {/* Carrusel */}
+        <div className="relative max-w-3xl mx-auto">
+          <div className="relative overflow-hidden rounded-3xl bg-background-surface ring-1 ring-espresso/10 shadow-lg">
+            <AnimatePresence initial={false} mode="wait">
+              <motion.div
+                key={item.id}
+                className="h-[46vh] min-h-[300px] md:h-[560px] flex items-center justify-center cursor-zoom-in"
+                drag="x"
+                dragConstraints={{ left: 0, right: 0 }}
+                dragElastic={0.18}
+                onDragEnd={(_e, info) => {
+                  if (info.offset.x < -60) go(1)
+                  else if (info.offset.x > 60) go(-1)
+                }}
+                onTap={() => setSelected(item)}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.35 }}
+              >
+                <img
+                  src={item.image}
+                  alt={item.label || ''}
+                  draggable="false"
+                  loading="lazy"
+                  decoding="async"
+                  className="max-w-full max-h-full w-auto h-auto object-contain select-none pointer-events-none"
+                />
+              </motion.div>
+            </AnimatePresence>
+
+            {/* Flechas */}
+            <button
+              onClick={() => go(-1)}
+              aria-label="Foto anterior"
+              className="absolute left-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-background/80 backdrop-blur border border-espresso/15 text-espresso text-xl flex items-center justify-center hover:bg-background transition-colors shadow"
+            >
+              ‹
+            </button>
+            <button
+              onClick={() => go(1)}
+              aria-label="Foto siguiente"
+              className="absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-background/80 backdrop-blur border border-espresso/15 text-espresso text-xl flex items-center justify-center hover:bg-background transition-colors shadow"
+            >
+              ›
+            </button>
+
+            {/* Contador de posición */}
+            <div className="absolute bottom-3 right-4 rounded-full bg-espresso/60 px-3 py-1 text-xs font-medium text-ivory">
+              {index + 1} / {n}
+            </div>
+          </div>
+
+          {/* Puntos */}
+          <div className="flex justify-center gap-2 mt-5">
+            {GALLERY_ITEMS.map((it, i) => (
+              <button
+                key={it.id}
+                onClick={() => setIndex(i)}
+                aria-label={`Ir a la foto ${i + 1}`}
+                aria-current={i === index}
+                className={`h-2.5 rounded-full transition-all ${
+                  i === index ? 'w-7 bg-terracotta' : 'w-2.5 bg-espresso/20 hover:bg-espresso/40'
+                }`}
+              />
+            ))}
+          </div>
         </div>
       </div>
 
