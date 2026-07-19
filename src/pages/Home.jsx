@@ -5,7 +5,6 @@ import Hero from '../components/sections/Hero'
 import Marquee from '../components/sections/Marquee'
 import Storytelling from '../components/sections/Storytelling'
 import MenuSection from '../components/sections/MenuSection'
-import Process from '../components/sections/Process'
 import FamilyStory from '../components/sections/FamilyStory'
 import VideoSection from '../components/sections/VideoSection'
 import Testimonials from '../components/sections/Testimonials'
@@ -41,7 +40,6 @@ export default function Home() {
         <Marquee />
         <Storytelling />
         <MenuSection />
-        <Process />
         <FamilyStory />
         <VideoSection />
         <Testimonials />

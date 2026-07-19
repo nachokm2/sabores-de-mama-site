@@ -5,7 +5,6 @@ import { MemoryRouter } from 'react-router-dom'
 import Hero from '../components/sections/Hero'
 import Marquee from '../components/sections/Marquee'
 import MenuSection from '../components/sections/MenuSection'
-import Process from '../components/sections/Process'
 import Storytelling from '../components/sections/Storytelling'
 import Testimonials from '../components/sections/Testimonials'
 import VideoSection from '../components/sections/VideoSection'
@@ -32,7 +31,6 @@ const SECTIONS = [
   ['Hero', Hero],
   ['Marquee', Marquee],
   ['MenuSection', MenuSection],
-  ['Process', Process],
   ['Storytelling', Storytelling],
   ['Testimonials', Testimonials],
   ['VideoSection', VideoSection],
