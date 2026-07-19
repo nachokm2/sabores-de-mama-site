@@ -168,12 +168,13 @@ export default function Hero() {
               <video
                 ref={videoRef}
                 src={imagenUrl(HERO_VIDEO)}
+                poster="/assets/images/hero-bg.png"
                 className="w-full rounded-3xl shadow-xl object-cover aspect-[4/5] sm:aspect-video lg:aspect-[4/5] bg-espresso/5"
                 autoPlay
                 muted
                 loop
                 playsInline
-                preload="auto"
+                preload="metadata"
               />
             ) : (
               <img

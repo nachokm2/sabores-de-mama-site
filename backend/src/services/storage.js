@@ -113,15 +113,23 @@ export async function presignUpload({ filename, contentType, prefix = 'uploads' 
 
 /**
  * URL firmada para LEER un objeto (Plan B: el bucket no es público).
- * Se re-firma en cada lectura, así nunca caduca de cara al usuario.
+ * - `expiresIn` largo (7 días) para que la URL firmada siga válida mientras el
+ *   navegador tenga cacheado el redirect del proxy.
+ * - `ResponseCacheControl` hace que S3/Tigris devuelva un `Cache-Control` en la
+ *   respuesta de la imagen, para que el navegador la cachee (antes no traía
+ *   ninguno → se re-descargaba en cada visita).
  */
-export async function presignGet(key, expiresIn = 3600) {
+export async function presignGet(key, expiresIn = 604800) {
   const s3 = getClient()
   if (!s3) {
     const err = new Error('Almacenamiento de imágenes no configurado.')
     err.status = 503
     throw err
   }
-  const cmd = new GetObjectCommand({ Bucket: process.env.S3_BUCKET, Key: key })
+  const cmd = new GetObjectCommand({
+    Bucket: process.env.S3_BUCKET,
+    Key: key,
+    ResponseCacheControl: 'public, max-age=86400',
+  })
   return getSignedUrl(s3, cmd, { expiresIn })
 }

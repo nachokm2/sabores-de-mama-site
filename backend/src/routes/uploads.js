@@ -14,6 +14,10 @@ router.get('/file', async (req, res, next) => {
     const key = req.query.key
     if (!key) return res.status(400).json({ error: 'key es obligatorio.' })
     const url = await presignGet(String(key))
+    // Cachea el redirect en el navegador: dentro de la ventana se reutiliza la
+    // misma URL firmada (y por tanto la imagen ya cacheada), sin re-pegarle al
+    // proxy ni volver a descargar. Antes se re-descargaba todo en cada visita.
+    res.set('Cache-Control', 'public, max-age=86400')
     return res.redirect(302, url)
   } catch (err) {
     if (err.status === 503) return res.status(404).end()
