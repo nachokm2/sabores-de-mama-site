@@ -8,7 +8,7 @@ import { imagenUrl } from '../../lib/publicApi'
 // URL/key del video del inicio (subido al bucket). Configurable por variable de
 // entorno; si está vacío se muestra la imagen de respaldo. imagenUrl() lo sirve
 // por el proxy firmado del backend (funciona aunque el bucket sea privado).
-const HERO_VIDEO = import.meta.env.VITE_HERO_VIDEO_URL || 'hero/2.mp4'
+const HERO_VIDEO = import.meta.env.VITE_HERO_VIDEO_URL || 'home/Video Project 1 (1).mp4'
 
 /* ── Smoke particle ──────────────────────────────────────────────────────── */
 function SmokeParticle({ style }) {
