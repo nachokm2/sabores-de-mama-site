@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import BakingAddon from './BakingAddon'
 import AdicionalesMealPrep from './AdicionalesMealPrep'
+import EnsaladasAddon from './EnsaladasAddon'
 import { createPedido, ApiError } from '../../lib/publicApi'
 import { fmtCLP } from '../../lib/flowConfig'
 
@@ -42,6 +43,11 @@ export default function StepSummary({ data, update, onBack }) {
   const restricciones = data.restricciones || []
   const baking = data.productosHornearDetalle || []
   const adicionales = data.adicionales || []
+  // Las ensaladas viajan dentro de `adicionales` con clave `ensalada-*`; se
+  // separan sólo para mostrarlas en su propia línea del resumen.
+  const esEnsalada = (a) => String(a.clave || '').startsWith('ensalada-')
+  const adicionalesServicios = adicionales.filter((a) => !esEnsalada(a))
+  const ensaladasSel = adicionales.filter(esEnsalada)
   const esMealPrep = (data.servicio || 'meal_prep') === 'meal_prep'
 
   const confirmar = async () => {
@@ -128,8 +134,13 @@ export default function StepSummary({ data, update, onBack }) {
         {restricciones.length > 0 && <Fila label="Restricciones">{restricciones.join(', ')}</Fila>}
         {data.observaciones && <Fila label="Observaciones">{data.observaciones}</Fila>}
         {baking.length > 0 && <Fila label="Para hornear">{baking.map((p) => p.nombre).join(', ')}</Fila>}
-        {adicionales.length > 0 && (
-          <Fila label="Servicios adicionales">{adicionales.map((a) => a.nombre).join(', ')}</Fila>
+        {adicionalesServicios.length > 0 && (
+          <Fila label="Servicios adicionales">{adicionalesServicios.map((a) => a.nombre).join(', ')}</Fila>
+        )}
+        {ensaladasSel.length > 0 && (
+          <Fila label="Ensaladas">
+            {ensaladasSel.map((a) => a.nombre.replace(/^Ensalada:\s*/, '')).join(', ')}
+          </Fila>
         )}
         <div className="flex justify-between font-bold text-espresso mt-2 pt-2 border-t border-espresso/10">
           <span>Total</span>
@@ -143,6 +154,9 @@ export default function StepSummary({ data, update, onBack }) {
           <AdicionalesMealPrep data={data} update={update} />
         </div>
       )}
+      <div className="mb-5">
+        <EnsaladasAddon data={data} update={update} />
+      </div>
       <div className="mb-5">
         <BakingAddon data={data} update={update} />
       </div>

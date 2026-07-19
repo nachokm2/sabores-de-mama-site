@@ -10,6 +10,10 @@ export const DELIVERY_COST = Number(import.meta.env.VITE_DELIVERY_COST) || 5000
 export const MEAL_PREP_INGREDIENTES = Number(import.meta.env.VITE_MEAL_PREP_INGREDIENTES) || 1000
 export const MEAL_PREP_PORCIONADO = Number(import.meta.env.VITE_MEAL_PREP_PORCIONADO) || 3000
 
+// Las ensaladas se cobran aparte (como los productos Healthy): se agregan como
+// adicional al pedido con este valor por unidad.
+export const ENSALADA_PRECIO = Number(import.meta.env.VITE_ENSALADA_PRECIO) || 1500
+
 /**
  * Total del pedido = base del servicio + despacho + add-ons de hornear +
  * servicios adicionales. `base` es parametrizable por flujo (Meal Prep vs

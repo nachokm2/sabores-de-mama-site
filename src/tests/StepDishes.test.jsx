@@ -24,6 +24,8 @@ const PLATOS = [
   { id: 6, nombre: 'Charquicán', descripcion: 'guiso', categoria: 'Otros Platos' },
   // Excepción configurable: flag manual en una categoría que normalmente no lleva.
   { id: 9, nombre: 'Especial de la casa', descripcion: 'x', categoria: 'Otros Platos', lleva_acompanamiento: true },
+  // Ensalada: NO cuenta para los 5 (se cobra aparte como adicional).
+  { id: 12, nombre: 'Ensalada Surtida', descripcion: 'mix', categoria: 'Ensaladas' },
   // Acompañamientos: NO cuentan para los 5 ni aparecen en la selección.
   { id: 7, nombre: 'Arroz', descripcion: '', categoria: 'Acompañamientos' },
   { id: 8, nombre: 'Puré', descripcion: '', categoria: 'Acompañamientos' },
@@ -122,6 +124,13 @@ describe('StepDishes', () => {
     expect(screen.queryByRole('button', { name: /^Puré/ })).toBeNull()
     // Tampoco existe el acordeón de la categoría Acompañamientos.
     expect(screen.queryByRole('button', { name: /Acompañamientos/ })).toBeNull()
+  })
+
+  it('los platos de categoría Ensaladas no aparecen en la selección (se cobran aparte)', async () => {
+    render(<Wrapper />)
+    await loadAndExpand()
+    expect(screen.queryByRole('button', { name: /Ensalada Surtida/ })).toBeNull()
+    expect(screen.queryByRole('button', { name: /Ensaladas/ })).toBeNull()
   })
 
   it('un plato de "Carnes y Pollo" lleva acompañamiento por categoría (sin flag)', async () => {

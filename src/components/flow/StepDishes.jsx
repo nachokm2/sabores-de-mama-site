@@ -5,6 +5,9 @@ const MAX = 5
 // Los acompañamientos NO son platos: no cuentan para los 5 y son la guarnición
 // de los platos que la llevan.
 const ACOMP_CAT = 'Acompañamientos'
+// Las ensaladas tampoco cuentan para los 5: se cobran aparte y se agregan como
+// adicional al pedido (ver EnsaladasAddon).
+const ENSALADA_CAT = 'Ensaladas'
 
 // Normaliza para búsqueda: minúsculas y sin tildes (acento-insensible).
 const norm = (s) =>
@@ -59,7 +62,11 @@ export default function StepDishes({ data, update, onNext, onBack }) {
   }, [data.servicio])
 
   // Principales (cuentan para los 5) vs. acompañamientos (guarnición a elección).
-  const principales = useMemo(() => platos.filter((p) => (p.categoria || '') !== ACOMP_CAT), [platos])
+  // Las ensaladas se excluyen: van como adicional (se cobran aparte).
+  const principales = useMemo(
+    () => platos.filter((p) => (p.categoria || '') !== ACOMP_CAT && (p.categoria || '') !== ENSALADA_CAT),
+    [platos]
+  )
   const acompanamientos = useMemo(() => platos.filter((p) => (p.categoria || '') === ACOMP_CAT), [platos])
   const grupos = useMemo(() => agrupar(principales), [principales])
 

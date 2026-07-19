@@ -45,6 +45,9 @@ const initialState = {
   productos_hornear: [],
   productosHornearDetalle: [],
   bakingTotal: 0,
+  // Adicionales (ensaladas que se cobran aparte)
+  adicionales: [], // [{ clave, nombre, precio }]
+  adicionalesTotal: 0,
   // Paso 7 (datos personales)
   nombre: '',
   email: '',
@@ -56,7 +59,12 @@ function reducer(state, action) {
   switch (action.type) {
     case 'SET': {
       const next = { ...state, ...action.payload }
-      next.total = computeTotal({ base: next.base, costo_despacho: next.costo_despacho, bakingTotal: next.bakingTotal })
+      next.total = computeTotal({
+        base: next.base,
+        costo_despacho: next.costo_despacho,
+        bakingTotal: next.bakingTotal,
+        adicionalesTotal: next.adicionalesTotal,
+      })
       return next
     }
     case 'NEXT':
