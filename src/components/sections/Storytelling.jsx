@@ -5,7 +5,7 @@ import { useScrollReveal } from '../../hooks/useScrollAnimation'
 import { imagenUrl } from '../../lib/publicApi'
 
 // Imagen de la sección "Nuestra Historia" del inicio (servida desde el bucket).
-const HOME_STORY_IMG = import.meta.env.VITE_HOME_STORY_IMG || 'home/3.png'
+const HOME_STORY_IMG = import.meta.env.VITE_HOME_STORY_IMG || 'home/5.png'
 
 /* ── Stat card ───────────────────────────────────────────────────────────── */
 function StatCard({ number, label, delay }) {
