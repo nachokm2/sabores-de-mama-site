@@ -6,7 +6,6 @@ import Marquee from '../components/sections/Marquee'
 import Storytelling from '../components/sections/Storytelling'
 import MenuSection from '../components/sections/MenuSection'
 import FamilyStory from '../components/sections/FamilyStory'
-import VideoSection from '../components/sections/VideoSection'
 import Testimonials from '../components/sections/Testimonials'
 import Gallery from '../components/sections/Gallery'
 import FAQ from '../components/sections/FAQ'
@@ -41,7 +40,6 @@ export default function Home() {
         <Storytelling />
         <MenuSection />
         <FamilyStory />
-        <VideoSection />
         <Testimonials />
         <Gallery />
         <FAQ />

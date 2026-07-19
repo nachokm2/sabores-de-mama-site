@@ -7,7 +7,6 @@ import Marquee from '../components/sections/Marquee'
 import MenuSection from '../components/sections/MenuSection'
 import Storytelling from '../components/sections/Storytelling'
 import Testimonials from '../components/sections/Testimonials'
-import VideoSection from '../components/sections/VideoSection'
 import WhatsAppCTA from '../components/sections/WhatsAppCTA'
 import FamilyStory from '../components/sections/FamilyStory'
 import Gallery from '../components/sections/Gallery'
@@ -33,7 +32,6 @@ const SECTIONS = [
   ['MenuSection', MenuSection],
   ['Storytelling', Storytelling],
   ['Testimonials', Testimonials],
-  ['VideoSection', VideoSection],
   ['WhatsAppCTA', WhatsAppCTA],
   ['FamilyStory', FamilyStory],
   ['Gallery', Gallery],
