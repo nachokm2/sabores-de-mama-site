@@ -2,6 +2,7 @@ import { Router } from 'express'
 import { query, withTransaction } from '../models/index.js'
 import { requireAdmin, isAdminToken } from '../middleware/authJWT.js'
 import { cargarCatalogo } from '../models/seedCatalogo.js'
+import { parseCantidad } from '../utils/ingredientes.js'
 
 const router = Router()
 
@@ -43,17 +44,6 @@ async function insertarIngredientes(client, platoId, ingredientes) {
       [platoId, ing.nombre, ing.unidad ?? null, p[0] ?? null, p[1] ?? null, p[2] ?? null, p[3] ?? null, p[4] ?? null]
     )
   }
-}
-
-// Convierte una cantidad textual ("½", "1½", "260", "A gusto", "2 cdas") a número
-// puro cuando es posible; si no, la deja como texto (unidad embebida, "A gusto"…).
-function parseCantidad(v) {
-  if (v == null) return { num: null, text: null }
-  const s = String(v).trim()
-  if (!s) return { num: null, text: null }
-  const norm = s.replace('½', '.5').replace('¼', '.25').replace('¾', '.75').replace(',', '.')
-  if (/^\d*\.?\d+$/.test(norm)) return { num: parseFloat(norm), text: null }
-  return { num: null, text: s }
 }
 
 /**

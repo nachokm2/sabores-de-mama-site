@@ -2,6 +2,7 @@ import nodemailer from 'nodemailer'
 import dotenv from 'dotenv'
 import { query } from '../models/index.js'
 import { presignGet } from './storage.js'
+import { consolidarIngredientes } from '../utils/ingredientes.js'
 
 dotenv.config()
 
@@ -224,37 +225,9 @@ function datosBancariosHtml(pedido) {
   </table>`
 }
 
-function ingredientesHtml(platosConIng) {
-  if (!platosConIng?.length) return ''
-  const bloques = platosConIng
-    .map((p) => {
-      const ings = (p.ingredientes || []).length
-        ? `<ul style="margin:4px 0 0;padding-left:18px;">${p.ingredientes
-            .map(
-              (i) =>
-                `<li style="margin:1px 0;color:${INK};font-size:13px;">${esc(i.nombre)}${
-                  i.cantidad ? ` — ${esc(i.cantidad)}${i.unidad ? ' ' + esc(i.unidad) : ''}` : ''
-                }</li>`
-            )
-            .join('')}</ul>`
-        : `<div style="margin:2px 0 0;font-size:12px;color:${MUTED};">Ingredientes por confirmar.</div>`
-      return `<div style="margin:0 0 10px;">
-        <div style="font-weight:bold;color:${BRAND};font-size:14px;">${esc(p.nombre)}</div>
-        ${ings}
-      </div>`
-    })
-    .join('')
-  return `
-  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:16px;background:${CREAM};border:1px solid ${BORDER};border-radius:12px;">
-    <tr><td style="padding:16px 18px;">
-      <div style="font-weight:bold;color:${INK};margin-bottom:10px;font-size:14px;">Lista de ingredientes</div>
-      ${bloques}
-    </td></tr>
-  </table>`
-}
-
-// Lista de compras (flujo Cocinera a Domicilio): tabla nombre/cantidad/unidad.
-function listaComprasHtml(lista) {
+// Lista de ingredientes/compras: tabla nombre/cantidad/unidad. Recibe una lista YA
+// consolidada (un total por ingrediente) — nunca separada por plato.
+function listaComprasHtml(lista, titulo = 'Lista de compras') {
   if (!Array.isArray(lista) || !lista.length) return ''
   const filas = lista
     .map(
@@ -268,7 +241,7 @@ function listaComprasHtml(lista) {
   return `
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:16px;background:#FFFFFF;border:1px solid ${BORDER};border-radius:12px;">
     <tr><td style="padding:16px 18px;">
-      <div style="font-weight:bold;color:${BRAND};margin-bottom:8px;font-size:14px;">Lista de compras</div>
+      <div style="font-weight:bold;color:${BRAND};margin-bottom:8px;font-size:14px;">${esc(titulo)}</div>
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0">${filas}</table>
     </td></tr>
   </table>`
@@ -290,15 +263,22 @@ const TEMPLATES = {
   },
   pagado(pedido, extra = {}) {
     const nombre = esc((pedido.nombre || '').split(' ')[0] || 'hola')
+    // Una sola lista con el total por ingrediente (nunca separada por plato):
+    // en Cocinera se usa la lista_compras (ya consolidada y editable); en Meal Prep
+    // se consolidan los ingredientes de los platos elegidos.
+    const ingredientesConsolidados =
+      Array.isArray(pedido.lista_compras) && pedido.lista_compras.length
+        ? listaComprasHtml(pedido.lista_compras)
+        : listaComprasHtml(
+            consolidarIngredientes((extra.platosConIng || []).flatMap((p) => p.ingredientes || [])),
+            'Lista de ingredientes'
+          )
     return {
       subject: '¡Tu pago fue confirmado! 🎉',
       html: baseTemplate({
         titulo: 'Pago confirmado',
         intro: `¡Gracias ${nombre}! ✅ Confirmamos tu pago. Tu pedido se entregará el <strong>${esc(fmtFecha(pedido.fecha_entrega))}</strong>.`,
-        bodyHtml:
-          resumenPedidoHtml(pedido) +
-          ingredientesHtml(extra.platosConIng) +
-          listaComprasHtml(pedido.lista_compras),
+        bodyHtml: resumenPedidoHtml(pedido) + ingredientesConsolidados,
         footerNota: 'Coordinaremos contigo la entrega de los ingredientes según tu servicio.',
       }),
     }
