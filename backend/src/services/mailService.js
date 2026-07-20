@@ -3,6 +3,7 @@ import dotenv from 'dotenv'
 import { query } from '../models/index.js'
 import { presignGet } from './storage.js'
 import { consolidarIngredientes } from '../utils/ingredientes.js'
+import { surveyToken } from '../utils/encuestaToken.js'
 
 dotenv.config()
 
@@ -390,12 +391,16 @@ const TEMPLATES = {
   },
   entregado(pedido) {
     const nombre = esc((pedido.nombre || '').split(' ')[0] || 'hola')
+    const clientUrl = (process.env.CLIENT_URL || 'https://saboresdemama.com').replace(/\/$/, '')
+    const encuestaUrl = `${clientUrl}/encuesta/${pedido.id}/${surveyToken(pedido.id)}`
     return {
       subject: '¡Gracias por tu pedido! ❤️',
       html: baseTemplate({
         titulo: '¡Entregado!',
         intro: `¡${nombre}, esperamos que lo disfrutes! ❤️ Gracias por confiar en Sabores de Mamá.`,
-        bodyHtml: `<p style="margin:0;color:${INK};line-height:1.6;">Si te gustó, nos encantaría que nos recomiendes y vuelvas a pedir cuando quieras. Cualquier comentario, sólo responde este correo.</p>`,
+        bodyHtml:
+          `<p style="margin:0 0 16px;color:${INK};line-height:1.6;">¡Esperamos que hayas disfrutado tu pedido! Tu opinión es muy importante para nosotros. Nos tomará menos de un minuto conocer tu experiencia. Haz clic en el siguiente botón para responder una breve encuesta.</p>` +
+          `<div style="text-align:center;margin:8px 0 4px;"><a href="${encuestaUrl}" style="display:inline-block;background:${BRAND};color:#FFFCF7;text-decoration:none;font-weight:bold;padding:13px 30px;border-radius:999px;font-size:15px;">Responder encuesta</a></div>`,
         footerNota: '¡Hasta la próxima! 🍽️',
       }),
     }

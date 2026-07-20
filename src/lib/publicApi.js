@@ -160,3 +160,13 @@ export async function consultarPedido({ id, email }) {
   const data = await request('/pedidos/consultar', { method: 'POST', body: { id, email } })
   return data?.pedido
 }
+
+/** Encuesta de satisfacción: estado del enlace (¿válido? ¿ya respondida?). */
+export async function getEncuesta(orderId, token) {
+  return request(`/encuestas/${orderId}?token=${encodeURIComponent(token || '')}`)
+}
+
+/** Envía la respuesta de la encuesta de satisfacción. */
+export async function enviarEncuesta(orderId, payload) {
+  return request(`/encuestas/${orderId}`, { method: 'POST', body: payload })
+}

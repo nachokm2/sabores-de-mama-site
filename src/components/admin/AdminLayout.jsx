@@ -14,6 +14,7 @@ function buildNav(servicio) {
     ...(servicio === 'meal_prep' ? [{ to: `${base}/productos`, label: 'Healthy', icon: '🧁' }] : []),
     { to: `${base}/cupos`, label: 'Cupos', icon: '📅' },
     { to: `${base}/comunas`, label: 'Comunas', icon: '📍' },
+    { to: `${base}/satisfaccion`, label: 'Satisfacción', icon: '⭐' },
     { to: `${base}/ajustes`, label: 'Ajustes', icon: '⚙️' },
   ]
 }

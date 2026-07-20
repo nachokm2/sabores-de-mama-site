@@ -150,6 +150,28 @@ export function reenviarCorreo(pedidoId, estado) {
   return apiFetch(`/correos/pedido/${pedidoId}`, { method: 'POST', body: { estado } })
 }
 
+// ── Encuestas de satisfacción ────────────────────────────────────────────────
+export function getEncuestas({ servicio, desde, hasta, rating, recomienda, q } = {}) {
+  const p = new URLSearchParams()
+  if (servicio) p.set('servicio', servicio)
+  if (desde) p.set('desde', desde)
+  if (hasta) p.set('hasta', hasta)
+  if (rating) p.set('rating', rating)
+  if (recomienda) p.set('recomienda', recomienda)
+  if (q) p.set('q', q)
+  const qs = p.toString()
+  return apiFetch(`/encuestas${qs ? `?${qs}` : ''}`)
+}
+
+export function getEncuestasStats({ servicio, desde, hasta } = {}) {
+  const p = new URLSearchParams()
+  if (servicio) p.set('servicio', servicio)
+  if (desde) p.set('desde', desde)
+  if (hasta) p.set('hasta', hasta)
+  const qs = p.toString()
+  return apiFetch(`/encuestas/stats${qs ? `?${qs}` : ''}`)
+}
+
 // Platos
 export function getPlatos({ incluirInactivos = false, servicio } = {}) {
   const qs = new URLSearchParams({

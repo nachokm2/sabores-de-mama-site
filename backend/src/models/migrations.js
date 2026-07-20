@@ -207,6 +207,23 @@ UPDATE cupos c SET
 WHERE c.capacidad_meal_prep IS NULL OR c.capacidad_cocinera IS NULL
    OR c.confirmados_meal_prep IS NULL OR c.confirmados_cocinera IS NULL
    OR c.activo_meal_prep IS NULL OR c.activo_cocinera IS NULL;
+
+-- ── Encuestas de satisfacción (post-entrega) ──────────────────────────────────
+-- Una respuesta por pedido (UNIQUE order_id impide duplicados). El enlace del
+-- correo lleva un token HMAC del pedido para asociar/validar la respuesta.
+CREATE TABLE IF NOT EXISTS encuestas_satisfaccion (
+  id                  SERIAL PRIMARY KEY,
+  order_id            INTEGER NOT NULL UNIQUE REFERENCES pedidos(id) ON DELETE CASCADE,
+  customer_id         INTEGER REFERENCES admin_users(id) ON DELETE SET NULL,
+  satisfaction_rating SMALLINT NOT NULL CHECK (satisfaction_rating BETWEEN 1 AND 5),
+  would_recommend     BOOLEAN NOT NULL,
+  improvement_comment TEXT,
+  ip_address          VARCHAR(64),
+  user_agent          TEXT,
+  created_at          TIMESTAMPTZ NOT NULL DEFAULT now(),
+  responded_at        TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_encuestas_responded_at ON encuestas_satisfaccion (responded_at);
 `
 
 // Comunas del Gran Santiago (lista inicial de cobertura). El costo de despacho

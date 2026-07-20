@@ -12,6 +12,7 @@ const HornearEnCasa = lazy(() => import('./pages/HornearEnCasa'))
 const ConsultarPedido = lazy(() => import('./pages/ConsultarPedido'))
 const Galeria       = lazy(() => import('./pages/Galeria'))
 const Contacto      = lazy(() => import('./pages/Contacto'))
+const Encuesta      = lazy(() => import('./pages/Encuesta'))
 const NotFound      = lazy(() => import('./pages/NotFound'))
 const MealPrepFlow  = lazy(() => import('./pages/MealPrepFlow'))
 const CocineraFlow  = lazy(() => import('./pages/CocineraFlow'))
@@ -36,6 +37,7 @@ const AdminCupos     = lazy(() => import('./pages/Admin/AdminCupos'))
 const AdminComunas   = lazy(() => import('./pages/Admin/AdminComunas'))
 const AdminProductos = lazy(() => import('./pages/Admin/AdminProductos'))
 const AdminAjustes   = lazy(() => import('./pages/Admin/AdminAjustes'))
+const AdminSatisfaccion = lazy(() => import('./pages/Admin/AdminSatisfaccion'))
 const AdminHub       = lazy(() => import('./pages/Admin/AdminHub'))
 import { isTokenValid } from './lib/adminApi'
 
@@ -104,6 +106,7 @@ function AppContent({ lenisRef }) {
         <Route path="/consultar-pedido" element={<ConsultarPedido />} />
         <Route path="/galeria"   element={<Galeria />} />
         <Route path="/contacto"  element={<Contacto />} />
+        <Route path="/encuesta/:orderId/:token" element={<Encuesta />} />
 
         {/* ── Flujos de pedido ── */}
         <Route path="/meal-prep"             element={<MealPrepFlow />} />
@@ -133,6 +136,7 @@ function AppContent({ lenisRef }) {
           <Route path="/admin/:servicio/comunas"   element={<AdminComunas />} />
           <Route path="/admin/:servicio/productos" element={<AdminProductos />} />
           <Route path="/admin/:servicio/ajustes"   element={<AdminAjustes />} />
+          <Route path="/admin/:servicio/satisfaccion" element={<AdminSatisfaccion />} />
         </Route>
 
         <Route path="*"          element={<NotFound />} />

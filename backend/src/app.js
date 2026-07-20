@@ -14,6 +14,7 @@ import uploadsRouter from './routes/uploads.js'
 import correosRouter from './routes/correos.js'
 import productosHornearRouter from './routes/productosHornear.js'
 import configRouter from './routes/config.js'
+import encuestasRouter from './routes/encuestas.js'
 
 dotenv.config()
 
@@ -85,6 +86,7 @@ app.use('/api/uploads', uploadsRouter)
 app.use('/api/correos', correosRouter)
 app.use('/api/productos-hornear', productosHornearRouter)
 app.use('/api/config', configRouter)
+app.use('/api/encuestas', encuestasRouter)
 
 // ── 404 ──
 app.use((req, res) => {
