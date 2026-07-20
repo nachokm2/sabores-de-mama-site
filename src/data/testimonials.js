@@ -27,7 +27,7 @@ export const TESTIMONIALS = [
     role: 'Mamá de familia',
     location: 'Ñuñoa',
     rating: 5,
-    text: 'Pedimos la once completa para el día de la mamá y fue un éxito total. El pan amasado estaba increíble, como recién salido del horno. La familia quedó encantada.',
+    text: 'Pido para toda la familia y me organizo la semana completa. Las comidas vienen porcionadas y selladas al vacío; las guardo en el congelador y me duran semanas. Comemos más sano en casa sin tener que cocinar todos los días.',
     avatar: 'FV',
     avatarGradient: 'from-gold to-wheat',
     featured: true,
