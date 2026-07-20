@@ -1,5 +1,4 @@
-import { useRef } from 'react'
-import { motion, useScroll, useTransform } from 'framer-motion'
+import { motion } from 'framer-motion'
 import SectionLabel from '../ui/SectionLabel'
 import { useScrollReveal } from '../../hooks/useScrollAnimation'
 import { imagenUrl } from '../../lib/publicApi'
@@ -48,19 +47,10 @@ function FeatureItem({ icon, title, text, delay }) {
 }
 
 export default function Storytelling() {
-  const sectionRef = useRef(null)
   const textRef = useScrollReveal({ selector: '.reveal-item', stagger: 0.12, y: 40 })
-
-  const { scrollYProgress } = useScroll({
-    target: sectionRef,
-    offset: ['start end', 'end start'],
-  })
-
-  const illustrationY = useTransform(scrollYProgress, [0, 1], [-40, 40])
 
   return (
     <section
-      ref={sectionRef}
       id="nosotros"
       className="section-padding bg-ivory overflow-hidden"
       aria-labelledby="story-heading"
@@ -80,10 +70,7 @@ export default function Storytelling() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 lg:gap-20 items-center">
 
           {/* ── Left: Illustration ── */}
-          <motion.div
-            className="relative flex items-center justify-center order-2 lg:order-1"
-            style={{ y: illustrationY }}
-          >
+          <div className="relative flex items-center justify-center order-2 lg:order-1">
             {/* Background circle */}
             <div
               className="absolute w-72 h-72 md:w-96 md:h-96 rounded-full"
@@ -124,7 +111,7 @@ export default function Storytelling() {
                 <p className="font-body text-warm-gray text-xs">100% natural</p>
               </div>
             </motion.div>
-          </motion.div>
+          </div>
 
           {/* ── Right: Text ── */}
           <div ref={textRef} className="order-1 lg:order-2 space-y-8">

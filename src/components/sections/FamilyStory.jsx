@@ -1,6 +1,4 @@
-import { useRef } from 'react'
-import { motion, useScroll, useTransform } from 'framer-motion'
-import SectionLabel from '../ui/SectionLabel'
+import { motion } from 'framer-motion'
 import { imagenUrl } from '../../lib/publicApi'
 
 // Imagen de la sección "Nuestra Esencia" del inicio (servida desde el bucket).
@@ -46,19 +44,8 @@ function MomentCard({ moment, index }) {
 }
 
 export default function FamilyStory() {
-  const sectionRef = useRef(null)
-
-  const { scrollYProgress } = useScroll({
-    target: sectionRef,
-    offset: ['start end', 'end start'],
-  })
-
-  const textY       = useTransform(scrollYProgress, [0, 1], [40, -40])
-  const illustrY    = useTransform(scrollYProgress, [0, 1], [-30, 30])
-
   return (
     <section
-      ref={sectionRef}
       className="relative section-padding overflow-hidden"
       style={{ background: 'linear-gradient(160deg, #FFFCF7 0%, #FBF6EE 50%, #F4EADB 100%)' }}
       aria-label="Nuestra esencia"
@@ -83,24 +70,25 @@ export default function FamilyStory() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 lg:gap-20 items-center">
 
           {/* ── Left: Imagen ── */}
-          <motion.div style={{ y: textY }}>
+          <div>
             <img
               src={imagenUrl(FAMILY_IMG)}
               alt="La comida de mamá, hecha con cariño"
               className="w-full aspect-[4/5] object-cover rounded-3xl shadow-xl"
               loading="lazy"
+              decoding="async"
             />
-          </motion.div>
+          </div>
 
           {/* ── Right: Timeline moments ── */}
-          <motion.div style={{ y: illustrY }} className="space-y-8">
+          <div className="space-y-8">
             <h3 className="font-display text-espresso text-2xl font-bold mb-8">
               Cocinamos para personas como tú
             </h3>
             {AUDIENCIAS.map((moment, i) => (
               <MomentCard key={moment.title} moment={moment} index={i} />
             ))}
-          </motion.div>
+          </div>
         </div>
       </div>
     </section>
