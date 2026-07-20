@@ -40,10 +40,10 @@ export default function Home() {
         <Storytelling />
         <MenuSection />
         <FamilyStory />
-        <Testimonials />
         <Gallery />
         <FAQ />
         <WhatsAppCTA />
+        <Testimonials />
       </main>
 
       <Footer />
