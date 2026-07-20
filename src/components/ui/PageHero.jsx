@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react'
 import { motion } from 'framer-motion'
 import { Link } from 'react-router-dom'
 import SectionLabel from './SectionLabel'
+import PlayBadge from './PlayBadge'
 import { imagenUrl } from '../../lib/publicApi'
 
 /**
@@ -185,9 +186,10 @@ export default function PageHero({
                     target="_blank"
                     rel="noopener noreferrer"
                     aria-label="Ver nuestro reel en Instagram"
-                    className="block group rounded-3xl overflow-hidden shadow-xl"
+                    className="relative block group rounded-3xl overflow-hidden shadow-xl"
                   >
                     {medio}
+                    <PlayBadge />
                   </a>
                 ) : (
                   medio

@@ -5,6 +5,7 @@ import { openChatBot } from '../../lib/openChatBot'
 import { useReducedMotion } from '../../hooks/useReducedMotion'
 import { imagenUrl } from '../../lib/publicApi'
 import UtensilsIcon from '../ui/UtensilsIcon'
+import PlayBadge from '../ui/PlayBadge'
 
 // Imagen del inicio (subida al bucket), enlazada al reel de Instagram.
 // Configurable por variable de entorno. imagenUrl() la sirve por el proxy firmado
@@ -155,7 +156,7 @@ export default function Hero() {
               target="_blank"
               rel="noopener noreferrer"
               aria-label="Ver nuestro reel en Instagram"
-              className="block group rounded-3xl overflow-hidden shadow-xl"
+              className="relative block group rounded-3xl overflow-hidden shadow-xl"
             >
               <img
                 src={imagenUrl(HERO_IMG)}
@@ -163,6 +164,7 @@ export default function Hero() {
                 className="w-full object-cover aspect-[4/5] sm:aspect-video lg:aspect-[4/5] bg-espresso/5 transition-transform duration-500 group-hover:scale-[1.03]"
                 loading="eager"
               />
+              <PlayBadge />
             </a>
           </div>
 

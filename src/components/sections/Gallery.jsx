@@ -96,7 +96,7 @@ export default function Gallery() {
 
         {/* Carrusel (marco vertical que calza con las fotos; se muestran completas) */}
         <div
-          className="relative max-w-md mx-auto"
+          className="relative max-w-3xl mx-auto"
           onMouseEnter={() => setPaused(true)}
           onMouseLeave={() => setPaused(false)}
         >
@@ -104,7 +104,7 @@ export default function Gallery() {
             <AnimatePresence initial={false} mode="wait">
               <motion.div
                 key={item.id}
-                className="aspect-[4/5] flex items-center justify-center cursor-zoom-in"
+                className="relative aspect-[3/2] flex items-center justify-center cursor-zoom-in"
                 drag="x"
                 dragConstraints={{ left: 0, right: 0 }}
                 dragElastic={0.18}
@@ -118,13 +118,21 @@ export default function Gallery() {
                 exit={{ opacity: 0 }}
                 transition={{ duration: 0.35 }}
               >
+                {/* Fondo difuminado (misma foto) para rellenar sin bandas blancas */}
+                <img
+                  src={item.image}
+                  alt=""
+                  aria-hidden="true"
+                  className="absolute inset-0 w-full h-full object-cover scale-110 blur-2xl opacity-40 select-none pointer-events-none"
+                />
+                {/* Imagen completa (sin recorte) */}
                 <img
                   src={item.image}
                   alt={item.label || ''}
                   draggable="false"
                   loading="lazy"
                   decoding="async"
-                  className="max-w-full max-h-full w-auto h-auto object-contain select-none pointer-events-none"
+                  className="relative max-w-full max-h-full w-auto h-auto object-contain select-none pointer-events-none"
                 />
               </motion.div>
             </AnimatePresence>
