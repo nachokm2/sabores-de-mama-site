@@ -236,7 +236,7 @@ export default function Galeria() {
               transition={{ duration: 0.7 }}
             >
               <p className="text-warm-gray font-body text-sm mb-5">
-                ¿Te antojaste? Pide ahora por WhatsApp.
+                ¿Te antojaste? Pídelo ahora.
               </p>
               <button onClick={openChatBot} className="btn-primary-dark">
                 Hacer un pedido

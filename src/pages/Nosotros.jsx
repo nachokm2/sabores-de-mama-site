@@ -135,7 +135,7 @@ export default function Nosotros() {
           subtitle="Somos una familia que decidió compartir lo que más amamos: la comida que reconforta, que recuerda y que une."
           breadcrumb={[{ label: 'Inicio', href: '/' }, { label: 'Nosotros', href: '/nosotros' }]}
         >
-          <button onClick={openChatBot} className="btn-whatsapp text-sm">
+          <button onClick={openChatBot} className="btn-primary text-sm">
             Hacer un pedido
           </button>
         </PageHero>

@@ -14,6 +14,12 @@ const WhatsAppIcon = ({ className = 'w-6 h-6' }) => (
   </svg>
 )
 
+const UtensilsIcon = ({ className = 'w-6 h-6' }) => (
+  <svg viewBox="0 0 24 24" fill="currentColor" className={className} aria-hidden="true">
+    <path d="M8.1 13.34l2.83-2.83L3.91 3.5a4 4 0 000 5.66l4.19 4.18zm6.78-1.81c1.53.71 3.68.21 5.27-1.38 1.91-1.91 2.28-4.65.81-6.12-1.46-1.46-4.2-1.1-6.12.81-1.59 1.59-2.09 3.74-1.38 5.27L3.7 19.87l1.41 1.41L12 14.41l6.88 6.88 1.41-1.41L13.41 13l1.47-1.47z"/>
+  </svg>
+)
+
 const FAQ_ITEMS = [
   {
     q: '¿En qué comunas trabajan?',
@@ -108,10 +114,10 @@ export default function Contacto() {
           subtitle="Un mensaje y en minutos tienes tu pedido confirmado. Sin apps, sin registros. Solo comida de verdad."
           breadcrumb={[{ label: 'Inicio', href: '/' }, { label: 'Contacto', href: '/contacto' }]}
         >
-          <button onClick={openChatBot} className="btn-whatsapp">
+          <a href={getWhatsAppLink()} target="_blank" rel="noopener noreferrer" className="btn-whatsapp">
             <WhatsAppIcon className="w-5 h-5" />
             Abrir WhatsApp
-          </button>
+          </a>
         </PageHero>
 
         {/* ── Main contact section ── */}
@@ -256,8 +262,8 @@ export default function Contacto() {
             aria-hidden="true"
           />
           <div className="container-narrow relative z-10 text-center">
-            <div className="w-16 h-16 rounded-full bg-[#25D366]/15 border-2 border-[#25D366]/30 flex items-center justify-center mx-auto mb-6 text-[#25D366]">
-              <WhatsAppIcon className="w-7 h-7" />
+            <div className="w-16 h-16 rounded-full bg-amber/15 border-2 border-amber/40 flex items-center justify-center mx-auto mb-6 text-terracotta">
+              <UtensilsIcon className="w-7 h-7" />
             </div>
             <h2 className="section-title-light mb-4">
               ¿Listo para pedir?
@@ -268,11 +274,11 @@ export default function Contacto() {
             <div className="flex flex-wrap justify-center gap-4">
               <motion.button
                 onClick={openChatBot}
-                className="flex items-center gap-3 bg-[#25D366] text-white font-semibold text-base px-8 py-4 rounded-full shadow-[0_4px_24px_rgba(37,211,102,0.4)] hover:bg-[#1ebe57] transition-colors"
+                className="flex items-center gap-3 bg-terracotta text-ivory font-semibold text-base px-8 py-4 rounded-full shadow-[0_4px_24px_rgba(174,76,41,0.35)] hover:bg-ember transition-colors"
                 whileHover={{ scale: 1.04 }}
                 whileTap={{ scale: 0.96 }}
               >
-                <WhatsAppIcon />
+                <UtensilsIcon />
                 Hacer pedido ahora
               </motion.button>
               <motion.button

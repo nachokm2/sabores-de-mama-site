@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import SectionLabel from '../ui/SectionLabel'
-import { openChatBot } from '../../lib/openChatBot'
+import { getWhatsAppLink } from '../../data/siteConfig'
 
 const FAQ_ITEMS = [
   {
@@ -97,15 +97,17 @@ export default function FAQ() {
               ¿Tienes más dudas? Escríbenos directamente por WhatsApp y
               te respondemos en minutos.
             </p>
-            <motion.button
-              onClick={openChatBot}
+            <motion.a
+              href={getWhatsAppLink()}
+              target="_blank"
+              rel="noopener noreferrer"
               className="btn-whatsapp text-sm"
               whileHover={{ scale: 1.04 }}
               whileTap={{ scale: 0.96 }}
             >
               <WaIcon />
               Consultar por WhatsApp
-            </motion.button>
+            </motion.a>
           </motion.div>
 
           {/* Right: accordion */}

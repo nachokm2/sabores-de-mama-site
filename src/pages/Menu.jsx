@@ -195,9 +195,8 @@ export default function Menu() {
           subtitle="Elige tu servicio y hasta 5 preparaciones. Tú pones los ingredientes, yo cocino con amor."
           breadcrumb={[{ label: 'Inicio', href: '/' }, { label: 'Menú', href: '/menu' }]}
         >
-          <button onClick={openChatBot} className="btn-whatsapp text-sm">
-            <WaIcon className="w-4 h-4" />
-            Agendar por WhatsApp
+          <button onClick={openChatBot} className="btn-primary text-sm">
+            Pedir ahora
           </button>
         </PageHero>
 
