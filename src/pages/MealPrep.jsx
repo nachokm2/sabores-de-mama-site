@@ -9,9 +9,9 @@ import SectionLabel from '../components/ui/SectionLabel'
 import { getComunas } from '../lib/publicApi'
 import { fmtCLP } from '../lib/flowConfig'
 
-// Video del hero de Meal Prep (subido al bucket). Configurable por variable de
-// entorno; por defecto usa la key hero/meal-prep.mp4.
-const MEALPREP_VIDEO = import.meta.env.VITE_MEALPREP_VIDEO_URL || 'hero/4.mp4'
+// Imagen del hero de Meal Prep (subida al bucket). Configurable por variable de
+// entorno; por defecto usa la key hero/11.png (reemplaza al video pesado anterior).
+const MEALPREP_IMG = import.meta.env.VITE_MEALPREP_IMG || 'hero/11.png'
 
 /* ── Cómo funciona ───────────────────────────────────────────────────────── */
 const PASOS = [
@@ -109,7 +109,7 @@ export default function MealPrep() {
           titleHighlight="nunca fue tan fácil."
           subtitle="Nos envías tus ingredientes, nosotros los transformamos en comidas caseras listas para disfrutar durante toda la semana."
           breadcrumb={[{ label: 'Inicio', href: '/' }, { label: 'Meal Prep', href: '/meal-prep-en-casa' }]}
-          video={MEALPREP_VIDEO}
+          image={MEALPREP_IMG}
         >
           <button onClick={agendar} className="btn-primary text-sm">
             Agendar mi Meal Prep

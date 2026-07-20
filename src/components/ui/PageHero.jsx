@@ -6,9 +6,9 @@ import { imagenUrl } from '../../lib/publicApi'
 
 /**
  * Cinematic page hero for inner pages.
- * Mantiene el look espresso/amber. Si se pasa `video` (key/URL del bucket),
- * usa un layout de 2 columnas: video a la izquierda y texto a la derecha
- * (en móvil se apilan con el texto primero).
+ * Mantiene el look espresso/amber. Si se pasa `video` o `image` (key/URL del
+ * bucket), usa un layout de 2 columnas: el medio a la izquierda y el texto a la
+ * derecha (en móvil se apilan con el texto primero).
  */
 export default function PageHero({
   label,
@@ -17,11 +17,14 @@ export default function PageHero({
   subtitle,
   breadcrumb,        // [{ label, href }]
   align = 'center',  // 'center' | 'left'
-  video,             // key/URL del bucket (opcional)
+  video,             // key/URL de video del bucket (opcional)
+  image,             // key/URL de imagen del bucket (opcional; alternativa al video)
   children,
 }) {
   const hasVideo = Boolean(video)
-  const isCenter = align === 'center' && !hasVideo
+  const hasImage = !hasVideo && Boolean(image)
+  const hasMedia = hasVideo || hasImage
+  const isCenter = align === 'center' && !hasMedia
   const videoRef = useRef(null)
 
   // Fuerza `muted` (React no siempre aplica el atributo) para permitir autoplay.
@@ -73,7 +76,7 @@ export default function PageHero({
       {/* Title */}
       <motion.h1
         className={`font-display ${
-          hasVideo ? 'text-4xl sm:text-5xl lg:text-6xl' : 'text-4xl sm:text-5xl md:text-6xl lg:text-7xl'
+          hasMedia ? 'text-4xl sm:text-5xl lg:text-6xl' : 'text-4xl sm:text-5xl md:text-6xl lg:text-7xl'
         } text-espresso leading-[1.05] tracking-tighter-display mb-5 ${isCenter ? 'mx-auto max-w-3xl' : 'max-w-2xl'}`}
         initial={{ opacity: 0, y: 40 }}
         animate={{ opacity: 1, y: 0 }}
@@ -117,7 +120,7 @@ export default function PageHero({
   return (
     <section
       className={`relative flex flex-col overflow-hidden bg-background ${
-        hasVideo ? 'min-h-[60vh] justify-center pt-28 pb-14' : 'min-h-[52vh] justify-end pt-20'
+        hasMedia ? 'min-h-[60vh] justify-center pt-28 pb-14' : 'min-h-[52vh] justify-end pt-20'
       }`}
       aria-label={`Página: ${label || title}`}
     >
@@ -151,20 +154,29 @@ export default function PageHero({
       />
 
       <div className="container-site relative z-10 pb-14 md:pb-18">
-        {hasVideo ? (
+        {hasMedia ? (
           <div className="grid lg:grid-cols-2 gap-10 lg:gap-14 items-center">
-            {/* Video (izquierda en desktop; debajo del texto en móvil) */}
+            {/* Medio (izquierda en desktop; debajo del texto en móvil) */}
             <div className="order-2 lg:order-1">
-              <video
-                ref={videoRef}
-                src={imagenUrl(video)}
-                className="w-full rounded-3xl shadow-xl object-cover aspect-[4/5] sm:aspect-video lg:aspect-[4/5] bg-espresso/5"
-                autoPlay
-                muted
-                loop
-                playsInline
-                preload="auto"
-              />
+              {hasVideo ? (
+                <video
+                  ref={videoRef}
+                  src={imagenUrl(video)}
+                  className="w-full rounded-3xl shadow-xl object-cover aspect-[4/5] sm:aspect-video lg:aspect-[4/5] bg-espresso/5"
+                  autoPlay
+                  muted
+                  loop
+                  playsInline
+                  preload="metadata"
+                />
+              ) : (
+                <img
+                  src={imagenUrl(image)}
+                  alt=""
+                  className="w-full rounded-3xl shadow-xl object-cover aspect-[4/5] sm:aspect-video lg:aspect-[4/5] bg-espresso/5"
+                  loading="eager"
+                />
+              )}
             </div>
             {/* Texto (derecha) */}
             <div className="order-1 lg:order-2">{contenido}</div>
