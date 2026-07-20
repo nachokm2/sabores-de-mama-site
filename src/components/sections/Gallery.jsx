@@ -1,7 +1,8 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import SectionLabel from '../ui/SectionLabel'
 import { imagenUrl } from '../../lib/publicApi'
+import { useReducedMotion } from '../../hooks/useReducedMotion'
 
 const GALLERY_ITEMS = [
   { id: 1, label: 'Papa Rellena', image: imagenUrl('home/7.png') },
@@ -9,6 +10,8 @@ const GALLERY_ITEMS = [
   { id: 3, label: 'Pollo Asado', image: imagenUrl('home/9.jpg') },
   { id: 4, label: 'Pescado a la Plancha', image: imagenUrl('home/10.png') },
 ]
+
+const AUTOPLAY_MS = 5000
 
 /* ── Lightbox: imagen completa a pantalla, sin recortes ──────────────────────── */
 function Lightbox({ item, onClose }) {
@@ -48,9 +51,19 @@ function Lightbox({ item, onClose }) {
 export default function Gallery() {
   const [index, setIndex] = useState(0)
   const [selected, setSelected] = useState(null)
+  const [paused, setPaused] = useState(false)
+  const prefersReduced = useReducedMotion()
   const n = GALLERY_ITEMS.length
   const go = (dir) => setIndex((i) => (i + dir + n) % n)
   const item = GALLERY_ITEMS[index]
+
+  // Autoplay: avanza solo cada AUTOPLAY_MS. Se pausa al pasar el mouse, al abrir
+  // la imagen (lightbox) o si el usuario prefiere menos movimiento.
+  useEffect(() => {
+    if (paused || selected || prefersReduced) return
+    const id = setInterval(() => setIndex((i) => (i + 1) % n), AUTOPLAY_MS)
+    return () => clearInterval(id)
+  }, [paused, selected, prefersReduced, n])
 
   return (
     <section
@@ -81,13 +94,17 @@ export default function Gallery() {
           </p>
         </div>
 
-        {/* Carrusel */}
-        <div className="relative max-w-3xl mx-auto">
+        {/* Carrusel (marco vertical que calza con las fotos; se muestran completas) */}
+        <div
+          className="relative max-w-md mx-auto"
+          onMouseEnter={() => setPaused(true)}
+          onMouseLeave={() => setPaused(false)}
+        >
           <div className="relative overflow-hidden rounded-3xl bg-background-surface ring-1 ring-espresso/10 shadow-lg">
             <AnimatePresence initial={false} mode="wait">
               <motion.div
                 key={item.id}
-                className="h-[46vh] min-h-[300px] md:h-[560px] flex items-center justify-center cursor-zoom-in"
+                className="aspect-[4/5] flex items-center justify-center cursor-zoom-in"
                 drag="x"
                 dragConstraints={{ left: 0, right: 0 }}
                 dragElastic={0.18}
