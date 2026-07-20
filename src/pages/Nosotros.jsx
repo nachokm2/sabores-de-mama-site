@@ -42,30 +42,6 @@ const TEAM = [
   },
 ]
 
-/* ── Values ─────────────────────────────────────────────────────────────── */
-const VALUES = [
-  {
-    icon:  '🌿',
-    title: 'Ingredientes Frescos',
-    text:  'Cada mañana seleccionamos lo mejor de temporada. Sin congelados, sin conservantes, sin atajos.',
-  },
-  {
-    icon:  '⏳',
-    title: 'Tiempos Tradicionales',
-    text:  'Respetamos los tiempos de cocción de las recetas de siempre. La prisa no cabe en una buena cazuela.',
-  },
-  {
-    icon:  '❤️',
-    title: 'Cuidado en Cada Detalle',
-    text:  'Preparamos cada plato como si fuera para nuestra propia familia. Ese cuidado se nota en el sabor.',
-  },
-  {
-    icon:  '🏠',
-    title: 'El Sabor del Hogar',
-    text:  'Queremos que cada bocado te recuerde a esos domingos en familia o a una tarde fría con pan recién amasado.',
-  },
-]
-
 /* ── Hitos ───────────────────────────────────────────────────────────────── */
 const TIMELINE = [
   { icon: '🍲', title: 'El primer pedido', text: 'Cocinamos para personas cercanas que buscaban una alternativa casera cuando no tenían tiempo para cocinar.' },
@@ -105,22 +81,6 @@ function TeamCard({ member, index }) {
         <p className="font-body text-amber text-xs font-semibold mt-0.5 mb-2">{member.role}</p>
         <p className="font-body text-warm-gray text-sm leading-relaxed">{member.text}</p>
       </div>
-    </motion.div>
-  )
-}
-
-function ValueCard({ item, index }) {
-  return (
-    <motion.div
-      className="bg-ivory border border-wheat/50 rounded-2xl p-6 hover:border-amber/40 hover:shadow-lg transition-all duration-400"
-      initial={{ opacity: 0, y: 40 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: '-60px' }}
-      transition={{ duration: 0.7, delay: index * 0.1, ease: [0.19, 1, 0.22, 1] }}
-    >
-      <span className="text-3xl mb-4 block" aria-hidden="true">{item.icon}</span>
-      <h3 className="font-display text-espresso text-xl font-bold mb-2">{item.title}</h3>
-      <p className="font-body text-warm-gray text-sm leading-relaxed">{item.text}</p>
     </motion.div>
   )
 }
@@ -292,23 +252,6 @@ export default function Nosotros() {
               {TEAM.map((member, i) => (
                 <TeamCard key={member.name} member={member} index={i} />
               ))}
-            </div>
-          </div>
-        </section>
-
-        {/* ── Values ── */}
-        <section className="section-padding bg-ivory" aria-labelledby="values-heading">
-          <div className="container-site">
-            <div className="text-center mb-14">
-              <SectionLabel>Lo que nos mueve</SectionLabel>
-              <h2 id="values-heading" className="section-title text-espresso mt-4">
-                Nuestros valores,
-                <br />
-                <em className="not-italic text-amber">en cada receta.</em>
-              </h2>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-              {VALUES.map((v, i) => <ValueCard key={v.title} item={v} index={i} />)}
             </div>
           </div>
         </section>
