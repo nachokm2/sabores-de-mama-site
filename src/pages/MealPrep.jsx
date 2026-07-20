@@ -189,7 +189,8 @@ export default function MealPrep() {
                   ))}
                 </ul>
                 <p className="mt-4 text-xs text-warm-gray bg-ivory border border-wheat/50 rounded-xl p-3">
-                  Los ingredientes son tuyos, así que tienes el control total de la calidad y
+                  <strong className="text-espresso">Importante:</strong> los ingredientes <strong className="text-espresso">no están incluidos en el cobro</strong>;
+                  los compra y los envía el cliente. Así tienes el control total de la calidad y
                   la cantidad de cada plato. 💚
                 </p>
               </div>
