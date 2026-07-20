@@ -135,8 +135,12 @@ export function getPedido(id) {
 export function crearPedidoAdmin(data) {
   return apiFetch('/pedidos/admin', { method: 'POST', body: data })
 }
-export function cambiarEstadoPedido(id, estado, fotoEntrega) {
-  const body = { estado, ...(fotoEntrega ? { foto_entrega: fotoEntrega } : {}) }
+export function cambiarEstadoPedido(id, estado, fotoEntrega, plazoIngredientes) {
+  const body = {
+    estado,
+    ...(fotoEntrega ? { foto_entrega: fotoEntrega } : {}),
+    ...(plazoIngredientes ? { plazo_ingredientes: plazoIngredientes } : {}),
+  }
   return apiFetch(`/pedidos/${id}/estado`, { method: 'PATCH', body })
 }
 export function editarPedido(id, data) {

@@ -124,6 +124,29 @@ function fmtFecha(fecha) {
   }
 }
 
+// Formatea el plazo "YYYY-MM-DDTHH:mm" (hora local que ingresó la admin) a algo
+// legible: "sábado, 1 de agosto de 2026 a las 16:00 hrs".
+function fmtPlazo(v) {
+  if (!v) return ''
+  const m = String(v).match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/)
+  if (!m) return String(v)
+  const [, y, mo, d, h, mi] = m.map(Number)
+  const dt = new Date(Date.UTC(y, mo - 1, d))
+  if (isNaN(dt.getTime())) return String(v)
+  const fecha = dt.toLocaleDateString('es-CL', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+    timeZone: 'UTC',
+  })
+  return `${fecha} a las ${String(h).padStart(2, '0')}:${String(mi).padStart(2, '0')} hrs`
+}
+
+// Datos de envío de ingredientes (configurables por variable de entorno).
+const ENVIO_DIRECCION = process.env.ENVIO_DIRECCION || 'Los plátanos 1566, Renca'
+const ENVIO_CONTACTO = process.env.ENVIO_CONTACTO || '+56 9 9810 4653'
+
 function esc(s) {
   return String(s ?? '').replace(/[&<>"]/g, (c) =>
     ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])
@@ -261,6 +284,38 @@ function listaComprasHtml(lista, titulo = 'Lista de compras') {
   </table>`
 }
 
+// Avisos al pie del correo de pago (solo Meal Prep): descongelación,
+// recomendaciones y envío de ingredientes con el plazo que ingresó la admin.
+function avisosMealPrepHtml(pedido) {
+  const plazo = fmtPlazo(pedido.plazo_ingredientes)
+  const li = (t) => `<li style="margin:3px 0;color:${INK};font-size:13px;">${esc(t)}</li>`
+  return `
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:16px;background:${CREAM};border:1px solid ${BORDER};border-radius:12px;">
+    <tr><td style="padding:16px 18px;">
+      <div style="font-weight:bold;color:${INK};margin-bottom:6px;font-size:14px;">❄️ Descongelación</div>
+      <ul style="margin:0 0 14px;padding-left:18px;">${li('Pasar del congelador al refrigerador la noche anterior.')}</ul>
+
+      <div style="font-weight:bold;color:${INK};margin-bottom:6px;font-size:14px;">⚠️ Recomendaciones importantes</div>
+      <ul style="margin:0 0 14px;padding-left:18px;">
+        ${li('Retirar siempre el producto de la bolsa antes de calentar.')}
+        ${li('No calentar la bolsa en microondas ni horno.')}
+        ${li('Calentar hasta que esté completamente caliente.')}
+        ${li('No recalentar más de una vez.')}
+        ${li('No volver a congelar una vez descongelado.')}
+      </ul>
+
+      <div style="font-weight:bold;color:${BRAND};margin-bottom:6px;font-size:14px;">🚚 Envío de ingredientes</div>
+      <p style="margin:0;color:${INK};font-size:13px;line-height:1.5;">
+        Los ingredientes deben enviarse ${
+          plazo ? `<strong>a más tardar el ${esc(plazo)}</strong>` : 'dentro del plazo acordado'
+        }, a través de la aplicación de delivery de tu preferencia, a la dirección
+        <strong>${esc(ENVIO_DIRECCION)}</strong>. En caso de ser necesario, puedes agregar el
+        siguiente número de contacto para la entrega: <strong>${esc(ENVIO_CONTACTO)}</strong>.
+      </p>
+    </td></tr>
+  </table>`
+}
+
 // ── Plantillas por estado ───────────────────────────────────────────────────
 const TEMPLATES = {
   solicitud_recibida(pedido) {
@@ -287,12 +342,16 @@ const TEMPLATES = {
             consolidarIngredientes((extra.platosConIng || []).flatMap((p) => p.ingredientes || [])),
             'Lista de ingredientes'
           )
+    const esMealPrep = (pedido.servicio || 'meal_prep') === 'meal_prep'
     return {
       subject: '¡Tu pago fue confirmado! 🎉',
       html: baseTemplate({
         titulo: 'Pago confirmado',
         intro: `¡Gracias ${nombre}! ✅ Confirmamos tu pago. Tu pedido se entregará el <strong>${esc(fmtFecha(pedido.fecha_entrega))}</strong>.`,
-        bodyHtml: resumenPedidoHtml(pedido) + ingredientesConsolidados,
+        bodyHtml:
+          resumenPedidoHtml(pedido) +
+          ingredientesConsolidados +
+          (esMealPrep ? avisosMealPrepHtml(pedido) : ''),
         footerNota: 'Coordinaremos contigo la entrega de los ingredientes según tu servicio.',
       }),
     }

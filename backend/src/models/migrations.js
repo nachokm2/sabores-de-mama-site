@@ -128,6 +128,10 @@ CREATE INDEX IF NOT EXISTS idx_cupos_fecha           ON cupos(fecha);
 ALTER TABLE pedidos ADD COLUMN IF NOT EXISTS lista_compras JSONB NOT NULL DEFAULT '[]'::jsonb;
 -- Número de comensales (flujo Cocinera): escala ingredientes y porciones.
 ALTER TABLE pedidos ADD COLUMN IF NOT EXISTS personas INTEGER;
+-- Plazo (fecha y hora límite) para que el cliente envíe los ingredientes
+-- (Meal Prep). Lo ingresa la admin al marcar el pedido como pagado y se incluye
+-- en el correo de pago. Texto "YYYY-MM-DDTHH:mm" (hora local, sin zona).
+ALTER TABLE pedidos ADD COLUMN IF NOT EXISTS plazo_ingredientes TEXT;
 -- Disponibilidad de cada comuna por servicio (para tablas ya existentes).
 ALTER TABLE comunas ADD COLUMN IF NOT EXISTS meal_prep BOOLEAN NOT NULL DEFAULT true;
 ALTER TABLE comunas ADD COLUMN IF NOT EXISTS cocinera  BOOLEAN NOT NULL DEFAULT true;

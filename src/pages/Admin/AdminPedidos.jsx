@@ -5,6 +5,7 @@ import { EstadoBadge, fmtCLP, fmtFecha } from '../../components/admin/adminHelpe
 import PedidoDetalle from '../../components/admin/PedidoDetalle'
 import PedidoNuevo from '../../components/admin/PedidoNuevo'
 import FotoEntregaModal from '../../components/admin/FotoEntregaModal'
+import PlazoIngredientesModal from '../../components/admin/PlazoIngredientesModal'
 import {
   getPedidos,
   cambiarEstadoPedido,
@@ -37,6 +38,8 @@ export default function AdminPedidos() {
   const [creando, setCreando] = useState(false)
   // Pedido a la espera de foto para pasar a "En delivery" (abre el modal).
   const [fotoPedido, setFotoPedido] = useState(null)
+  // Pedido a la espera del plazo de ingredientes para marcar "Pagado" (modal).
+  const [plazoPedido, setPlazoPedido] = useState(null)
 
   const goLogin = useCallback(() => navigate('/admin/login', { replace: true }), [navigate])
 
@@ -85,10 +88,10 @@ export default function AdminPedidos() {
 
   // Aplica el cambio de estado (con foto opcional). Lanza el error para que el
   // llamador decida dónde mostrarlo (fila vs. modal); el 401 navega al login.
-  const aplicarEstado = async (pedido, estado, fotoKey) => {
+  const aplicarEstado = async (pedido, estado, fotoKey, plazoIngredientes) => {
     setSavingId(pedido.id)
     try {
-      const res = await cambiarEstadoPedido(pedido.id, estado, fotoKey)
+      const res = await cambiarEstadoPedido(pedido.id, estado, fotoKey, plazoIngredientes)
       setPedidos((prev) => prev.map((p) => (p.id === pedido.id ? res.pedido : p)))
       const correo = res.email?.ok
         ? 'correo enviado.'
@@ -115,6 +118,12 @@ export default function AdminPedidos() {
       setFotoPedido(pedido)
       return
     }
+    // Regla: al marcar "Pagado" un Meal Prep, primero pedir el plazo de envío de
+    // ingredientes (va en el correo de pago).
+    if (estado === 'pagado' && (pedido.servicio || 'meal_prep') === 'meal_prep') {
+      setPlazoPedido(pedido)
+      return
+    }
     try {
       await aplicarEstado(pedido, estado)
     } catch (err) {
@@ -131,6 +140,15 @@ export default function AdminPedidos() {
     setError('')
     await aplicarEstado(fotoPedido, 'en_delivery', key)
     setFotoPedido(null)
+  }
+
+  // Confirmación del modal de plazo: aplica "Pagado" con la fecha/hora límite,
+  // que viaja al correo. Si falla, se relanza para que el modal muestre el error.
+  const onPlazoConfirmado = async (plazo) => {
+    setMsg('')
+    setError('')
+    await aplicarEstado(plazoPedido, 'pagado', undefined, plazo)
+    setPlazoPedido(null)
   }
 
   // Estados disponibles para este servicio (Meal Prep / Cocinera).
@@ -196,6 +214,14 @@ export default function AdminPedidos() {
           pedido={fotoPedido}
           onConfirm={onFotoConfirmada}
           onClose={() => setFotoPedido(null)}
+        />
+      )}
+
+      {plazoPedido && (
+        <PlazoIngredientesModal
+          pedido={plazoPedido}
+          onConfirm={onPlazoConfirmado}
+          onClose={() => setPlazoPedido(null)}
         />
       )}
 

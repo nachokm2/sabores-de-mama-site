@@ -366,9 +366,19 @@ router.patch('/:id/estado', requireAdmin, async (req, res, next) => {
       })
     }
 
+    // Plazo (fecha y hora límite) para enviar los ingredientes: lo ingresa la
+    // admin al marcar "pagado". Si no viene, se conserva el existente (COALESCE).
+    const plazoBody =
+      typeof b.plazo_ingredientes === 'string' && b.plazo_ingredientes.trim()
+        ? b.plazo_ingredientes.trim()
+        : null
+
     const { rows } = await query(
-      'UPDATE pedidos SET estado = $1, foto_entrega = $2 WHERE id = $3 RETURNING *',
-      [estado, finalFoto, req.params.id]
+      `UPDATE pedidos
+          SET estado = $1, foto_entrega = $2,
+              plazo_ingredientes = COALESCE($3, plazo_ingredientes)
+        WHERE id = $4 RETURNING *`,
+      [estado, finalFoto, plazoBody, req.params.id]
     )
     if (!rows[0]) return res.status(404).json({ error: 'Pedido no encontrado.' })
 
