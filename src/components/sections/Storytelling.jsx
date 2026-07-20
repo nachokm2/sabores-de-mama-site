@@ -90,7 +90,7 @@ export default function Storytelling() {
 
             {/* Floating recipe card */}
             <motion.div
-              className="absolute -right-4 top-8 z-20 glass-dark rounded-2xl p-4 max-w-[180px]"
+              className="absolute -left-4 top-8 z-20 glass-dark rounded-2xl p-4 max-w-[180px]"
               animate={{ y: [0, -8, 0] }}
               transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
             >
@@ -101,7 +101,7 @@ export default function Storytelling() {
 
             {/* Floating badge */}
             <motion.div
-              className="absolute -left-4 bottom-12 z-20 glass-dark rounded-2xl p-4 flex items-center gap-3"
+              className="absolute -right-4 bottom-12 z-20 glass-dark rounded-2xl p-4 flex items-center gap-3"
               animate={{ y: [0, 6, 0] }}
               transition={{ duration: 3.5, repeat: Infinity, ease: 'easeInOut', delay: 0.5 }}
             >
