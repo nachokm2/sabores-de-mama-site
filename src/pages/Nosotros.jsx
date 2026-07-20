@@ -6,6 +6,7 @@ import SectionLabel from '../components/ui/SectionLabel'
 import WhatsAppCTA from '../components/sections/WhatsAppCTA'
 import { useScrollReveal } from '../hooks/useScrollAnimation'
 import { openChatBot } from '../lib/openChatBot'
+import UtensilsIcon from '../components/ui/UtensilsIcon'
 import { Helmet } from 'react-helmet-async'
 
 /* ── Team ────────────────────────────────────────────────────────────────── */
@@ -136,6 +137,7 @@ export default function Nosotros() {
           breadcrumb={[{ label: 'Inicio', href: '/' }, { label: 'Nosotros', href: '/nosotros' }]}
         >
           <button onClick={openChatBot} className="btn-primary text-sm">
+            <UtensilsIcon className="w-4 h-4" />
             Hacer un pedido
           </button>
         </PageHero>

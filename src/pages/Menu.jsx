@@ -11,6 +11,7 @@ import {
   EXTRAS, DULCES_FAMILIAR, DULCES_SNACKS, COMMUNES,
 } from '../data/menu'
 import { openChatBot } from '../lib/openChatBot'
+import UtensilsIcon from '../components/ui/UtensilsIcon'
 
 const WA_NUMBER = import.meta.env.VITE_WHATSAPP_NUMBER 
 function waLink(msg) {
@@ -196,6 +197,7 @@ export default function Menu() {
           breadcrumb={[{ label: 'Inicio', href: '/' }, { label: 'Menú', href: '/menu' }]}
         >
           <button onClick={openChatBot} className="btn-primary text-sm">
+            <UtensilsIcon className="w-4 h-4" />
             Pedir ahora
           </button>
         </PageHero>

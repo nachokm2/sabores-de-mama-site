@@ -4,6 +4,7 @@ import { gsap } from 'gsap'
 import { openChatBot } from '../../lib/openChatBot'
 import { useReducedMotion } from '../../hooks/useReducedMotion'
 import { imagenUrl } from '../../lib/publicApi'
+import UtensilsIcon from '../ui/UtensilsIcon'
 
 // Imagen del inicio (subida al bucket), enlazada al reel de Instagram.
 // Configurable por variable de entorno. imagenUrl() la sirve por el proxy firmado
@@ -222,6 +223,7 @@ export default function Hero() {
               className="btn-primary text-sm px-7 py-3.5"
               aria-label="Pedir ahora"
             >
+              <UtensilsIcon className="w-4 h-4" />
               Pedir ahora
             </button>
             <button

@@ -6,6 +6,7 @@ import Footer from '../components/layout/Footer'
 import PageHero from '../components/ui/PageHero'
 import WhatsAppCTA from '../components/sections/WhatsAppCTA'
 import { openChatBot } from '../lib/openChatBot'
+import UtensilsIcon from '../components/ui/UtensilsIcon'
 
 /* ── All gallery items including real photos ────────────────────────────── */
 const GALLERY_ITEMS = [
@@ -239,6 +240,7 @@ export default function Galeria() {
                 ¿Te antojaste? Pídelo ahora.
               </p>
               <button onClick={openChatBot} className="btn-primary-dark">
+                <UtensilsIcon className="w-4 h-4" />
                 Hacer un pedido
               </button>
             </motion.div>

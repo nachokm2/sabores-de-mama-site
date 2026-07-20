@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { openChatBot } from '../../lib/openChatBot'
+import UtensilsIcon from '../ui/UtensilsIcon'
 
 // R-02 · Navegación principal (orden exacto solicitado).
 // El sitio es multipágina (React Router): cada ítem apunta a su propia ruta.
@@ -110,11 +111,12 @@ export default function Navbar() {
           <div className="hidden lg:flex items-center gap-4">
             <motion.button
               onClick={openChatBot}
-              className="bg-terracotta text-ivory text-sm font-medium px-5 py-2.5 rounded-full hover:bg-ember transition-colors shadow-[0_2px_12px_rgba(174,76,41,0.3)]"
+              className="inline-flex items-center gap-2 bg-terracotta text-ivory text-sm font-medium px-5 py-2.5 rounded-full hover:bg-ember transition-colors shadow-[0_2px_12px_rgba(174,76,41,0.3)]"
               whileHover={{ scale: 1.03 }}
               whileTap={{ scale: 0.97 }}
               aria-label="Pedir ahora"
             >
+              <UtensilsIcon className="w-4 h-4" />
               Pedir ahora
             </motion.button>
           </div>
@@ -188,8 +190,9 @@ export default function Navbar() {
               >
                 <button
                   onClick={openChatBot}
-                  className="bg-terracotta text-ivory font-semibold px-7 py-4 rounded-full w-full text-center text-lg"
+                  className="inline-flex items-center justify-center gap-2 bg-terracotta text-ivory font-semibold px-7 py-4 rounded-full w-full text-lg"
                 >
+                  <UtensilsIcon className="w-5 h-5" />
                   Pedir ahora
                 </button>
                 {/* "Mi cuenta" oculto: el portal es solo para clientes exclusivos
