@@ -5,10 +5,11 @@ import { openChatBot } from '../../lib/openChatBot'
 import { useReducedMotion } from '../../hooks/useReducedMotion'
 import { imagenUrl } from '../../lib/publicApi'
 
-// URL/key del video del inicio (subido al bucket). Configurable por variable de
-// entorno; si está vacío se muestra la imagen de respaldo. imagenUrl() lo sirve
-// por el proxy firmado del backend (funciona aunque el bucket sea privado).
-const HERO_VIDEO = import.meta.env.VITE_HERO_VIDEO_URL || 'home/Video Project 1 (1).mp4'
+// Imagen del inicio (subida al bucket), enlazada al reel de Instagram.
+// Configurable por variable de entorno. imagenUrl() la sirve por el proxy firmado
+// del backend (funciona aunque el bucket sea privado).
+const HERO_IMG = import.meta.env.VITE_HERO_IMG || 'home/12.jpg'
+const HERO_INSTAGRAM = 'https://www.instagram.com/reel/DUgNnE8ES0y/?igsh=MXh5YzdnZjMyODRlZA=='
 
 /* ── Smoke particle ──────────────────────────────────────────────────────── */
 function SmokeParticle({ style }) {
@@ -49,22 +50,6 @@ export default function Hero() {
   const prefersReduced = useReducedMotion()
   const bgRef = useRef(null)
   const titleRef = useRef(null)
-  const videoRef = useRef(null)
-
-  // React a veces no aplica el atributo `muted`, lo que hace que el navegador
-  // bloquee el autoplay. Lo forzamos por ref y disparamos la reproducción.
-  useEffect(() => {
-    const v = videoRef.current
-    if (!v) return
-    v.muted = true
-    if (prefersReduced) return
-    try {
-      const p = v.play()
-      if (p && typeof p.catch === 'function') p.catch(() => {})
-    } catch {
-      /* jsdom / autoplay bloqueado */
-    }
-  }, [prefersReduced])
 
   useEffect(() => {
     if (prefersReduced) return
@@ -162,27 +147,22 @@ export default function Hero() {
       {/* ── Content ── */}
       <div className="relative z-10 container-site pt-28 pb-24 md:pt-36 md:pb-32">
         <div className="grid lg:grid-cols-2 gap-10 lg:gap-14 items-center">
-          {/* Video (izquierda en desktop; debajo del texto en móvil) */}
+          {/* Imagen enlazada a Instagram (izquierda en desktop; debajo del texto en móvil) */}
           <div className="order-2 lg:order-1">
-            {HERO_VIDEO ? (
-              <video
-                ref={videoRef}
-                src={imagenUrl(HERO_VIDEO)}
-                poster="/assets/images/hero-bg.png"
-                className="w-full rounded-3xl shadow-xl object-cover aspect-[4/5] sm:aspect-video lg:aspect-[4/5] bg-espresso/5"
-                autoPlay
-                muted
-                loop
-                playsInline
-                preload="metadata"
-              />
-            ) : (
+            <a
+              href={HERO_INSTAGRAM}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Ver nuestro reel en Instagram"
+              className="block group rounded-3xl overflow-hidden shadow-xl"
+            >
               <img
-                src="/assets/images/hero-bg.png"
-                alt=""
-                className="w-full rounded-3xl shadow-xl object-cover aspect-[4/5] lg:aspect-[4/5]"
+                src={imagenUrl(HERO_IMG)}
+                alt="Sabores de Mamá en Instagram"
+                className="w-full object-cover aspect-[4/5] sm:aspect-video lg:aspect-[4/5] bg-espresso/5 transition-transform duration-500 group-hover:scale-[1.03]"
+                loading="eager"
               />
-            )}
+            </a>
           </div>
 
           {/* Texto (derecha) */}

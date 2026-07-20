@@ -19,6 +19,7 @@ export default function PageHero({
   align = 'center',  // 'center' | 'left'
   video,             // key/URL de video del bucket (opcional)
   image,             // key/URL de imagen del bucket (opcional; alternativa al video)
+  mediaHref,         // si se pasa, el medio (imagen/video) enlaza a esta URL (nueva pestaña)
   children,
 }) {
   const hasVideo = Boolean(video)
@@ -158,25 +159,40 @@ export default function PageHero({
           <div className="grid lg:grid-cols-2 gap-10 lg:gap-14 items-center">
             {/* Medio (izquierda en desktop; debajo del texto en móvil) */}
             <div className="order-2 lg:order-1">
-              {hasVideo ? (
-                <video
-                  ref={videoRef}
-                  src={imagenUrl(video)}
-                  className="w-full rounded-3xl shadow-xl object-cover aspect-[4/5] sm:aspect-video lg:aspect-[4/5] bg-espresso/5"
-                  autoPlay
-                  muted
-                  loop
-                  playsInline
-                  preload="metadata"
-                />
-              ) : (
-                <img
-                  src={imagenUrl(image)}
-                  alt=""
-                  className="w-full rounded-3xl shadow-xl object-cover aspect-[4/5] sm:aspect-video lg:aspect-[4/5] bg-espresso/5"
-                  loading="eager"
-                />
-              )}
+              {(() => {
+                const medio = hasVideo ? (
+                  <video
+                    ref={videoRef}
+                    src={imagenUrl(video)}
+                    className="w-full rounded-3xl shadow-xl object-cover aspect-[4/5] sm:aspect-video lg:aspect-[4/5] bg-espresso/5"
+                    autoPlay
+                    muted
+                    loop
+                    playsInline
+                    preload="metadata"
+                  />
+                ) : (
+                  <img
+                    src={imagenUrl(image)}
+                    alt=""
+                    className="w-full rounded-3xl shadow-xl object-cover aspect-[4/5] sm:aspect-video lg:aspect-[4/5] bg-espresso/5 transition-transform duration-500 group-hover:scale-[1.03]"
+                    loading="eager"
+                  />
+                )
+                return mediaHref ? (
+                  <a
+                    href={mediaHref}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label="Ver nuestro reel en Instagram"
+                    className="block group rounded-3xl overflow-hidden shadow-xl"
+                  >
+                    {medio}
+                  </a>
+                ) : (
+                  medio
+                )
+              })()}
             </div>
             {/* Texto (derecha) */}
             <div className="order-1 lg:order-2">{contenido}</div>

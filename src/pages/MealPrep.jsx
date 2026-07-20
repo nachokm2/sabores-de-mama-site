@@ -12,6 +12,8 @@ import { fmtCLP } from '../lib/flowConfig'
 // Imagen del hero de Meal Prep (subida al bucket). Configurable por variable de
 // entorno; por defecto usa la key hero/11.png (reemplaza al video pesado anterior).
 const MEALPREP_IMG = import.meta.env.VITE_MEALPREP_IMG || 'hero/11.png'
+// La imagen del hero enlaza a nuestro reel de Instagram.
+const MEALPREP_INSTAGRAM = 'https://www.instagram.com/reel/DaG87SkxivQ/?igsh=MWJhZ2RvamJxM3JsOQ=='
 
 /* ── Cómo funciona ───────────────────────────────────────────────────────── */
 const PASOS = [
@@ -110,6 +112,7 @@ export default function MealPrep() {
           subtitle="Nos envías tus ingredientes, nosotros los transformamos en comidas caseras listas para disfrutar durante toda la semana."
           breadcrumb={[{ label: 'Inicio', href: '/' }, { label: 'Meal Prep', href: '/meal-prep-en-casa' }]}
           image={MEALPREP_IMG}
+          mediaHref={MEALPREP_INSTAGRAM}
         >
           <button onClick={agendar} className="btn-primary text-sm">
             Agendar mi Meal Prep
