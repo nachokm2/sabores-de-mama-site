@@ -17,6 +17,7 @@ const FORM_VACIO = {
   id: null,
   nombre: '',
   descripcion: '',
+  duracion: '',
   categoria: '',
   imagen: '',
   activo: true,
@@ -146,6 +147,7 @@ export default function AdminPlatos() {
       id: p.id,
       nombre: p.nombre || '',
       descripcion: p.descripcion || '',
+      duracion: p.duracion || '',
       categoria: p.categoria || '',
       imagen: p.imagen || '',
       activo: p.activo,
@@ -177,6 +179,7 @@ export default function AdminPlatos() {
     const payload = {
       nombre: form.nombre.trim(),
       descripcion: form.descripcion.trim() || null,
+      duracion: form.duracion.trim(),
       categoria: form.categoria.trim() || null,
       imagen: form.imagen.trim() || null,
       activo: form.activo,
@@ -294,6 +297,20 @@ export default function AdminPlatos() {
           <label className="block mb-3 text-sm">
             <span className="block text-espresso font-medium mb-1">Descripción</span>
             <textarea className={inputCls} rows={2} value={form.descripcion} onChange={(e) => setField('descripcion', e.target.value)} />
+          </label>
+
+          <label className="block mb-3 text-sm">
+            <span className="block text-espresso font-medium mb-1">Duración / conservación</span>
+            <textarea
+              className={inputCls}
+              rows={2}
+              value={form.duracion}
+              onChange={(e) => setField('duracion', e.target.value)}
+              placeholder={'Refrigerado: 3–4 días\nCongelado: 1 mes (la crema puede cambiar de textura)'}
+            />
+            <span className="block text-2xs text-warm-gray mt-1">
+              Aparece bajo el plato en el correo al cliente. Una línea por indicación (Enter para separar).
+            </span>
           </label>
 
           <div className="block mb-3 text-sm">

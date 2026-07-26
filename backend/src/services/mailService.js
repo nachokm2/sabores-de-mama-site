@@ -164,7 +164,11 @@ function listaPlatosHtml(platos) {
   const items = arr
     .map((p) => {
       const acomp = p && p.acompanamiento && p.acompanamiento.nombre ? ` (con ${esc(p.acompanamiento.nombre)})` : ''
-      return `<li style="margin:2px 0;color:${INK}">${esc(platoNombre(p))}${acomp}</li>`
+      const dur =
+        p && p.duracion
+          ? `<div style="font-size:12px;color:${MUTED};margin:1px 0 5px;line-height:1.4;">${esc(p.duracion).replace(/\n/g, '<br>')}</div>`
+          : ''
+      return `<li style="margin:3px 0;color:${INK}">${esc(platoNombre(p))}${acomp}${dur}</li>`
     })
     .join('')
   return `<ul style="margin:6px 0 0;padding-left:18px">${items}</ul>`
@@ -441,6 +445,25 @@ async function getPlatosConIngredientes(pedido) {
   })
 }
 
+// Añade a cada plato del snapshot su `duracion` actual (consulta la BD por los
+// ids). Muta pedido.platos para que la lista del correo la muestre.
+async function enrichDuraciones(pedido) {
+  const arr = Array.isArray(pedido.platos) ? pedido.platos : []
+  const ids = arr
+    .map((p) => (typeof p === 'object' && p ? p.id : null))
+    .filter((x) => Number.isInteger(x))
+  if (!ids.length) return
+  try {
+    const { rows } = await query('SELECT id, duracion FROM platos WHERE id = ANY($1)', [ids])
+    const map = new Map(rows.map((r) => [r.id, r.duracion]))
+    for (const p of arr) {
+      if (typeof p === 'object' && p && map.get(p.id)) p.duracion = map.get(p.id)
+    }
+  } catch (err) {
+    console.error('[mail] No se pudieron cargar duraciones:', err.message)
+  }
+}
+
 /**
  * Envía el correo del estado indicado. No lanza si falla: devuelve
  * { ok:false, ... } y registra el error, para no romper la operación principal.
@@ -449,6 +472,9 @@ export async function sendEstadoEmail(pedido, estado) {
   const builder = TEMPLATES[estado]
   if (!builder) return { ok: false, skipped: true, reason: `estado sin plantilla: ${estado}` }
   if (!pedido?.email) return { ok: false, skipped: true, reason: 'pedido sin email' }
+
+  // La lista de platos del correo muestra la duración/conservación de cada plato.
+  await enrichDuraciones(pedido)
 
   // Datos extra por estado (ingredientes para "pagado"; foto para "en_delivery").
   const extra = {}
