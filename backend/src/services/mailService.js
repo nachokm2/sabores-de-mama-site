@@ -164,11 +164,7 @@ function listaPlatosHtml(platos) {
   const items = arr
     .map((p) => {
       const acomp = p && p.acompanamiento && p.acompanamiento.nombre ? ` (con ${esc(p.acompanamiento.nombre)})` : ''
-      const dur =
-        p && p.duracion
-          ? `<div style="font-size:12px;color:${MUTED};margin:1px 0 5px;line-height:1.4;">${esc(p.duracion).replace(/\n/g, '<br>')}</div>`
-          : ''
-      return `<li style="margin:3px 0;color:${INK}">${esc(platoNombre(p))}${acomp}${dur}</li>`
+      return `<li style="margin:2px 0;color:${INK}">${esc(platoNombre(p))}${acomp}</li>`
     })
     .join('')
   return `<ul style="margin:6px 0 0;padding-left:18px">${items}</ul>`
@@ -321,6 +317,30 @@ function avisosMealPrepHtml(pedido) {
   </table>`
 }
 
+// Duración y conservación por plato (correo de pago). Sólo muestra los platos que
+// tengan una duración configurada por la admin (ver enrichDuraciones).
+function conservacionHtml(platos) {
+  const arr = (Array.isArray(platos) ? platos : []).filter(
+    (p) => p && p.duracion && String(p.duracion).trim()
+  )
+  if (!arr.length) return ''
+  const bloques = arr
+    .map(
+      (p) => `<div style="margin:0 0 10px;">
+        <div style="font-weight:bold;color:${BRAND};font-size:14px;">${esc(platoNombre(p))}</div>
+        <div style="font-size:13px;color:${INK};line-height:1.5;">${esc(p.duracion).replace(/\n/g, '<br>')}</div>
+      </div>`
+    )
+    .join('')
+  return `
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:16px;background:${CREAM};border:1px solid ${BORDER};border-radius:12px;">
+    <tr><td style="padding:16px 18px;">
+      <div style="font-weight:bold;color:${INK};margin-bottom:10px;font-size:14px;">❄️ Duración y conservación</div>
+      ${bloques}
+    </td></tr>
+  </table>`
+}
+
 // ── Plantillas por estado ───────────────────────────────────────────────────
 const TEMPLATES = {
   solicitud_recibida(pedido) {
@@ -356,6 +376,7 @@ const TEMPLATES = {
         bodyHtml:
           resumenPedidoHtml(pedido) +
           ingredientesConsolidados +
+          conservacionHtml(pedido.platos) +
           (esMealPrep ? avisosMealPrepHtml(pedido) : ''),
         footerNota: 'Coordinaremos contigo la entrega de los ingredientes según tu servicio.',
       }),
