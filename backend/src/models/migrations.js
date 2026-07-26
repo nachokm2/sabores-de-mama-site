@@ -180,7 +180,7 @@ ALTER TABLE platos ADD COLUMN IF NOT EXISTS cocinera  BOOLEAN NOT NULL DEFAULT t
 -- no cuentan para los 5 platos; son la guarnición de los que la llevan).
 ALTER TABLE platos ADD COLUMN IF NOT EXISTS lleva_acompanamiento BOOLEAN NOT NULL DEFAULT false;
 -- Duración/conservación del plato (texto libre) que se muestra en el correo,
--- p. ej. "Refrigerado: 3–4 días\nCongelado: 1 mes".
+-- por ejemplo: Refrigerado 3-4 dias; Congelado 1 mes.
 ALTER TABLE platos ADD COLUMN IF NOT EXISTS duracion TEXT;
 -- Cantidades EXACTAS por nº de personas (texto: admite "½", "A gusto", null).
 ALTER TABLE ingredientes ADD COLUMN IF NOT EXISTS p1 TEXT;
