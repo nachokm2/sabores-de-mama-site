@@ -22,8 +22,8 @@ const ingredientesPara = (ids, personas = 1) => [
   { id: 2, nombre: 'Cebolla', cantidad: 2 * personas, unidad: 'u', platos: [1, 2] },
 ]
 
-function Wrapper({ ids = [1, 2] }) {
-  const [data, setData] = useState({ platos: ids, lista_compras: [] })
+function Wrapper({ ids = [1, 2], adicionales = [] }) {
+  const [data, setData] = useState({ platos: ids, lista_compras: [], adicionales })
   const update = (p) => setData((d) => ({ ...d, ...p }))
   return (
     <>
@@ -43,6 +43,11 @@ describe('ShoppingList', () => {
   it('llama a GET /api/platos/ingredientes (getIngredientesDePlatos) al montar', async () => {
     render(<Wrapper ids={[1, 2, 3]} />)
     await waitFor(() => expect(getIngredientesDePlatos).toHaveBeenCalledWith([1, 2, 3], 1))
+  })
+
+  it('suma los ingredientes de las ensaladas agregadas (adicional "ensalada-<id>")', async () => {
+    render(<Wrapper ids={[1, 2]} adicionales={[{ clave: 'ensalada-9', nombre: 'Ensalada: César', precio: 1500 }]} />)
+    await waitFor(() => expect(getIngredientesDePlatos).toHaveBeenCalledWith([1, 2, 9], 1))
   })
 
   it('muestra los ingredientes consolidados (una sola fila por ingrediente, con el total sumado)', async () => {

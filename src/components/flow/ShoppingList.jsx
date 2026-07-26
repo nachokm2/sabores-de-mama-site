@@ -21,11 +21,18 @@ const OPCIONES_PERSONAS = [1, 2, 3, 4, 5]
  *    eliminar ingredientes) y se guarda en el estado del flujo.
  */
 export default function ShoppingList({ data, update, onNext, onBack, platosSeleccionados }) {
-  // Platos principales + acompañamientos elegidos (sus ingredientes también van
-  // a la lista de compras).
+  // Platos principales + acompañamientos + ensaladas elegidas (sus ingredientes
+  // también van a la lista de compras). Las ensaladas viajan como adicional con
+  // clave "ensalada-<id>".
   const mainIds = platosSeleccionados ?? data?.platos ?? []
   const sideIds = data?.acompanamientoIds ?? []
-  const ids = [...new Set([...mainIds, ...sideIds])]
+  const saladIds = (data?.adicionales || [])
+    .map((a) => {
+      const m = /^ensalada-(\d+)$/.exec((a && a.clave) || '')
+      return m ? parseInt(m[1], 10) : null
+    })
+    .filter((x) => Number.isInteger(x))
+  const ids = [...new Set([...mainIds, ...sideIds, ...saladIds])]
   const personas = Number(data?.personas) || 1
   const [lista, setLista] = useState([])
   const [loading, setLoading] = useState(true)

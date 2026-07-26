@@ -434,36 +434,49 @@ const TEMPLATES = {
 
 export const ESTADOS_VALIDOS = Object.keys(TEMPLATES)
 
-// Para el estado "pagado": obtiene los platos del pedido con sus ingredientes
-// (consulta la BD por los ids de plato presentes en pedido.platos).
+// Para el estado "pagado": obtiene los platos del pedido con sus ingredientes.
+// Incluye los platos principales (pedido.platos) Y las ensaladas agregadas como
+// adicional (clave "ensalada-<id>"), para que sus ingredientes también entren en
+// la lista de compras del correo.
 async function getPlatosConIngredientes(pedido) {
   const arr = Array.isArray(pedido.platos) ? pedido.platos : []
-  if (!arr.length) return []
-  const ids = arr.map((p) => (typeof p === 'object' && p ? p.id : null)).filter((x) => Number.isInteger(x))
+  const platoIds = arr.map((p) => (typeof p === 'object' && p ? p.id : null)).filter((x) => Number.isInteger(x))
+
+  const ensaladas = (Array.isArray(pedido.adicionales) ? pedido.adicionales : [])
+    .map((a) => {
+      const m = /^ensalada-(\d+)$/.exec((a && a.clave) || '')
+      return m ? { id: parseInt(m[1], 10), nombre: (a && a.nombre) || 'Ensalada' } : null
+    })
+    .filter(Boolean)
+
+  const allIds = [...new Set([...platoIds, ...ensaladas.map((s) => s.id)])]
+  if (!allIds.length) return []
 
   // Cantidad exacta según nº de comensales (Cocinera); por defecto 5 (receta base).
   const n = Math.min(Math.max(Number(pedido.personas) || 5, 1), 5)
 
-  let porPlato = new Map()
-  if (ids.length) {
-    try {
-      const { rows } = await query(
-        `SELECT plato_id, nombre, unidad, p${n} AS cantidad, p5 FROM ingredientes WHERE plato_id = ANY($1) ORDER BY id`,
-        [ids]
-      )
-      for (const r of rows) {
-        if (!porPlato.has(r.plato_id)) porPlato.set(r.plato_id, [])
-        porPlato.get(r.plato_id).push({ nombre: r.nombre, cantidad: r.cantidad ?? r.p5, unidad: r.unidad })
-      }
-    } catch (err) {
-      console.error('[mail] No se pudieron cargar ingredientes:', err.message)
+  const porPlato = new Map()
+  try {
+    const { rows } = await query(
+      `SELECT plato_id, nombre, unidad, p${n} AS cantidad, p5 FROM ingredientes WHERE plato_id = ANY($1) ORDER BY id`,
+      [allIds]
+    )
+    for (const r of rows) {
+      if (!porPlato.has(r.plato_id)) porPlato.set(r.plato_id, [])
+      porPlato.get(r.plato_id).push({ nombre: r.nombre, cantidad: r.cantidad ?? r.p5, unidad: r.unidad })
     }
+  } catch (err) {
+    console.error('[mail] No se pudieron cargar ingredientes:', err.message)
   }
 
-  return arr.map((p) => {
+  const result = arr.map((p) => {
     const id = typeof p === 'object' && p ? p.id : null
     return { nombre: platoNombre(p), ingredientes: id ? porPlato.get(id) || [] : [] }
   })
+  for (const s of ensaladas) {
+    result.push({ nombre: s.nombre, ingredientes: porPlato.get(s.id) || [] })
+  }
+  return result
 }
 
 // Añade a cada plato del snapshot su `duracion` actual (consulta la BD por los
