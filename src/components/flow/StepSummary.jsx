@@ -4,6 +4,7 @@ import BakingAddon from './BakingAddon'
 import AdicionalesMealPrep from './AdicionalesMealPrep'
 import EnsaladasAddon from './EnsaladasAddon'
 import { createPedido, ApiError } from '../../lib/publicApi'
+import { trackEvent } from '../../lib/analytics'
 import { fmtCLP } from '../../lib/flowConfig'
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
@@ -78,6 +79,14 @@ export default function StepSummary({ data, update, onBack }) {
         lista_compras: data.lista_compras || [],
         // Nº de comensales (flujo Cocinera); null en Meal Prep.
         personas: data.personas || null,
+      })
+      // Conversión: pedido creado con éxito. GTM escucha 'pedido_confirmado' y
+      // lo envía a GA4 (donde se marca como evento clave / conversión).
+      trackEvent('pedido_confirmado', {
+        pedido_id: pedido.id,
+        servicio: data.servicio || 'meal_prep',
+        value: Number(pedido.total ?? data.total) || 0,
+        currency: 'CLP',
       })
       // replace: true → evita volver atrás al resumen una vez en la página de pago.
       navigate(`/pago/${pedido.id}`, { replace: true, state: { total: pedido.total } })

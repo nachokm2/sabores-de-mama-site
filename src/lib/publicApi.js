@@ -140,6 +140,20 @@ export async function getProductosHornear() {
   return data?.productos || []
 }
 
+/**
+ * Resumen público de valoraciones (promedio, nº de opiniones, % que recomienda),
+ * agregado y anónimo, de la encuesta de satisfacción. Devuelve null si no hay
+ * datos suficientes o si el backend no responde (el sitio nunca se rompe).
+ */
+export async function getResumenValoraciones() {
+  try {
+    const data = await request('/encuestas/publico')
+    return data?.disponible ? data : null
+  } catch {
+    return null
+  }
+}
+
 /** Ingredientes consolidados de un conjunto de platos (para la lista de compras). */
 export async function getIngredientesDePlatos(ids = [], personas) {
   if (!ids.length) return []

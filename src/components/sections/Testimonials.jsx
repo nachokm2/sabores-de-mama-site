@@ -1,6 +1,7 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { TESTIMONIALS } from '../../data/testimonials'
+import { getResumenValoraciones } from '../../lib/publicApi'
 import SectionLabel from '../ui/SectionLabel'
 import StarRating from '../ui/StarRating'
 import { useScrollReveal } from '../../hooks/useScrollAnimation'
@@ -102,6 +103,15 @@ function FeaturedCard({ testimonial }) {
 
 export default function Testimonials() {
   const [page, setPage] = useState(0)
+  // Valoración real y anónima de la encuesta de satisfacción (se pide en el
+  // navegador; si no hay datos suficientes o el backend no responde, queda null
+  // y mostramos un texto de confianza sin número inventado).
+  const [valoracion, setValoracion] = useState(null)
+  useEffect(() => {
+    let vivo = true
+    getResumenValoraciones().then((v) => vivo && setValoracion(v)).catch(() => {})
+    return () => { vivo = false }
+  }, [])
   const headerRef = useScrollReveal({ selector: '.testi-head', stagger: 0.1, y: 30 })
   const featured = TESTIMONIALS.filter((t) => t.featured)
   const regular  = TESTIMONIALS.filter((t) => !t.featured)
@@ -109,6 +119,15 @@ export default function Testimonials() {
   const PER_PAGE = 3
   const pages    = Math.ceil(regular.length / PER_PAGE)
   const visible  = regular.slice(page * PER_PAGE, page * PER_PAGE + PER_PAGE)
+
+  const trustItems = [
+    valoracion
+      ? { icon: '⭐', text: `${valoracion.promedio.toFixed(1)} / 5 · ${valoracion.total} opiniones reales` }
+      : { icon: '⭐', text: 'Clientes que vuelven a pedir' },
+    { icon: '🛡️', text: 'Pago 100% seguro' },
+    { icon: '🔄', text: 'Satisfacción garantizada' },
+    { icon: '📦', text: 'Empaque premium' },
+  ]
 
   return (
     <section
@@ -177,12 +196,7 @@ export default function Testimonials() {
           viewport={{ once: true }}
           transition={{ duration: 0.7, delay: 0.4 }}
         >
-          {[
-            { icon: '⭐', text: '4.9 / 5 estrellas promedio' },
-            { icon: '🛡️', text: 'Pago 100% seguro' },
-            { icon: '🔄', text: 'Satisfacción garantizada' },
-            { icon: '📦', text: 'Empaque premium' },
-          ].map(({ icon, text }) => (
+          {trustItems.map(({ icon, text }) => (
             <div key={text} className="flex items-center gap-2">
               <span aria-hidden="true">{icon}</span>
               <span>{text}</span>

@@ -114,6 +114,36 @@ router.get('/stats', requireAdmin, async (req, res, next) => {
 })
 
 /**
+ * GET /api/encuestas/publico — resumen agregado PÚBLICO (sin auth y sin ningún
+ * dato personal) para mostrar la valoración real en el sitio. Solo devuelve
+ * datos si hay una muestra mínima, para no publicar promedios poco
+ * representativos. Debe declararse ANTES de `/:orderId` para que no lo capture
+ * la ruta con parámetro.
+ */
+router.get('/publico', async (_req, res, next) => {
+  try {
+    const MIN_RESPUESTAS = 3
+    const { rows } = await query(
+      `SELECT COUNT(*)::int AS total,
+              COALESCE(AVG(satisfaction_rating), 0)::numeric(10,2) AS promedio,
+              COALESCE(SUM(CASE WHEN would_recommend THEN 1 ELSE 0 END), 0)::int AS recomiendan
+         FROM encuestas_satisfaccion`
+    )
+    const r = rows[0] || { total: 0, promedio: 0, recomiendan: 0 }
+    const total = Number(r.total) || 0
+    if (total < MIN_RESPUESTAS) return res.json({ disponible: false })
+    return res.json({
+      disponible: true,
+      total,
+      promedio: Number(r.promedio) || 0,
+      pct_recomienda: total ? Math.round((Number(r.recomiendan) / total) * 100) : 0,
+    })
+  } catch (err) {
+    next(err)
+  }
+})
+
+/**
  * GET /api/encuestas/:orderId?token=...  (público) — estado de la encuesta para
  * la página del cliente (¿enlace válido? ¿ya respondida?).
  */
