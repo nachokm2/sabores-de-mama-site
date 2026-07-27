@@ -30,13 +30,13 @@ export const restaurantSchema = {
     },
   ],
   sameAs: [SITE.social.instagram, SITE.social.tiktok].filter(Boolean),
-  hasMenu: `${SITE.url}/#menu`,
+  hasMenu: `${SITE.url}/menu`,
   potentialAction: {
     '@type': 'OrderAction',
     target: {
       '@type': 'EntryPoint',
       urlTemplate: `https://wa.me/${SITE.whatsapp}`,
-      actionPlatform: ['http://schema.org/MobileWebPlatform'],
+      actionPlatform: ['https://schema.org/MobileWebPlatform'],
     },
   },
 }

@@ -1,44 +1,17 @@
-import { BrowserRouter, Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom'
-import { lazy, Suspense, useEffect, useRef } from 'react'
+import { Outlet, Navigate, useLocation, useNavigate } from 'react-router-dom'
+import { Suspense, useEffect, useRef } from 'react'
 import Lenis from 'lenis'
 import Home from './pages/Home' // landing (LCP) → eager para no diferir el primer render
 
-// Code splitting: el resto de páginas se cargan bajo demanda (chunks separados).
-const Nosotros      = lazy(() => import('./pages/Nosotros'))
-const Menu          = lazy(() => import('./pages/Menu'))
-const MealPrep      = lazy(() => import('./pages/MealPrep'))
-const Cocinera      = lazy(() => import('./pages/Cocinera'))
-const HornearEnCasa = lazy(() => import('./pages/HornearEnCasa'))
-const ConsultarPedido = lazy(() => import('./pages/ConsultarPedido'))
-const Galeria       = lazy(() => import('./pages/Galeria'))
-const Contacto      = lazy(() => import('./pages/Contacto'))
-const Encuesta      = lazy(() => import('./pages/Encuesta'))
-const NotFound      = lazy(() => import('./pages/NotFound'))
-const MealPrepFlow  = lazy(() => import('./pages/MealPrepFlow'))
-const CocineraFlow  = lazy(() => import('./pages/CocineraFlow'))
-const StepPayment   = lazy(() => import('./pages/StepPayment'))
+// Helper para rutas con carga diferida (React Router data-router / vite-react-ssg).
+// Nuestras páginas exportan el componente por defecto; lo mapeamos a `Component`.
+// Usar el campo `lazy` (en lugar de React.lazy) permite además que vite-react-ssg
+// detecte los CSS de cada chunk al pre-renderizar (evita el "flash" sin estilos).
+const lazyRoute = (importer) => async () => ({ Component: (await importer()).default })
 
-// ── Portal de clientes (chunks aparte) ──
+// ── Portal de clientes y admin: wrappers de sesión (eager, ligeros) ──
 import ClientePrivateRoute from './components/cuenta/ClientePrivateRoute'
-const ClienteLogin     = lazy(() => import('./pages/Cuenta/ClienteLogin'))
-const ClienteRegistro  = lazy(() => import('./pages/Cuenta/ClienteRegistro'))
-const ClienteRecuperar = lazy(() => import('./pages/Cuenta/ClienteRecuperar'))
-const ClienteReset     = lazy(() => import('./pages/Cuenta/ClienteReset'))
-const ClienteCuenta    = lazy(() => import('./pages/Cuenta/ClienteCuenta'))
-const ClienteLista     = lazy(() => import('./pages/Cuenta/ClienteListaCompras'))
-
-// ── Panel admin (chunks aparte; no se cargan en el sitio público) ──
-import PrivateRoute   from './components/admin/PrivateRoute'
-const AdminLogin     = lazy(() => import('./pages/Admin/AdminLogin'))
-const AdminDashboard = lazy(() => import('./pages/Admin/AdminDashboard'))
-const AdminPedidos   = lazy(() => import('./pages/Admin/AdminPedidos'))
-const AdminPlatos    = lazy(() => import('./pages/Admin/AdminPlatos'))
-const AdminCupos     = lazy(() => import('./pages/Admin/AdminCupos'))
-const AdminComunas   = lazy(() => import('./pages/Admin/AdminComunas'))
-const AdminProductos = lazy(() => import('./pages/Admin/AdminProductos'))
-const AdminAjustes   = lazy(() => import('./pages/Admin/AdminAjustes'))
-const AdminSatisfaccion = lazy(() => import('./pages/Admin/AdminSatisfaccion'))
-const AdminHub       = lazy(() => import('./pages/Admin/AdminHub'))
+import PrivateRoute from './components/admin/PrivateRoute'
 import { isTokenValid } from './lib/adminApi'
 
 // /admin → hub (elegir servicio) si hay sesión válida; si no, al login.
@@ -49,17 +22,14 @@ function AdminIndex() {
 /**
  * Gestiona el scroll en cambios de ruta:
  *  - Si la URL trae un hash (#seccion), hace scroll suave hasta el ancla
- *    (usando la instancia de Lenis para que respete el smooth scroll global).
+ *    (usando la instancia de Lenis para respetar el smooth scroll global).
  *  - Si no hay hash, vuelve al inicio de la página.
- * Esto permite que el Navbar enlace a secciones de otra página (p. ej.
- * /menu#servicio-mealprep) con desplazamiento suave.
  */
 function ScrollManager({ lenisRef }) {
   const { pathname, hash } = useLocation()
   useEffect(() => {
     if (hash) {
       const id = decodeURIComponent(hash.slice(1))
-      // Esperar a que la página destino renderice antes de buscar el ancla.
       let tries = 0
       const tryScroll = () => {
         const el = document.getElementById(id)
@@ -81,73 +51,14 @@ function ScrollManager({ lenisRef }) {
   return null
 }
 
-function AppContent({ lenisRef }) {
-  const navigate = useNavigate()
-
-  // Los CTA del sitio ("Pedir ahora", "Agendar"…) disparan este evento vía
-  // openChatBot(); ahora inicia el flujo de Meal Prep (SPA, sin recarga).
-  useEffect(() => {
-    const handler = () => navigate('/meal-prep')
-    window.addEventListener('sabores:start-flow', handler)
-    return () => window.removeEventListener('sabores:start-flow', handler)
-  }, [navigate])
-
-  return (
-    <>
-      <ScrollManager lenisRef={lenisRef} />
-      <Suspense fallback={<div className="min-h-screen bg-background" aria-busy="true" />}>
-      <Routes>
-        <Route path="/"          element={<Home />} />
-        <Route path="/nosotros"  element={<Nosotros />} />
-        <Route path="/menu"      element={<Menu />} />
-        <Route path="/meal-prep-en-casa" element={<MealPrep />} />
-        <Route path="/cocinera"  element={<Cocinera />} />
-        <Route path="/healthy" element={<HornearEnCasa />} />
-        <Route path="/consultar-pedido" element={<ConsultarPedido />} />
-        <Route path="/galeria"   element={<Galeria />} />
-        <Route path="/contacto"  element={<Contacto />} />
-        <Route path="/encuesta/:orderId/:token" element={<Encuesta />} />
-
-        {/* ── Flujos de pedido ── */}
-        <Route path="/meal-prep"             element={<MealPrepFlow />} />
-        <Route path="/cocinera-a-domicilio"  element={<CocineraFlow />} />
-        <Route path="/pago/:pedidoId"        element={<StepPayment />} />
-
-        {/* ── Portal de clientes ── */}
-        <Route path="/cuenta/login"     element={<ClienteLogin />} />
-        <Route path="/cuenta/registro"  element={<ClienteRegistro />} />
-        <Route path="/cuenta/recuperar" element={<ClienteRecuperar />} />
-        <Route path="/cuenta/reset"     element={<ClienteReset />} />
-        <Route element={<ClientePrivateRoute />}>
-          <Route path="/cuenta"         element={<ClienteCuenta />} />
-          <Route path="/cuenta/lista"   element={<ClienteLista />} />
-        </Route>
-
-        {/* ── Panel admin ── */}
-        <Route path="/admin"           element={<AdminIndex />} />
-        <Route path="/admin/login"     element={<AdminLogin />} />
-        <Route element={<PrivateRoute />}>
-          <Route path="/admin/hub"     element={<AdminHub />} />
-          {/* Panel por servicio: /admin/:servicio/... (meal_prep | cocinera) */}
-          <Route path="/admin/:servicio/dashboard" element={<AdminDashboard />} />
-          <Route path="/admin/:servicio/pedidos"   element={<AdminPedidos />} />
-          <Route path="/admin/:servicio/platos"    element={<AdminPlatos />} />
-          <Route path="/admin/:servicio/cupos"     element={<AdminCupos />} />
-          <Route path="/admin/:servicio/comunas"   element={<AdminComunas />} />
-          <Route path="/admin/:servicio/productos" element={<AdminProductos />} />
-          <Route path="/admin/:servicio/ajustes"   element={<AdminAjustes />} />
-          <Route path="/admin/:servicio/satisfaccion" element={<AdminSatisfaccion />} />
-        </Route>
-
-        <Route path="*"          element={<NotFound />} />
-      </Routes>
-      </Suspense>
-    </>
-  )
-}
-
-function App() {
+/**
+ * Layout raíz de toda la app: inicializa el smooth scroll (Lenis), gestiona el
+ * scroll por ruta y escucha el evento de los CTA para iniciar el flujo de pedido.
+ * Los efectos solo corren en el navegador → seguro para el pre-render (SSG).
+ */
+function RootLayout() {
   const lenisRef = useRef(null)
+  const navigate = useNavigate()
 
   useEffect(() => {
     const lenis = new Lenis({
@@ -159,24 +70,102 @@ function App() {
       touchMultiplier: 2,
     })
     lenisRef.current = lenis
-
     function raf(time) {
       lenis.raf(time)
       requestAnimationFrame(raf)
     }
     requestAnimationFrame(raf)
-
     return () => {
       lenis.destroy()
       lenisRef.current = null
     }
   }, [])
 
+  // Los CTA del sitio ("Pedir ahora", "Agendar"…) disparan este evento vía
+  // openChatBot(); inicia el flujo de Meal Prep (SPA, sin recarga).
+  useEffect(() => {
+    const handler = () => navigate('/meal-prep')
+    window.addEventListener('sabores:start-flow', handler)
+    return () => window.removeEventListener('sabores:start-flow', handler)
+  }, [navigate])
+
   return (
-    <BrowserRouter>
-      <AppContent lenisRef={lenisRef} />
-    </BrowserRouter>
+    <>
+      <ScrollManager lenisRef={lenisRef} />
+      <Suspense fallback={<div className="min-h-screen bg-background" aria-busy="true" />}>
+        <Outlet />
+      </Suspense>
+    </>
   )
 }
 
-export default App
+/**
+ * Rutas en formato data-router (compatible con react-router y con vite-react-ssg
+ * para el pre-renderizado estático). Las rutas públicas de marketing se
+ * pre-renderizan en el build (ver `ssgOptions.includedRoutes` en vite.config.js);
+ * el resto (flujos, portal, admin, rutas con parámetros) se renderizan en el
+ * cliente con el fallback SPA.
+ */
+export const routes = [
+  {
+    path: '/',
+    element: <RootLayout />,
+    entry: 'src/App.jsx',
+    children: [
+      // ── Páginas públicas (se pre-renderizan) ──
+      { index: true, element: <Home /> },
+      { path: 'nosotros', lazy: lazyRoute(() => import('./pages/Nosotros')) },
+      { path: 'menu', lazy: lazyRoute(() => import('./pages/Menu')) },
+      { path: 'meal-prep-en-casa', lazy: lazyRoute(() => import('./pages/MealPrep')) },
+      { path: 'cocinera', lazy: lazyRoute(() => import('./pages/Cocinera')) },
+      { path: 'healthy', lazy: lazyRoute(() => import('./pages/HornearEnCasa')) },
+      { path: 'galeria', lazy: lazyRoute(() => import('./pages/Galeria')) },
+      { path: 'contacto', lazy: lazyRoute(() => import('./pages/Contacto')) },
+
+      // ── Utilidades y encuesta (solo cliente) ──
+      { path: 'consultar-pedido', lazy: lazyRoute(() => import('./pages/ConsultarPedido')) },
+      { path: 'encuesta/:orderId/:token', lazy: lazyRoute(() => import('./pages/Encuesta')) },
+
+      // ── Flujos de pedido (solo cliente) ──
+      { path: 'meal-prep', lazy: lazyRoute(() => import('./pages/MealPrepFlow')) },
+      { path: 'cocinera-a-domicilio', lazy: lazyRoute(() => import('./pages/CocineraFlow')) },
+      { path: 'pago/:pedidoId', lazy: lazyRoute(() => import('./pages/StepPayment')) },
+
+      // ── Portal de clientes (solo cliente) ──
+      { path: 'cuenta/login', lazy: lazyRoute(() => import('./pages/Cuenta/ClienteLogin')) },
+      { path: 'cuenta/registro', lazy: lazyRoute(() => import('./pages/Cuenta/ClienteRegistro')) },
+      { path: 'cuenta/recuperar', lazy: lazyRoute(() => import('./pages/Cuenta/ClienteRecuperar')) },
+      { path: 'cuenta/reset', lazy: lazyRoute(() => import('./pages/Cuenta/ClienteReset')) },
+      {
+        element: <ClientePrivateRoute />,
+        children: [
+          { path: 'cuenta', lazy: lazyRoute(() => import('./pages/Cuenta/ClienteCuenta')) },
+          { path: 'cuenta/lista', lazy: lazyRoute(() => import('./pages/Cuenta/ClienteListaCompras')) },
+        ],
+      },
+
+      // ── Panel admin (solo cliente) ──
+      { path: 'admin', element: <AdminIndex /> },
+      { path: 'admin/login', lazy: lazyRoute(() => import('./pages/Admin/AdminLogin')) },
+      {
+        element: <PrivateRoute />,
+        children: [
+          { path: 'admin/hub', lazy: lazyRoute(() => import('./pages/Admin/AdminHub')) },
+          { path: 'admin/:servicio/dashboard', lazy: lazyRoute(() => import('./pages/Admin/AdminDashboard')) },
+          { path: 'admin/:servicio/pedidos', lazy: lazyRoute(() => import('./pages/Admin/AdminPedidos')) },
+          { path: 'admin/:servicio/platos', lazy: lazyRoute(() => import('./pages/Admin/AdminPlatos')) },
+          { path: 'admin/:servicio/cupos', lazy: lazyRoute(() => import('./pages/Admin/AdminCupos')) },
+          { path: 'admin/:servicio/comunas', lazy: lazyRoute(() => import('./pages/Admin/AdminComunas')) },
+          { path: 'admin/:servicio/productos', lazy: lazyRoute(() => import('./pages/Admin/AdminProductos')) },
+          { path: 'admin/:servicio/ajustes', lazy: lazyRoute(() => import('./pages/Admin/AdminAjustes')) },
+          { path: 'admin/:servicio/satisfaccion', lazy: lazyRoute(() => import('./pages/Admin/AdminSatisfaccion')) },
+        ],
+      },
+
+      // ── 404 ──
+      { path: '*', lazy: lazyRoute(() => import('./pages/NotFound')) },
+    ],
+  },
+]
+
+export default routes

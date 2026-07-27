@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { Helmet } from 'react-helmet-async'
+import SEOHead from '../components/seo/SEOHead'
 import Navbar from '../components/layout/Navbar'
 import Footer from '../components/layout/Footer'
 import PageHero from '../components/ui/PageHero'
@@ -93,13 +93,11 @@ export default function MealPrep() {
 
   return (
     <>
-      <Helmet>
-        <title>Meal Prep | Sabores de Mamá</title>
-        <meta
-          name="description"
-          content="Meal Prep de Sabores de Mamá: tú envías los ingredientes y mamá prepara tus platos caseros, los envasa al vacío y te los despacha. El despacho depende de tu comuna."
-        />
-      </Helmet>
+      <SEOHead
+        title="Meal Prep — Comida Casera Semanal"
+        description="Meal Prep de Sabores de Mamá: tú envías los ingredientes y mamá prepara tus platos caseros, los envasa al vacío y te los despacha. El despacho depende de tu comuna."
+        canonical="https://saboresdemama.com/meal-prep-en-casa"
+      />
 
       <Navbar />
 

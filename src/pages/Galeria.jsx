@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Helmet } from 'react-helmet-async'
+import SEOHead from '../components/seo/SEOHead'
 import Navbar from '../components/layout/Navbar'
 import Footer from '../components/layout/Footer'
 import PageHero from '../components/ui/PageHero'
@@ -171,10 +171,11 @@ export default function Galeria() {
 
   return (
     <>
-      <Helmet>
-        <title>Galería | Sabores de Mamá</title>
-        <meta name="description" content="Galería de platos de Sabores de Mamá. Comida casera chilena fotografiada con amor: papa rellena, pollo asado, empanadas, postres y más." />
-      </Helmet>
+      <SEOHead
+        title="Galería de Platos"
+        description="Galería de platos de Sabores de Mamá. Comida casera chilena fotografiada con amor: papa rellena, pollo asado, empanadas, postres y más."
+        canonical="https://saboresdemama.com/galeria"
+      />
 
       <Navbar />
 

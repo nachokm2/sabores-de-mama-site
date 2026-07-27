@@ -22,13 +22,37 @@ function wwwRedirect() {
   }
 }
 
-export default defineConfig({
+// Config como función para distinguir el build de cliente del de servidor (SSR)
+// que hace vite-react-ssg: en el build SSR react/react-dom/etc. son externos y no
+// pueden ir en `manualChunks`, así que ese chunking solo se aplica al cliente.
+export default defineConfig(({ isSsrBuild }) => ({
   plugins: [
     wwwRedirect(),
     react(),
     compression({ algorithm: 'gzip', exclude: [/\.(png|jpg|jpeg|gif|svg|webp|avif)$/] }),
     compression({ algorithm: 'brotliCompress', exclude: [/\.(png|jpg|jpeg|gif|svg|webp|avif)$/] }),
   ],
+  // Pre-render (SSG) con vite-react-ssg: solo generamos HTML estático de las
+  // páginas públicas de marketing (las que deben indexar Google y los buscadores
+  // de IA). El resto (flujos de pedido, portal de clientes, admin, rutas con
+  // parámetros) se sirven como SPA (fallback a index.html) y se renderizan en el
+  // navegador. Así los rastreadores reciben el contenido ya escrito en el HTML.
+  ssgOptions: {
+    script: 'async',
+    // flat: `/nosotros` → `dist/nosotros.html`. `vite preview` (sirv) resuelve
+    // `/nosotros` (sin barra final, que es nuestra URL canónica) a `nosotros.html`.
+    dirStyle: 'flat',
+    includedRoutes: () => [
+      '/',
+      '/nosotros',
+      '/menu',
+      '/meal-prep-en-casa',
+      '/cocinera',
+      '/healthy',
+      '/galeria',
+      '/contacto',
+    ],
+  },
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
@@ -45,13 +69,15 @@ export default defineConfig({
     target: 'es2020',
     minify: 'esbuild',
     rollupOptions: {
-      output: {
-        manualChunks: {
-          'react-vendor': ['react', 'react-dom', 'react-router-dom'],
-          'animation-vendor': ['gsap', 'framer-motion'],
-          'ui-vendor': ['swiper', 'lenis'],
-        },
-      },
+      output: isSsrBuild
+        ? {}
+        : {
+            manualChunks: {
+              'react-vendor': ['react', 'react-dom', 'react-router-dom'],
+              'animation-vendor': ['gsap', 'framer-motion'],
+              'ui-vendor': ['swiper', 'lenis'],
+            },
+          },
     },
     cssCodeSplit: true,
     chunkSizeWarningLimit: 600,
@@ -73,4 +99,4 @@ export default defineConfig({
       process.env.PREVIEW_ALLOWED_HOSTS || '.saboresdemama.com,.up.railway.app'
     ).split(','),
   },
-})
+}))

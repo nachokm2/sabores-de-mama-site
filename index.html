@@ -10,35 +10,29 @@
     <link rel="apple-touch-icon" href="/assets/images/logo.jpg" />
     <link rel="manifest" href="/site.webmanifest" />
 
-    <!-- Primary Meta Tags -->
-    <title>Sabores de Mamá | Comida Casera a Domicilio</title>
-    <meta name="title" content="Sabores de Mamá | Comida Casera a Domicilio" />
-    <meta name="description" content="Comida casera hecha con amor, lista para disfrutar en tu hogar. Sabores auténticos que te devuelven a la mesa familiar. Pedidos por WhatsApp." />
-    <meta name="keywords" content="comida casera, delivery comida, comida a domicilio, sabores de mamá, comida chilena, cazuela, empanadas, almuerzo casero" />
+    <!--
+      Meta ESTÁTICOS y comunes a todo el sitio. El título, la descripción, la
+      URL canónica y los og/twitter :title/:url/:description son ÚNICOS por
+      página y los define cada página con react-helmet-async (componente
+      SEOHead). vite-react-ssg los escribe en el HTML pre-renderizado de cada
+      ruta pública, por lo que Google y los buscadores de IA los ven sin JS.
+    -->
+    <meta name="keywords" content="comida casera a domicilio, almuerzos a domicilio santiago, comida preparada, meal prep santiago, comida saludable, sabores de mamá, comida chilena" />
     <meta name="author" content="Sabores de Mamá" />
     <meta name="robots" content="index, follow" />
     <meta name="theme-color" content="#AE4C29" />
 
-    <!-- Open Graph / Facebook -->
+    <!-- Open Graph / Facebook (valores comunes; :title/:url/:description por página) -->
     <meta property="og:type" content="website" />
-    <meta property="og:url" content="https://saboresdemama.com/" />
-    <meta property="og:title" content="Sabores de Mamá | Comida Casera a Domicilio" />
-    <meta property="og:description" content="Comida casera hecha con amor, lista para disfrutar en tu hogar. Sabores auténticos que te devuelven a la mesa familiar." />
     <meta property="og:image" content="https://saboresdemama.com/og-image.jpg" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
     <meta property="og:locale" content="es_CL" />
     <meta property="og:site_name" content="Sabores de Mamá" />
 
-    <!-- Twitter Card -->
+    <!-- Twitter Card (valores comunes; :title/:description/:image por página) -->
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:url" content="https://saboresdemama.com/" />
-    <meta name="twitter:title" content="Sabores de Mamá | Comida Casera a Domicilio" />
-    <meta name="twitter:description" content="Comida casera hecha con amor. Sabores auténticos que te devuelven a la mesa familiar." />
     <meta name="twitter:image" content="https://saboresdemama.com/og-image.jpg" />
-
-    <!-- Canonical -->
-    <link rel="canonical" href="https://saboresdemama.com/" />
 
     <!-- Preconnect for performance -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -63,6 +57,96 @@
 
     <!-- Performance hints -->
     <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
+
+    <!--
+      Datos estructurados (JSON-LD) ESTÁTICOS: van en el HTML servido, por lo que
+      los ven TODOS los rastreadores, incluidos los de IA que no ejecutan JavaScript
+      (GPTBot, ClaudeBot, PerplexityBot…). Describe el negocio, su ubicación de
+      servicio y el sitio. Mantener sincronizado con src/data/siteConfig.js.
+    -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": ["Restaurant", "FoodEstablishment", "LocalBusiness"],
+          "@id": "https://saboresdemama.com/#negocio",
+          "name": "Sabores de Mamá",
+          "description": "Comida casera a domicilio en Santiago de Chile: almuerzos y preparaciones caseras, porcionadas y selladas al vacío, listas para disfrutar en tu hogar.",
+          "url": "https://saboresdemama.com",
+          "telephone": "+56966705821",
+          "email": "estela.zavalla@saboresdemama.com",
+          "image": "https://saboresdemama.com/og-image.jpg",
+          "logo": "https://saboresdemama.com/assets/images/logo.jpg",
+          "servesCuisine": ["Comida chilena", "Comida casera", "Comida saludable"],
+          "priceRange": "$$",
+          "currenciesAccepted": "CLP",
+          "address": {
+            "@type": "PostalAddress",
+            "addressLocality": "Santiago",
+            "addressRegion": "Región Metropolitana",
+            "addressCountry": "CL"
+          },
+          "areaServed": [
+            { "@type": "City", "name": "Las Condes" },
+            { "@type": "City", "name": "Providencia" },
+            { "@type": "City", "name": "Ñuñoa" },
+            { "@type": "City", "name": "Vitacura" },
+            { "@type": "City", "name": "La Reina" },
+            { "@type": "City", "name": "Lo Barnechea" },
+            { "@type": "City", "name": "San Miguel" },
+            { "@type": "City", "name": "Santiago" }
+          ],
+          "openingHoursSpecification": [
+            {
+              "@type": "OpeningHoursSpecification",
+              "dayOfWeek": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
+              "opens": "11:00",
+              "closes": "20:00"
+            },
+            {
+              "@type": "OpeningHoursSpecification",
+              "dayOfWeek": ["Saturday", "Sunday"],
+              "opens": "11:00",
+              "closes": "17:00"
+            }
+          ],
+          "sameAs": [
+            "https://instagram.com/saboresdemama.casero",
+            "https://tiktok.com/@saboresdemama.casero"
+          ],
+          "hasMenu": "https://saboresdemama.com/menu",
+          "potentialAction": {
+            "@type": "OrderAction",
+            "target": {
+              "@type": "EntryPoint",
+              "urlTemplate": "https://wa.me/56966705821",
+              "actionPlatform": ["https://schema.org/MobileWebPlatform"]
+            }
+          }
+        },
+        {
+          "@type": "Organization",
+          "@id": "https://saboresdemama.com/#organizacion",
+          "name": "Sabores de Mamá",
+          "url": "https://saboresdemama.com",
+          "logo": "https://saboresdemama.com/assets/images/logo.jpg",
+          "sameAs": [
+            "https://instagram.com/saboresdemama.casero",
+            "https://tiktok.com/@saboresdemama.casero"
+          ]
+        },
+        {
+          "@type": "WebSite",
+          "@id": "https://saboresdemama.com/#website",
+          "url": "https://saboresdemama.com",
+          "name": "Sabores de Mamá",
+          "inLanguage": "es-CL",
+          "publisher": { "@id": "https://saboresdemama.com/#organizacion" }
+        }
+      ]
+    }
+    </script>
   </head>
   <body>
     <div id="root"></div>

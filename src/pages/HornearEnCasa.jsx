@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { Helmet } from 'react-helmet-async'
+import SEOHead from '../components/seo/SEOHead'
 import Navbar from '../components/layout/Navbar'
 import Footer from '../components/layout/Footer'
 import PageHero from '../components/ui/PageHero'
@@ -88,13 +88,11 @@ export default function HornearEnCasa() {
 
   return (
     <>
-      <Helmet>
-        <title>Healthy | Sabores de Mamá</title>
-        <meta
-          name="description"
-          content="Postres y galletas saludables hechos en casa: los recibes listos para disfrutar, con ingredientes seleccionados. Sin culpa, sin conservantes."
-        />
-      </Helmet>
+      <SEOHead
+        title="Comida y Postres Saludables"
+        description="Postres y galletas saludables hechos en casa: los recibes listos para disfrutar, con ingredientes seleccionados. Sin culpa, sin conservantes."
+        canonical="https://saboresdemama.com/healthy"
+      />
 
       <Navbar />
 

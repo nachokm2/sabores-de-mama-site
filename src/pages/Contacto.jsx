@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
-import { Helmet } from 'react-helmet-async'
+import SEOHead from '../components/seo/SEOHead'
 import Navbar from '../components/layout/Navbar'
 import Footer from '../components/layout/Footer'
 import PageHero from '../components/ui/PageHero'
@@ -94,10 +94,11 @@ export default function Contacto() {
 
   return (
     <>
-      <Helmet>
-        <title>Contacto | Sabores de Mamá</title>
-        <meta name="description" content="Contáctanos por WhatsApp para hacer tu pedido o resolver tus dudas. Atendemos de lunes a viernes 11:00-20:00 y fines de semana 11:00-17:00." />
-      </Helmet>
+      <SEOHead
+        title="Contacto"
+        description="Contáctanos por WhatsApp para hacer tu pedido o resolver tus dudas. Atendemos de lunes a viernes 11:00-20:00 y fines de semana 11:00-17:00."
+        canonical="https://saboresdemama.com/contacto"
+      />
 
       <Navbar />
 

@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Helmet } from 'react-helmet-async'
+import SEOHead from '../components/seo/SEOHead'
 import Navbar from '../components/layout/Navbar'
 import Footer from '../components/layout/Footer'
 import PageHero from '../components/ui/PageHero'
@@ -181,10 +181,11 @@ export default function Menu() {
 
   return (
     <>
-      <Helmet>
-        <title>Menú y Servicios | Sabores de Mamá</title>
-        <meta name="description" content="Cocinera a domicilio ($55.000) y Meal Prep ($60.000). Más de 60 preparaciones de comida casera chilena para elegir. Agenda por WhatsApp." />
-      </Helmet>
+      <SEOHead
+        title="Menú y Precios"
+        description="Cocinera a domicilio ($55.000) y Meal Prep ($60.000). Más de 60 preparaciones de comida casera chilena para elegir. Agenda por WhatsApp."
+        canonical="https://saboresdemama.com/menu"
+      />
 
       <Navbar />
 

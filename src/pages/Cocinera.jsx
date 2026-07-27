@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
-import { Helmet } from 'react-helmet-async'
+import SEOHead from '../components/seo/SEOHead'
 import Navbar from '../components/layout/Navbar'
 import Footer from '../components/layout/Footer'
 import PageHero from '../components/ui/PageHero'
@@ -91,13 +91,11 @@ export default function Cocinera() {
 
   return (
     <>
-      <Helmet>
-        <title>Cocinera a Domicilio | Sabores de Mamá</title>
-        <meta
-          name="description"
-          content="Cocinera a Domicilio de Sabores de Mamá: mamá va a tu hogar y cocina hasta 5 preparaciones con tus ingredientes. Recibes tu lista de compras y deja la cocina limpia. Valor $55.000 + movilización según comuna."
-        />
-      </Helmet>
+      <SEOHead
+        title="Cocinera a Domicilio en Santiago"
+        description="Cocinera a Domicilio de Sabores de Mamá: mamá va a tu hogar y cocina hasta 5 preparaciones con tus ingredientes. Recibes tu lista de compras y deja la cocina limpia. Valor $55.000 + movilización según comuna."
+        canonical="https://saboresdemama.com/cocinera"
+      />
 
       <Navbar />
 

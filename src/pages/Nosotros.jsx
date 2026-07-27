@@ -7,7 +7,7 @@ import WhatsAppCTA from '../components/sections/WhatsAppCTA'
 import { useScrollReveal } from '../hooks/useScrollAnimation'
 import { openChatBot } from '../lib/openChatBot'
 import UtensilsIcon from '../components/ui/UtensilsIcon'
-import { Helmet } from 'react-helmet-async'
+import SEOHead from '../components/seo/SEOHead'
 
 /* ── Team ────────────────────────────────────────────────────────────────── */
 const TEAM = [
@@ -120,10 +120,11 @@ export default function Nosotros() {
 
   return (
     <>
-      <Helmet>
-        <title>Nuestra Historia | Sabores de Mamá</title>
-        <meta name="description" content="Conoce la historia detrás de Sabores de Mamá. Una familia unida por el amor a la comida casera, ingredientes frescos y recetas transmitidas de generación en generación." />
-      </Helmet>
+      <SEOHead
+        title="Nuestra Historia"
+        description="Conoce la historia detrás de Sabores de Mamá. Una familia unida por el amor a la comida casera, ingredientes frescos y recetas transmitidas de generación en generación."
+        canonical="https://saboresdemama.com/nosotros"
+      />
 
       <Navbar />
 

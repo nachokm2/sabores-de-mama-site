@@ -1,12 +1,32 @@
+# Sabores de Mamá — https://saboresdemama.com
 User-agent: *
 Allow: /
 
-# Disallow admin paths (future backend)
+# Rutas privadas / de flujo que no aportan a la búsqueda
 Disallow: /api/
 Disallow: /admin/
-Disallow: /_/
+Disallow: /cuenta/
+Disallow: /pago/
+Disallow: /encuesta/
+
+# Permitir explícitamente a los rastreadores de IA (clave para aparecer citados
+# en ChatGPT, Perplexity, Gemini, Claude, Copilot…)
+User-agent: GPTBot
+Allow: /
+
+User-agent: OAI-SearchBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
 
 Sitemap: https://saboresdemama.com/sitemap.xml
-
-# Crawl-delay for responsible bots
-Crawl-delay: 10
