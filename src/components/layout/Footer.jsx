@@ -5,6 +5,8 @@ import { SITE, getWhatsAppLink } from '../../data/siteConfig'
 const FOOTER_LINKS = [
   { label: 'Inicio',    to: '/' },
   { label: 'Menú',      to: '/menu' },
+  { label: 'Almuerzos a domicilio', to: '/almuerzos-a-domicilio-santiago' },
+  { label: 'Comida para empresas',  to: '/comida-para-empresas' },
   { label: 'Nosotros',  to: '/nosotros' },
   { label: 'Galería',   to: '/galeria' },
   { label: 'Consultar pedido', to: '/consultar-pedido' },

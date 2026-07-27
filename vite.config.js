@@ -51,6 +51,8 @@ export default defineConfig(({ isSsrBuild }) => ({
       '/healthy',
       '/galeria',
       '/contacto',
+      '/almuerzos-a-domicilio-santiago',
+      '/comida-para-empresas',
     ],
   },
   resolve: {

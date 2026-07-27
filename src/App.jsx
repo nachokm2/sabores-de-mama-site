@@ -121,6 +121,9 @@ export const routes = [
       { path: 'healthy', lazy: lazyRoute(() => import('./pages/HornearEnCasa')) },
       { path: 'galeria', lazy: lazyRoute(() => import('./pages/Galeria')) },
       { path: 'contacto', lazy: lazyRoute(() => import('./pages/Contacto')) },
+      // Landing pages de servicio (SEO local)
+      { path: 'almuerzos-a-domicilio-santiago', lazy: lazyRoute(() => import('./pages/AlmuerzosDomicilio')) },
+      { path: 'comida-para-empresas', lazy: lazyRoute(() => import('./pages/ComidaEmpresas')) },
 
       // ── Utilidades y encuesta (solo cliente) ──
       { path: 'consultar-pedido', lazy: lazyRoute(() => import('./pages/ConsultarPedido')) },
