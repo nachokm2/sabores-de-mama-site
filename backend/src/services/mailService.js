@@ -435,13 +435,24 @@ const TEMPLATES = {
 export const ESTADOS_VALIDOS = Object.keys(TEMPLATES)
 
 // Para el estado "pagado": obtiene los platos del pedido con sus ingredientes.
-// Incluye los platos principales (pedido.platos) Y las ensaladas agregadas como
-// adicional (clave "ensalada-<id>"), para que sus ingredientes también entren en
-// la lista de compras del correo.
+// Incluye los platos principales (pedido.platos), sus ACOMPAÑAMIENTOS vinculados
+// (pedido.platos[].acompanamiento) y las ENSALADAS agregadas como adicional
+// (clave "ensalada-<id>"), para que TODOS sus ingredientes entren en la lista de
+// compras del correo.
 async function getPlatosConIngredientes(pedido) {
   const arr = Array.isArray(pedido.platos) ? pedido.platos : []
   const platoIds = arr.map((p) => (typeof p === 'object' && p ? p.id : null)).filter((x) => Number.isInteger(x))
 
+  // Acompañamientos vinculados a cada plato: pedido.platos[].acompanamiento = {id, nombre}.
+  const acompanamientos = arr
+    .map((p) =>
+      p && typeof p === 'object' && p.acompanamiento && Number.isInteger(p.acompanamiento.id)
+        ? { id: p.acompanamiento.id, nombre: p.acompanamiento.nombre || 'Acompañamiento' }
+        : null
+    )
+    .filter(Boolean)
+
+  // Ensaladas agregadas como adicional (clave "ensalada-<id>").
   const ensaladas = (Array.isArray(pedido.adicionales) ? pedido.adicionales : [])
     .map((a) => {
       const m = /^ensalada-(\d+)$/.exec((a && a.clave) || '')
@@ -449,7 +460,13 @@ async function getPlatosConIngredientes(pedido) {
     })
     .filter(Boolean)
 
-  const allIds = [...new Set([...platoIds, ...ensaladas.map((s) => s.id)])]
+  // Extras = acompañamientos + ensaladas, contando cada id UNA sola vez (igual que
+  // la lista de compras del flujo, que deduplica los ids).
+  const extrasMap = new Map()
+  for (const e of [...acompanamientos, ...ensaladas]) if (!extrasMap.has(e.id)) extrasMap.set(e.id, e)
+  const extras = [...extrasMap.values()]
+
+  const allIds = [...new Set([...platoIds, ...extras.map((e) => e.id)])]
   if (!allIds.length) return []
 
   // Cantidad exacta según nº de comensales (Cocinera); por defecto 5 (receta base).
@@ -473,8 +490,8 @@ async function getPlatosConIngredientes(pedido) {
     const id = typeof p === 'object' && p ? p.id : null
     return { nombre: platoNombre(p), ingredientes: id ? porPlato.get(id) || [] : [] }
   })
-  for (const s of ensaladas) {
-    result.push({ nombre: s.nombre, ingredientes: porPlato.get(s.id) || [] })
+  for (const e of extras) {
+    result.push({ nombre: e.nombre, ingredientes: porPlato.get(e.id) || [] })
   }
   return result
 }
