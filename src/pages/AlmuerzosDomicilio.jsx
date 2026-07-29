@@ -199,6 +199,20 @@ export default function AlmuerzosDomicilio() {
           </div>
         </section>
 
+        {/* ── Explora por comuna (enlazado interno a las landings locales) ── */}
+        <section className="section-padding bg-cream" aria-labelledby="comunas-heading">
+          <div className="container-site max-w-3xl text-center">
+            <SectionLabel>Por comuna</SectionLabel>
+            <h2 id="comunas-heading" className="section-title text-espresso mt-4 mb-6">Almuerzos a domicilio en tu comuna</h2>
+            <div className="flex flex-wrap gap-3 justify-center">
+              <Link to="/comida-a-domicilio/las-condes" className="text-sm bg-ivory border border-wheat/60 rounded-full px-4 py-2 text-espresso hover:border-terracotta/50 transition-colors">Las Condes</Link>
+              <Link to="/comida-a-domicilio/providencia" className="text-sm bg-ivory border border-wheat/60 rounded-full px-4 py-2 text-espresso hover:border-terracotta/50 transition-colors">Providencia</Link>
+              <Link to="/comida-a-domicilio/nunoa" className="text-sm bg-ivory border border-wheat/60 rounded-full px-4 py-2 text-espresso hover:border-terracotta/50 transition-colors">Ñuñoa</Link>
+              <Link to="/comida-a-domicilio/vitacura" className="text-sm bg-ivory border border-wheat/60 rounded-full px-4 py-2 text-espresso hover:border-terracotta/50 transition-colors">Vitacura</Link>
+            </div>
+          </div>
+        </section>
+
         {/* ── CTA final ── */}
         <section className="py-20 bg-background-warm border-t border-espresso/10">
           <div className="container-site text-center max-w-2xl">

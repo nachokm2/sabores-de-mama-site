@@ -91,6 +91,10 @@ export default defineConfig(({ isSsrBuild }) => ({
       '/almuerzos-a-domicilio-santiago',
       '/comida-para-empresas',
       '/preguntas-frecuentes',
+      '/comida-a-domicilio/las-condes',
+      '/comida-a-domicilio/providencia',
+      '/comida-a-domicilio/nunoa',
+      '/comida-a-domicilio/vitacura',
     ],
   },
   resolve: {
