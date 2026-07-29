@@ -44,6 +44,22 @@ router.post('/', async (req, res, next) => {
       return res.status(400).json({ error: 'Faltan o son inválidos los campos: ' + errores.join(', ') })
     }
 
+    // Piso de precio (A2): el backend NO confía sin límite en el `total` que envía
+    // el cliente. Rechaza cualquier total por debajo del precio base del servicio
+    // (fuente autoritativa: servicios_config). Bloquea manipulaciones tipo
+    // `total: 1` sin poder rechazar pedidos legítimos (siempre >= base, porque el
+    // total es base + despacho + adicionales). Si no se puede leer la config, no bloquea.
+    try {
+      const cfg = await query('SELECT precio_base FROM servicios_config WHERE servicio = $1', [b.servicio])
+      const base = Number(cfg.rows[0]?.precio_base)
+      const total = Number(b.total)
+      if (Number.isFinite(base) && base > 0 && (!Number.isFinite(total) || total < base)) {
+        return res.status(400).json({ error: 'El total del pedido no es válido. Vuelve a intentarlo.' })
+      }
+    } catch {
+      /* si no se puede leer servicios_config, no bloqueamos la creación */
+    }
+
     const c = cuposCols(b.servicio)
     const pedido = await withTransaction(async (client) => {
       // 1) Reservar cupo DEL SERVICIO de forma atómica (lock optimista).
