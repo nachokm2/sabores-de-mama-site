@@ -10,8 +10,10 @@ const router = Router()
 // prefijos que la app realmente usa. Configurable con UPLOADS_ALLOWED_PREFIXES.
 //  - productos-hornear/ , platos/  → imágenes públicas del catálogo
 //  - entregas/                      → foto de entrega (la ve el cliente en "Consultar pedido")
+//  - hero/ , home/                  → imágenes/videos de portada del sitio
 const PREFIJOS_PERMITIDOS = (
-  process.env.UPLOADS_ALLOWED_PREFIXES || 'productos-hornear/,platos/,entregas/'
+  process.env.UPLOADS_ALLOWED_PREFIXES ||
+  'productos-hornear/,platos/,entregas/,hero/,home/'
 )
   .split(',')
   .map((p) => p.trim())
