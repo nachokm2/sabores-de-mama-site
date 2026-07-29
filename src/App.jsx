@@ -124,6 +124,7 @@ export const routes = [
       // Landing pages de servicio (SEO local)
       { path: 'almuerzos-a-domicilio-santiago', lazy: lazyRoute(() => import('./pages/AlmuerzosDomicilio')) },
       { path: 'comida-para-empresas', lazy: lazyRoute(() => import('./pages/ComidaEmpresas')) },
+      { path: 'preguntas-frecuentes', lazy: lazyRoute(() => import('./pages/PreguntasFrecuentes')) },
 
       // ── Utilidades y encuesta (solo cliente) ──
       { path: 'consultar-pedido', lazy: lazyRoute(() => import('./pages/ConsultarPedido')) },

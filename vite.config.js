@@ -90,6 +90,7 @@ export default defineConfig(({ isSsrBuild }) => ({
       '/contacto',
       '/almuerzos-a-domicilio-santiago',
       '/comida-para-empresas',
+      '/preguntas-frecuentes',
     ],
   },
   resolve: {
