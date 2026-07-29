@@ -51,19 +51,30 @@ function mailFrom() {
   )
 }
 
+// Copia oculta (BCC) opcional: una o más direcciones (coma-separadas) del negocio
+// que reciben una copia de cada correo transaccional. Se configura con MAIL_BCC.
+function mailBcc() {
+  return (process.env.MAIL_BCC || '')
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean)
+}
+
 /**
  * Envío por la API HTTP de Resend (puerto 443). Funciona en hosts que bloquean
  * el SMTP saliente (Railway, Render, etc.). Usa fetch nativo (Node 18+), sin
  * dependencias extra, con timeout propio para no quedar colgado.
  */
-async function sendViaResend({ apiKey, from, to, subject, html }) {
+async function sendViaResend({ apiKey, from, to, bcc, subject, html }) {
   const controller = new AbortController()
   const timer = setTimeout(() => controller.abort(), 15_000)
   try {
+    const payload = { from, to: [to], subject, html }
+    if (Array.isArray(bcc) && bcc.length) payload.bcc = bcc
     const res = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ from, to: [to], subject, html }),
+      body: JSON.stringify(payload),
       signal: controller.signal,
     })
     // Leemos el cuerpo como texto y lo intentamos parsear: así, ante un 4xx/5xx,
@@ -548,11 +559,12 @@ export async function sendEstadoEmail(pedido, estado) {
  * Envía un correo (Resend si hay API key; si no, SMTP; si no, lo omite).
  * Centraliza la lógica de proveedor para todos los correos transaccionales.
  */
-async function dispatchMail({ to, subject, html, label = 'correo' }) {
+async function dispatchMail({ to, subject, html, label = 'correo', conCopia = true }) {
   const from = mailFrom()
+  const bcc = conCopia ? mailBcc() : []
   if (process.env.RESEND_API_KEY) {
     try {
-      const id = await sendViaResend({ apiKey: process.env.RESEND_API_KEY, from, to, subject, html })
+      const id = await sendViaResend({ apiKey: process.env.RESEND_API_KEY, from, to, bcc, subject, html })
       console.log(`[mail] Enviado "${label}" → ${to} (resend id: ${id})`)
       return { ok: true, messageId: id, provider: 'resend' }
     } catch (err) {
@@ -566,7 +578,7 @@ async function dispatchMail({ to, subject, html, label = 'correo' }) {
     return { ok: false, skipped: true, reason: 'sin_proveedor' }
   }
   try {
-    const info = await tx.sendMail({ from, to, subject, html })
+    const info = await tx.sendMail({ from, to, bcc: bcc.length ? bcc : undefined, subject, html })
     console.log(`[mail] Enviado "${label}" → ${to} (id: ${info.messageId})`)
     return { ok: true, messageId: info.messageId, provider: 'smtp' }
   } catch (err) {
@@ -593,7 +605,8 @@ export async function sendPasswordReset(email, resetUrl) {
       </p>`,
     footerNota: 'El enlace expira en 1 hora. Si no solicitaste el cambio, tu contraseña sigue intacta.',
   })
-  return dispatchMail({ to: email, subject: 'Sabores de Mamá — Recuperar contraseña', html, label: 'recuperar' })
+  // conCopia:false → el enlace de reseteo NO se copia a terceros (seguridad).
+  return dispatchMail({ to: email, subject: 'Sabores de Mamá — Recuperar contraseña', html, label: 'recuperar', conCopia: false })
 }
 
 export default { sendEstadoEmail, sendPasswordReset, ESTADOS_VALIDOS }
