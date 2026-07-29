@@ -18,10 +18,20 @@ if (!process.env.DATABASE_URL) {
 
 export const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  ssl: useSSL ? { rejectUnauthorized: false } : false,
+  // Validación del certificado TLS: opt-in con DB_SSL_STRICT=true (requiere que
+  // el proveedor use un certificado verificable / CA válida). Por defecto false
+  // para no romper la conexión con el certificado interno de Railway. Nota: la
+  // conexión de producción es por la red PRIVADA de Railway
+  // (postgres.railway.internal), lo que ya reduce el riesgo de MITM.
+  ssl: useSSL ? { rejectUnauthorized: process.env.DB_SSL_STRICT === 'true' } : false,
   max: 10,
   idleTimeoutMillis: 30000,
   connectionTimeoutMillis: 10000,
+  // Backstop: PostgreSQL aborta en el servidor cualquier query que supere 15s,
+  // para no retener indefinidamente una de las 10 conexiones del pool. 15s es
+  // holgado (las queries normales tardan <100ms; la migración inicial, <1s).
+  statement_timeout: 15000,
+  query_timeout: 20000,
 })
 
 pool.on('error', (err) => {
