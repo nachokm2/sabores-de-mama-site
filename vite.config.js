@@ -36,6 +36,8 @@ function securityHeaders() {
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
     "font-src 'self' https://fonts.gstatic.com",
     "img-src 'self' data: https:",
+    // media-src: videos servidos por el backend / bucket (otro origen).
+    "media-src 'self' data: https:",
     "connect-src 'self' https://*.up.railway.app https://api.emailjs.com https://www.google-analytics.com https://*.google-analytics.com https://*.analytics.google.com https://t3.storageapi.dev",
     "frame-src https://www.googletagmanager.com",
     "frame-ancestors 'none'",
@@ -48,7 +50,8 @@ function securityHeaders() {
         res.setHeader('X-Content-Type-Options', 'nosniff')
         res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin')
         res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()')
-        res.setHeader('Content-Security-Policy-Report-Only', csp)
+        // CSP en modo BLOQUEANTE (verificado sin violaciones en Report-Only).
+        res.setHeader('Content-Security-Policy', csp)
         next()
       })
     },
