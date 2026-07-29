@@ -8,6 +8,20 @@ dotenv.config()
 const PORT = process.env.PORT || 4000
 
 async function start() {
+  // Guardia de secretos (C2): en producción NO arrancar con un JWT_SECRET
+  // ausente, corto o de ejemplo. Falla cerrado para evitar tokens forjables.
+  const jwtSecret = process.env.JWT_SECRET || ''
+  if (
+    process.env.NODE_ENV === 'production' &&
+    (jwtSecret.length < 32 || /dev_secret|cambiar|1234567890|secret_para/i.test(jwtSecret))
+  ) {
+    console.error(
+      '[server] JWT_SECRET ausente/débil/por defecto en producción. ' +
+        'Configura un secreto aleatorio de ≥32 bytes en Railway. Abortando.'
+    )
+    process.exit(1)
+  }
+
   // Migraciones idempotentes al arrancar (configurable con RUN_MIGRATIONS).
   if (process.env.RUN_MIGRATIONS !== 'false') {
     try {

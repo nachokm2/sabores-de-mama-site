@@ -4,6 +4,7 @@ import jwt from 'jsonwebtoken'
 import bcrypt from 'bcryptjs'
 import { query } from '../models/index.js'
 import { authJWT } from '../middleware/authJWT.js'
+import { authRateLimiter } from '../middleware/rateLimiter.js'
 import { sendPasswordReset } from '../services/mailService.js'
 
 const router = Router()
@@ -33,7 +34,7 @@ const emailNorm = (e) => String(e || '').toLowerCase().trim()
 /**
  * POST /api/auth/login  — admin o cliente (se distingue por `rol`).
  */
-router.post('/login', async (req, res, next) => {
+router.post('/login', authRateLimiter, async (req, res, next) => {
   try {
     const { email, password } = req.body || {}
     if (!email || !password) {
@@ -57,7 +58,7 @@ router.post('/login', async (req, res, next) => {
  * POST /api/auth/registro  (público) — crea una cuenta de CLIENTE.
  * Body: { nombre, email, password, telefono?, direccion? }
  */
-router.post('/registro', async (req, res, next) => {
+router.post('/registro', authRateLimiter, async (req, res, next) => {
   try {
     const { nombre, email, password, telefono, direccion } = req.body || {}
     if (!nombre || !email || !password) {
@@ -89,7 +90,7 @@ router.post('/registro', async (req, res, next) => {
  * POST /api/auth/recuperar  (público) — envía un enlace de recuperación.
  * Siempre responde 200 (no revela si el email existe).
  */
-router.post('/recuperar', async (req, res, next) => {
+router.post('/recuperar', authRateLimiter, async (req, res, next) => {
   try {
     const { email } = req.body || {}
     if (!email) return res.status(400).json({ error: 'El email es obligatorio.' })
@@ -114,7 +115,7 @@ router.post('/recuperar', async (req, res, next) => {
  * POST /api/auth/reset  (público) — restablece la contraseña con el token.
  * Body: { token, password }
  */
-router.post('/reset', async (req, res, next) => {
+router.post('/reset', authRateLimiter, async (req, res, next) => {
   try {
     const { token, password } = req.body || {}
     if (!token || !password) return res.status(400).json({ error: 'Token y contraseña son obligatorios.' })

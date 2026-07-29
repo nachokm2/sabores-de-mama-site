@@ -68,4 +68,17 @@ export const pedidosRateLimiter = createRateLimiter({
   max: Number(process.env.PEDIDOS_RATE_LIMIT) || 10,
 })
 
+// Limiter para autenticación (login/registro/recuperar/reset): protege contra
+// fuerza bruta y credential stuffing. 15 intentos por IP cada 15 min por defecto
+// (configurable con AUTH_RATE_LIMIT). En tests se desactiva de facto (límite alto)
+// para no interferir con las suites.
+export const authRateLimiter = createRateLimiter({
+  windowMs: 15 * 60_000,
+  // Solo se restringe en producción (Railway). En dev/test/CI queda holgado
+  // salvo que se fije AUTH_RATE_LIMIT explícitamente (evita 429 en el e2e).
+  max:
+    Number(process.env.AUTH_RATE_LIMIT) ||
+    (process.env.NODE_ENV === 'production' ? 15 : 100000),
+})
+
 export default pedidosRateLimiter
