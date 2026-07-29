@@ -436,3 +436,52 @@
 @media print {
   .no-print { display: none !important; }
 }
+
+/* ─── Contenido de artículos del blog (Markdown → HTML) ───────────────────── */
+.blog-content {
+  color: #6B5D4E;
+  font-size: 1rem;
+  line-height: 1.75;
+}
+.blog-content > *:first-child { margin-top: 0; }
+.blog-content h2 {
+  font-family: 'Playfair Display', Georgia, serif;
+  color: #2A1C12;
+  font-size: 1.5rem;
+  font-weight: 700;
+  line-height: 1.2;
+  margin: 2rem 0 0.75rem;
+}
+.blog-content h3 {
+  font-family: 'Playfair Display', Georgia, serif;
+  color: #2A1C12;
+  font-size: 1.2rem;
+  font-weight: 700;
+  margin: 1.5rem 0 0.5rem;
+}
+.blog-content p { margin: 0 0 1.1rem; }
+.blog-content ul,
+.blog-content ol { margin: 0 0 1.1rem; padding-left: 1.5rem; }
+.blog-content ul { list-style: disc; }
+.blog-content ol { list-style: decimal; }
+.blog-content li { margin: 0.35rem 0; }
+.blog-content li::marker { color: #B5512E; }
+.blog-content a {
+  color: #AE4C29;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  font-weight: 500;
+}
+.blog-content a:hover { color: #B5512E; }
+.blog-content strong { color: #2A1C12; font-weight: 700; }
+.blog-content em { font-style: italic; }
+.blog-content blockquote {
+  margin: 1.25rem 0;
+  padding: 0.75rem 1.1rem;
+  border-left: 3px solid #B5512E;
+  background: #FBF6EE;
+  border-radius: 0 8px 8px 0;
+  color: #6B5D4E;
+  font-style: italic;
+}
+.blog-content hr { border: 0; border-top: 1px solid #ECE1D2; margin: 2rem 0; }

@@ -2,6 +2,7 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import compression from 'vite-plugin-compression2'
 import path from 'path'
+import fs from 'node:fs'
 
 // Redirige www.<dominio> → <dominio> (301) en el servidor de `vite preview`
 // (producción en Railway), para tener una sola URL canónica.
@@ -61,6 +62,13 @@ function securityHeaders() {
 // Config como función para distinguir el build de cliente del de servidor (SSR)
 // que hace vite-react-ssg: en el build SSR react/react-dom/etc. son externos y no
 // pueden ir en `manualChunks`, así que ese chunking solo se aplica al cliente.
+// Descubre los artículos del blog (.md) para pre-renderizarlos automáticamente:
+// agregar un nuevo .md basta para que su página se genere en el build.
+const blogSlugs = fs
+  .readdirSync(path.resolve(__dirname, 'src/content/blog'))
+  .filter((f) => f.endsWith('.md'))
+  .map((f) => f.replace(/\.md$/, ''))
+
 export default defineConfig(({ isSsrBuild }) => ({
   plugins: [
     wwwRedirect(),
@@ -95,6 +103,8 @@ export default defineConfig(({ isSsrBuild }) => ({
       '/comida-a-domicilio/providencia',
       '/comida-a-domicilio/nunoa',
       '/comida-a-domicilio/vitacura',
+      '/blog',
+      ...blogSlugs.map((s) => `/blog/${s}`),
     ],
   },
   resolve: {

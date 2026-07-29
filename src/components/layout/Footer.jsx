@@ -8,6 +8,7 @@ const FOOTER_LINKS = [
   { label: 'Almuerzos a domicilio', to: '/almuerzos-a-domicilio-santiago' },
   { label: 'Comida para empresas',  to: '/comida-para-empresas' },
   { label: 'Nosotros',  to: '/nosotros' },
+  { label: 'Blog',      to: '/blog' },
   { label: 'Preguntas frecuentes', to: '/preguntas-frecuentes' },
   { label: 'Galería',   to: '/galeria' },
   { label: 'Consultar pedido', to: '/consultar-pedido' },

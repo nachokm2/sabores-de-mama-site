@@ -128,6 +128,9 @@ export const routes = [
       // Landings por comuna (SEO local); las comunas válidas se pre-renderizan
       // (ver ssgOptions.includedRoutes); un slug desconocido redirige al home.
       { path: 'comida-a-domicilio/:comuna', lazy: lazyRoute(() => import('./pages/ComunaLanding')) },
+      // Blog (Markdown pre-renderizado)
+      { path: 'blog', lazy: lazyRoute(() => import('./pages/Blog')) },
+      { path: 'blog/:slug', lazy: lazyRoute(() => import('./pages/BlogPost')) },
 
       // ── Utilidades y encuesta (solo cliente) ──
       { path: 'consultar-pedido', lazy: lazyRoute(() => import('./pages/ConsultarPedido')) },
