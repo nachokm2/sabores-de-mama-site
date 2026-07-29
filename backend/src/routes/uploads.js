@@ -5,6 +5,22 @@ import { presignUpload, presignGet, storageConfigured } from '../services/storag
 
 const router = Router()
 
+// Allowlist de prefijos servibles públicamente por /file. Evita que el endpoint
+// (público) firme y devuelva CUALQUIER objeto del bucket: solo se permiten los
+// prefijos que la app realmente usa. Configurable con UPLOADS_ALLOWED_PREFIXES.
+//  - productos-hornear/ , platos/  → imágenes públicas del catálogo
+//  - entregas/                      → foto de entrega (la ve el cliente en "Consultar pedido")
+const PREFIJOS_PERMITIDOS = (
+  process.env.UPLOADS_ALLOWED_PREFIXES || 'productos-hornear/,platos/,entregas/'
+)
+  .split(',')
+  .map((p) => p.trim())
+  .filter(Boolean)
+
+function keyPermitida(k) {
+  return !k.includes('..') && PREFIJOS_PERMITIDOS.some((p) => k.startsWith(p))
+}
+
 // Extensiones que optimizamos al vuelo. Los demás (videos, etc.) van por redirect
 // directo a S3 (para conservar streaming/range).
 const IMG_EXT = /\.(jpe?g|png|webp)$/i
@@ -45,6 +61,11 @@ router.get('/file', async (req, res, next) => {
   const key = req.query.key
   if (!key) return res.status(400).json({ error: 'key es obligatorio.' })
   const keyStr = String(key)
+  if (!keyPermitida(keyStr)) {
+    return res.status(403).json({ error: 'Acceso no permitido.' })
+  }
+  // Evita que el navegador "adivine" el tipo del binario servido.
+  res.set('X-Content-Type-Options', 'nosniff')
 
   try {
     if (!IMG_EXT.test(keyStr)) {

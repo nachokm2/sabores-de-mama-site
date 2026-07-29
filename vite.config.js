@@ -22,12 +22,46 @@ function wwwRedirect() {
   }
 }
 
+// Cabeceras de seguridad para el servidor de `vite preview` (producción Railway).
+// Las cabeceras "seguras" (anti-clickjacking, nosniff, referrer, permissions) van
+// aplicadas. La CSP va en modo REPORT-ONLY: no bloquea nada, solo reporta
+// violaciones en la consola del navegador. Tras verificar que no hay falsos
+// positivos, se cambia la cabecera a 'Content-Security-Policy' para hacerla efectiva.
+function securityHeaders() {
+  const csp = [
+    "default-src 'self'",
+    "base-uri 'self'",
+    "object-src 'none'",
+    "script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://www.google-analytics.com https://*.google-analytics.com",
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+    "font-src 'self' https://fonts.gstatic.com",
+    "img-src 'self' data: https:",
+    "connect-src 'self' https://*.up.railway.app https://api.emailjs.com https://www.google-analytics.com https://*.google-analytics.com https://*.analytics.google.com https://t3.storageapi.dev",
+    "frame-src https://www.googletagmanager.com",
+    "frame-ancestors 'none'",
+  ].join('; ')
+  return {
+    name: 'security-headers',
+    configurePreviewServer(server) {
+      server.middlewares.use((req, res, next) => {
+        res.setHeader('X-Frame-Options', 'DENY')
+        res.setHeader('X-Content-Type-Options', 'nosniff')
+        res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin')
+        res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()')
+        res.setHeader('Content-Security-Policy-Report-Only', csp)
+        next()
+      })
+    },
+  }
+}
+
 // Config como función para distinguir el build de cliente del de servidor (SSR)
 // que hace vite-react-ssg: en el build SSR react/react-dom/etc. son externos y no
 // pueden ir en `manualChunks`, así que ese chunking solo se aplica al cliente.
 export default defineConfig(({ isSsrBuild }) => ({
   plugins: [
     wwwRedirect(),
+    securityHeaders(),
     react(),
     compression({ algorithm: 'gzip', exclude: [/\.(png|jpg|jpeg|gif|svg|webp|avif)$/] }),
     compression({ algorithm: 'brotliCompress', exclude: [/\.(png|jpg|jpeg|gif|svg|webp|avif)$/] }),

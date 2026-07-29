@@ -1,5 +1,6 @@
 import express from 'express'
 import cors from 'cors'
+import helmet from 'helmet'
 import dotenv from 'dotenv'
 
 import { pool } from './models/index.js'
@@ -23,6 +24,20 @@ const app = express()
 // Detrás del proxy de Railway: necesario para que req.ip sea la IP real
 // (lo usa el rate limiter).
 app.set('trust proxy', 1)
+
+// ── Cabeceras de seguridad (helmet) ──
+// Esta app es una API JSON + proxy de imágenes (no sirve HTML), así que:
+//  - contentSecurityPolicy:false → la CSP relevante se aplica en el frontend.
+//  - crossOriginResourcePolicy:'cross-origin' → permite que el sitio (otro
+//    origen) embeba las imágenes que devuelve /api/uploads/file (si no, el
+//    navegador las bloquearía).
+app.disable('x-powered-by')
+app.use(
+  helmet({
+    contentSecurityPolicy: false,
+    crossOriginResourcePolicy: { policy: 'cross-origin' },
+  })
+)
 
 // ── CORS ──
 // Orígenes permitidos = CORS_ORIGIN/CLIENT_URL (coma-separado) + los dominios del
