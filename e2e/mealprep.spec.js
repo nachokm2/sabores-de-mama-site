@@ -87,9 +87,9 @@ test.describe('Flujo Meal Prep', () => {
 
     await expandirCategorias(page)
     for (let i = 0; i < 4; i++) {
-      await page.locator('button[aria-pressed="false"]').first().click()
+      await page.locator('button[aria-pressed="false"]:not([disabled])').first().click()
+      await expect(page.getByText(`${i + 1} de 5 platos seleccionados`)).toBeVisible()
     }
-    await expect(page.getByText('4 de 5 platos seleccionados')).toBeVisible()
     await expect(page.getByRole('button', { name: 'Continuar' })).toBeDisabled()
   })
 

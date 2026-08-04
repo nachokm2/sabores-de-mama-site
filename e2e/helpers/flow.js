@@ -38,11 +38,13 @@ export async function expandirCategorias(page) {
 export async function seleccionar5Platos(page) {
   await expect(page.getByText('0 de 5 platos seleccionados')).toBeVisible()
   await expandirCategorias(page)
-  // Las tarjetas de plato exponen aria-pressed; seleccionamos 5 no elegidas.
+  // Seleccionamos 5 tarjetas NO elegidas y NO deshabilitadas. Tras cada click
+  // esperamos a que el contador suba: sincroniza con el re-render de React y evita
+  // la carrera de re-clickear (y deseleccionar) la misma tarjeta aún sin actualizar.
   for (let i = 0; i < 5; i++) {
-    await page.locator('button[aria-pressed="false"]').first().click()
+    await page.locator('button[aria-pressed="false"]:not([disabled])').first().click()
+    await expect(page.getByText(`${i + 1} de 5 platos seleccionados`)).toBeVisible()
   }
-  await expect(page.getByText('5 de 5 platos seleccionados')).toBeVisible()
 }
 
 async function fillControlado(locator, value) {
