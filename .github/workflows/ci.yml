@@ -101,6 +101,10 @@ jobs:
       CORS_ORIGIN: http://localhost:5173
       CLIENT_URL: http://localhost:5173
       BANCO_NOMBRE: Estela Zavalla
+      # Costo de despacho con que se siembran las comunas. El e2e de Meal Prep
+      # espera un total de $65.000 = base 60.000 + despacho 5.000, así que la
+      # comuna elegida debe costar 5.000 (coincide con VITE_DELIVERY_COST).
+      COMUNA_COSTO_DEFAULT: '5000'
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4

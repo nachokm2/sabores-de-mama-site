@@ -15,13 +15,38 @@ export async function elegirFecha(page, etiqueta) {
   await page.getByRole('button', { name: 'Continuar' }).click()
 }
 
+// El paso de platos agrupa por categorías en un ACORDEÓN que arranca colapsado:
+// las tarjetas de plato (button[aria-pressed]) solo se montan al abrir su
+// categoría. Igual que el test de vitest (MealPrepFlow), desplegamos todas las
+// categorías antes de seleccionar. getByRole excluye del árbol de accesibilidad
+// la hamburguesa del navbar (lg:hidden → display:none en el viewport Desktop del
+// e2e), así que solo matchea las cabeceras de categoría.
+export async function expandirCategorias(page) {
+  const colapsadas = page.getByRole('button', { expanded: false })
+  // Esperar a que los platos terminen de cargar: mientras StepDishes muestra
+  // "Cargando platos…" NO hay cabeceras de categoría en el DOM, así que expandir
+  // demasiado pronto dejaba 0 tarjetas (carrera de carga).
+  await expect(colapsadas.first()).toBeVisible()
+  // No usar `.all()`: el locator es dinámico (expanded:false); al abrir una
+  // categoría sale del conjunto y los índices se corren. Clickeamos SIEMPRE la
+  // primera colapsada y esperamos a que el conjunto baje en 1.
+  for (let guard = 0; guard < 30; guard++) {
+    const n = await colapsadas.count()
+    if (n === 0) break
+    await colapsadas.first().click()
+    await expect(colapsadas).toHaveCount(n - 1)
+  }
+}
+
 export async function seleccionar5Platos(page) {
   await expect(page.getByText('0 de 5 platos seleccionados')).toBeVisible()
-  // Las tarjetas de plato exponen aria-pressed; seleccionamos 5 no elegidas.
+  await expandirCategorias(page)
+  // Seleccionamos 5 tarjetas NO elegidas y NO deshabilitadas. Tras cada click
+  // esperamos a que el contador suba: sincroniza con el re-render de React.
   for (let i = 0; i < 5; i++) {
-    await page.locator('button[aria-pressed="false"]').first().click()
+    await page.locator('button[aria-pressed="false"]:not([disabled])').first().click()
+    await expect(page.getByText(`${i + 1} de 5 platos seleccionados`)).toBeVisible()
   }
-  await expect(page.getByText('5 de 5 platos seleccionados')).toBeVisible()
 }
 
 async function fillControlado(locator, value) {

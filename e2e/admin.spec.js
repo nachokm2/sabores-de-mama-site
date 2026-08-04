@@ -44,6 +44,14 @@ test.describe('Panel administrador', () => {
     await expect(fila).toBeVisible()
     await fila.getByRole('combobox').selectOption('pagado')
 
+    // Al marcar "Pagado" un Meal Prep, el panel pide primero el PLAZO de
+    // ingredientes (fecha/hora límite que va en el correo de pago) en un modal
+    // bloqueante. Hay que rellenarlo y confirmar para que el estado se aplique.
+    const modalPlazo = page.getByRole('dialog')
+    await expect(modalPlazo).toBeVisible()
+    await modalPlazo.locator('input[type="datetime-local"]').fill('2027-01-01T12:00')
+    await modalPlazo.getByRole('button', { name: /Confirmar y enviar correo/ }).click()
+
     // El estado cambió en la tabla.
     await expect(fila).toContainText('Pagado')
 
