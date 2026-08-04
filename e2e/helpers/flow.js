@@ -38,11 +38,15 @@ export async function expandirCategorias(page) {
 export async function seleccionar5Platos(page) {
   await expect(page.getByText('0 de 5 platos seleccionados')).toBeVisible()
   await expandirCategorias(page)
-  // Seleccionamos 5 tarjetas NO elegidas y NO deshabilitadas. Tras cada click
-  // esperamos a que el contador suba: sincroniza con el re-render de React y evita
-  // la carrera de re-clickear (y deseleccionar) la misma tarjeta aún sin actualizar.
+  // Capturamos las tarjetas (handles a nodos concretos) UNA vez, con todas las
+  // categorías abiertas y nada seleccionado aún. Clickeamos 5 handles distintos:
+  // así no dependemos de re-evaluar `.first()` (que puede quedar en 0 matches por
+  // el re-render) y cada click selecciona una tarjeta distinta. El wait del
+  // contador sincroniza con React entre clicks.
+  const tarjetas = await page.locator('button[aria-pressed="false"]:not([disabled])').elementHandles()
+  console.log(`[sel] tarjetas de plato disponibles tras expandir: ${tarjetas.length}`)
   for (let i = 0; i < 5; i++) {
-    await page.locator('button[aria-pressed="false"]:not([disabled])').first().click()
+    await tarjetas[i].click()
     await expect(page.getByText(`${i + 1} de 5 platos seleccionados`)).toBeVisible()
   }
 }
