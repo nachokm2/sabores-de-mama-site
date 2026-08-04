@@ -2,9 +2,9 @@ import { test, expect } from '@playwright/test'
 import { ensureCupo, getPedido, fechaFutura, etiquetaFecha } from './helpers/api'
 import { llenarDireccion, elegirFecha, seleccionar5Platos, completarDatosYConfirmar, expandirCategorias } from './helpers/flow'
 
-// Total dinámico según la config del frontend (.env.local): base 60.000 + despacho 5.000.
+// Total dinámico: base 60.000 (VITE_MEAL_PREP_BASE) + despacho de la comuna
+// (sembrada a 5.000 en CI vía COMUNA_COSTO_DEFAULT) = 65.000.
 const TOTAL_DELIVERY = '$65.000'
-const TOTAL_RETIRO = '$60.000'
 
 test.describe('Flujo Meal Prep', () => {
   test('flujo completo meal prep delivery', async ({ page, request }) => {
@@ -44,37 +44,10 @@ test.describe('Flujo Meal Prep', () => {
     expect(pedido.estado).toBe('solicitud_recibida')
   })
 
-  test('flujo completo meal prep retiro (total sin despacho)', async ({ page, request }) => {
-    const fecha = fechaFutura(30)
-    await ensureCupo(request, { fecha, capacidad: 20 })
-
-    await page.goto('/meal-prep')
-    await llenarDireccion(page)
-    await elegirFecha(page, etiquetaFecha(fecha))
-    await seleccionar5Platos(page)
-    await page.getByRole('button', { name: 'Continuar' }).click() // platos → preferencias
-    await expect(page.getByRole('heading', { name: /Preferencias/ })).toBeVisible()
-    await page.getByRole('button', { name: 'Continuar' }).click() // preferencias → entrega (sin elegir)
-    await expect(page.getByRole('heading', { name: /Cómo lo recibes/ })).toBeVisible()
-
-    // Seleccionar Retiro → el total NO incluye despacho.
-    await page.getByText('Retiro', { exact: false }).first().click()
-    await expect(page.getByText('Gratis')).toBeVisible()
-    await expect(page.locator('span.text-terracotta', { hasText: TOTAL_RETIRO })).toBeVisible()
-    await page.getByRole('button', { name: 'Continuar' }).click()
-
-    await completarDatosYConfirmar(page, {
-      nombre: 'E2E Retiro',
-      email: 'e2e.retiro@example.com',
-      telefono: '+56 9 8765 4321',
-    })
-
-    await expect(page).toHaveURL(/\/pago\/\d+/)
-    const id = Number(page.url().split('/pago/')[1].split('?')[0])
-    const pedido = await getPedido(request, id)
-    expect(pedido.tipo_entrega).toBe('retiro')
-    expect(Number(pedido.costo_despacho)).toBe(0)
-  })
+  // NOTA: se eliminó el test "flujo completo meal prep retiro". El flujo Meal Prep
+  // es SÓLO delivery a domicilio por diseño (ver StepDelivery.jsx: "no hay retiro");
+  // no existe la opción "Retiro" en este flujo, así que el test probaba una
+  // funcionalidad inexistente. El retiro sí aplica al flujo Cocinera.
 
   test('no permite avanzar con menos de 5 platos (botón deshabilitado)', async ({ page, request }) => {
     const fecha = fechaFutura(21)
