@@ -15,8 +15,21 @@ export async function elegirFecha(page, etiqueta) {
   await page.getByRole('button', { name: 'Continuar' }).click()
 }
 
+// El paso de platos agrupa por categorías en un ACORDEÓN que arranca colapsado:
+// las tarjetas de plato (button[aria-pressed]) solo se montan al abrir su
+// categoría. Igual que el test de vitest (MealPrepFlow), desplegamos todas las
+// categorías antes de seleccionar. getByRole excluye del árbol de accesibilidad
+// la hamburguesa del navbar (lg:hidden → display:none en el viewport Desktop del
+// e2e), así que solo matchea las cabeceras de categoría.
+export async function expandirCategorias(page) {
+  for (const header of await page.getByRole('button', { expanded: false }).all()) {
+    await header.click()
+  }
+}
+
 export async function seleccionar5Platos(page) {
   await expect(page.getByText('0 de 5 platos seleccionados')).toBeVisible()
+  await expandirCategorias(page)
   // Las tarjetas de plato exponen aria-pressed; seleccionamos 5 no elegidas.
   for (let i = 0; i < 5; i++) {
     await page.locator('button[aria-pressed="false"]').first().click()

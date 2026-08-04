@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test'
 import { ensureCupo, getPedido, fechaFutura, etiquetaFecha } from './helpers/api'
-import { llenarDireccion, elegirFecha, seleccionar5Platos, completarDatosYConfirmar } from './helpers/flow'
+import { llenarDireccion, elegirFecha, seleccionar5Platos, completarDatosYConfirmar, expandirCategorias } from './helpers/flow'
 
 // Total dinámico según la config del frontend (.env.local): base 60.000 + despacho 5.000.
 const TOTAL_DELIVERY = '$65.000'
@@ -85,6 +85,7 @@ test.describe('Flujo Meal Prep', () => {
     await elegirFecha(page, etiquetaFecha(fecha))
     await expect(page.getByText('0 de 5 platos seleccionados')).toBeVisible()
 
+    await expandirCategorias(page)
     for (let i = 0; i < 4; i++) {
       await page.locator('button[aria-pressed="false"]').first().click()
     }
