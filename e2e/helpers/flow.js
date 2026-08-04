@@ -22,31 +22,29 @@ export async function elegirFecha(page, etiqueta) {
 // la hamburguesa del navbar (lg:hidden → display:none en el viewport Desktop del
 // e2e), así que solo matchea las cabeceras de categoría.
 export async function expandirCategorias(page) {
-  // OJO: no usar `.all()` aquí. El locator es dinámico (expanded:false) y al abrir
-  // una categoría ésta sale del conjunto, corriendo los índices → `.nth(n)` de un
-  // snapshot previo se queda esperando un elemento que ya no existe. En su lugar,
-  // clickeamos SIEMPRE la primera colapsada y esperamos a que el conjunto baje.
   const colapsadas = page.getByRole('button', { expanded: false })
+  // Esperar a que los platos terminen de cargar: mientras StepDishes muestra
+  // "Cargando platos…" NO hay cabeceras de categoría en el DOM, así que expandir
+  // demasiado pronto dejaba 0 tarjetas (carrera de carga).
+  await expect(colapsadas.first()).toBeVisible()
+  // No usar `.all()`: el locator es dinámico (expanded:false); al abrir una
+  // categoría sale del conjunto y los índices se corren. Clickeamos SIEMPRE la
+  // primera colapsada y esperamos a que el conjunto baje en 1.
   for (let guard = 0; guard < 30; guard++) {
     const n = await colapsadas.count()
     if (n === 0) break
     await colapsadas.first().click()
-    await expect(colapsadas).toHaveCount(n - 1) // confirma que se expandió una
+    await expect(colapsadas).toHaveCount(n - 1)
   }
 }
 
 export async function seleccionar5Platos(page) {
   await expect(page.getByText('0 de 5 platos seleccionados')).toBeVisible()
   await expandirCategorias(page)
-  // Capturamos las tarjetas (handles a nodos concretos) UNA vez, con todas las
-  // categorías abiertas y nada seleccionado aún. Clickeamos 5 handles distintos:
-  // así no dependemos de re-evaluar `.first()` (que puede quedar en 0 matches por
-  // el re-render) y cada click selecciona una tarjeta distinta. El wait del
-  // contador sincroniza con React entre clicks.
-  const tarjetas = await page.locator('button[aria-pressed="false"]:not([disabled])').elementHandles()
-  console.log(`[sel] tarjetas de plato disponibles tras expandir: ${tarjetas.length}`)
+  // Seleccionamos 5 tarjetas NO elegidas y NO deshabilitadas. Tras cada click
+  // esperamos a que el contador suba: sincroniza con el re-render de React.
   for (let i = 0; i < 5; i++) {
-    await tarjetas[i].click()
+    await page.locator('button[aria-pressed="false"]:not([disabled])').first().click()
     await expect(page.getByText(`${i + 1} de 5 platos seleccionados`)).toBeVisible()
   }
 }

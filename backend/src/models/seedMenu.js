@@ -85,8 +85,15 @@ async function seedMenu() {
         )
         const platoId = rows[0].id
         for (const ing of ingredientesPara(nombre, cat.label)) {
+          // Poblar también p1..p5 (cantidades por nº de personas): el endpoint
+          // /api/platos/ingredientes lee p{personas}, NO la columna legacy
+          // `cantidad`. Sin esto, la lista de compras del flujo Cocinera sale con
+          // cantidades vacías (no numéricas) y no renderiza los inputs editables.
+          // $3 va casteado a ::text en todas sus posiciones (cantidad es VARCHAR y
+          // p1..p5 son TEXT → evita "inconsistent types deduced for parameter $3").
           await client.query(
-            `INSERT INTO ingredientes (plato_id, nombre, cantidad, unidad) VALUES ($1,$2,$3,$4)`,
+            `INSERT INTO ingredientes (plato_id, nombre, cantidad, unidad, p1, p2, p3, p4, p5)
+             VALUES ($1,$2,$3::text,$4,$3::text,$3::text,$3::text,$3::text,$3::text)`,
             [platoId, ing.nombre, ing.cantidad, ing.unidad]
           )
           totalIng++
