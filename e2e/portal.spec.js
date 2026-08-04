@@ -9,7 +9,8 @@ function nuevoCliente() {
     email: `cliente.${Date.now()}.${n}@example.com`,
     telefono: '+56900000000',
     direccion: 'Av. Siempre Viva 742, Ñuñoa',
-    password: 'secreto123',
+    // Mínimo de contraseña = 12 (endurecido en la auditoría). Debe cumplirlo.
+    password: 'secreto123456',
   }
 }
 
