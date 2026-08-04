@@ -12,8 +12,12 @@ async function crearPlatoConIngredientes(nombre, ingredientes) {
   )
   const id = rows[0].id
   for (const ing of ingredientes) {
+    // El endpoint /ingredientes lee las columnas por nº de personas (p1..p5),
+    // NO la columna legacy `cantidad`. Poblamos p1..p5 con la misma cantidad para
+    // que el test refleje el contrato real (por defecto el endpoint usa p5).
     await pool.query(
-      `INSERT INTO ingredientes (plato_id, nombre, cantidad, unidad) VALUES ($1,$2,$3,$4)`,
+      `INSERT INTO ingredientes (plato_id, nombre, cantidad, unidad, p1, p2, p3, p4, p5)
+       VALUES ($1,$2,$3,$4,$3,$3,$3,$3,$3)`,
       [id, ing.nombre, ing.cantidad, ing.unidad]
     )
   }
