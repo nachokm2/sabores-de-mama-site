@@ -62,7 +62,9 @@ describe('GET /api/platos/ingredientes (consolidación)', () => {
 
     expect(res.status).toBe(200)
     const arroz = res.body.ingredientes.find((i) => /arroz/i.test(i.nombre))
-    expect(arroz.cantidad_total).toBe(350)
+    // El endpoint devuelve `cantidad` (contrato real que consume el frontend en
+    // ShoppingList.jsx); `cantidad_total` era un nombre de campo que nunca existió.
+    expect(arroz.cantidad).toBe(350)
     expect(arroz.unidad).toBe('g')
   })
 
