@@ -45,7 +45,7 @@ test.describe('Flujo Cocinera a Domicilio', () => {
     expect(payload.lista_compras.some((i) => String(i.cantidad) === '999')).toBe(true)
 
     // Y se persiste en el pedido.
-    const id = Number(page.url().split('/pago/')[1])
+    const id = Number(page.url().split('/pago/')[1].split('?')[0])
     const pedido = await getPedido(request, id)
     expect(pedido.servicio).toBe('cocinera')
     expect(pedido.lista_compras.some((i) => String(i.cantidad) === '999')).toBe(true)

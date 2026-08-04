@@ -38,7 +38,7 @@ test.describe('Flujo Meal Prep', () => {
     await expect(page.getByText('Estela Zavalla')).toBeVisible() // VITE_BANK_TITULAR
 
     // El pedido existe en la BD con estado "solicitud_recibida".
-    const id = Number(page.url().split('/pago/')[1])
+    const id = Number(page.url().split('/pago/')[1].split('?')[0])
     const pedido = await getPedido(request, id)
     expect(pedido.servicio).toBe('meal_prep')
     expect(pedido.estado).toBe('solicitud_recibida')
@@ -70,7 +70,7 @@ test.describe('Flujo Meal Prep', () => {
     })
 
     await expect(page).toHaveURL(/\/pago\/\d+/)
-    const id = Number(page.url().split('/pago/')[1])
+    const id = Number(page.url().split('/pago/')[1].split('?')[0])
     const pedido = await getPedido(request, id)
     expect(pedido.tipo_entrega).toBe('retiro')
     expect(Number(pedido.costo_despacho)).toBe(0)

@@ -128,10 +128,15 @@ export async function getServicioConfig(servicio) {
   }
 }
 
-/** Crea un pedido (reserva cupo + dispara correo en el backend). */
+/**
+ * Crea un pedido (reserva cupo + dispara correo en el backend).
+ * Devuelve el pedido con `resumen_token`: el token que la página de pago necesita
+ * para poder leer el resumen (el endpoint dejó de ser abierto).
+ */
 export async function createPedido(payload) {
   const data = await request('/pedidos', { method: 'POST', body: payload })
-  return data?.pedido
+  if (!data?.pedido) return data?.pedido
+  return { ...data.pedido, resumen_token: data.resumen_token }
 }
 
 /** Productos para hornear activos (add-on opcional). */
@@ -163,9 +168,14 @@ export async function getIngredientesDePlatos(ids = [], personas) {
   return data?.ingredientes || []
 }
 
-/** Resumen público de un pedido (monto/estado/fecha) para la página de pago. */
-export async function getPedidoResumen(id) {
-  const data = await request(`/pedidos/${id}/resumen`)
+/**
+ * Resumen de un pedido (monto/estado/fecha) para la página de pago.
+ * Requiere el `token` que entregó la API al crear el pedido: sin él el endpoint
+ * responde 403 (antes era enumerable con solo el id).
+ */
+export async function getPedidoResumen(id, token) {
+  const qs = token ? `?token=${encodeURIComponent(token)}` : ''
+  const data = await request(`/pedidos/${id}/resumen${qs}`)
   return data?.pedido
 }
 

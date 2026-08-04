@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { DELIVERY_COST, computeTotal, fmtCLP, MEAL_PREP_BASE } from '../../lib/flowConfig'
+import { DELIVERY_COST, fmtCLP, MEAL_PREP_BASE } from '../../lib/flowConfig'
 
 /**
  * Paso 5 · Entrega. El servicio es sólo delivery a domicilio (no hay retiro),

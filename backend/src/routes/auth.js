@@ -31,6 +31,13 @@ function publicUser(u) {
 
 const emailNorm = (e) => String(e || '').toLowerCase().trim()
 
+// Longitud mínima de contraseña. Sube de 6 a 12: con el email del admin conocido
+// y sin MFA, 6 caracteres es muy poco. No bloquea a nadie que ya tenga una
+// contraseña más corta (el login no valida longitud), solo aplica al fijarla.
+const PASSWORD_MIN = 12
+const passwordCorta = (p) => String(p).length < PASSWORD_MIN
+const ERROR_PASSWORD = `La contraseña debe tener al menos ${PASSWORD_MIN} caracteres.`
+
 /**
  * POST /api/auth/login  — admin o cliente (se distingue por `rol`).
  */
@@ -64,8 +71,8 @@ router.post('/registro', authRateLimiter, async (req, res, next) => {
     if (!nombre || !email || !password) {
       return res.status(400).json({ error: 'Nombre, email y contraseña son obligatorios.' })
     }
-    if (String(password).length < 6) {
-      return res.status(400).json({ error: 'La contraseña debe tener al menos 6 caracteres.' })
+    if (passwordCorta(password)) {
+      return res.status(400).json({ error: ERROR_PASSWORD })
     }
     const correo = emailNorm(email)
     const existe = await query('SELECT 1 FROM admin_users WHERE email = $1', [correo])
@@ -119,8 +126,8 @@ router.post('/reset', authRateLimiter, async (req, res, next) => {
   try {
     const { token, password } = req.body || {}
     if (!token || !password) return res.status(400).json({ error: 'Token y contraseña son obligatorios.' })
-    if (String(password).length < 6) {
-      return res.status(400).json({ error: 'La contraseña debe tener al menos 6 caracteres.' })
+    if (passwordCorta(password)) {
+      return res.status(400).json({ error: ERROR_PASSWORD })
     }
     const hash = crypto.createHash('sha256').update(String(token)).digest('hex')
     const { rows } = await query(
@@ -159,10 +166,13 @@ router.get('/perfil', authJWT, async (req, res, next) => {
 
 /**
  * PATCH /api/auth/perfil  (autenticado) — edita nombre, teléfono y/o contraseña.
+ * Para cambiar la contraseña exige además `password_actual`: así un token robado
+ * (XSS, sesión compartida) no alcanza para apropiarse de la cuenta de forma
+ * permanente — el atacante necesitaría también la contraseña vigente.
  */
 router.patch('/perfil', authJWT, async (req, res, next) => {
   try {
-    const { nombre, telefono, direccion, password } = req.body || {}
+    const { nombre, telefono, direccion, password, password_actual } = req.body || {}
     const sets = []
     const params = []
     if (nombre !== undefined) {
@@ -178,8 +188,16 @@ router.patch('/perfil', authJWT, async (req, res, next) => {
       sets.push(`direccion = $${params.length}`)
     }
     if (password) {
-      if (String(password).length < 6) {
-        return res.status(400).json({ error: 'La contraseña debe tener al menos 6 caracteres.' })
+      if (passwordCorta(password)) {
+        return res.status(400).json({ error: ERROR_PASSWORD })
+      }
+      if (!password_actual) {
+        return res.status(400).json({ error: 'Debes ingresar tu contraseña actual para cambiarla.' })
+      }
+      const actual = await query('SELECT password_hash FROM admin_users WHERE id = $1', [req.admin.sub])
+      if (!actual.rows[0]) return res.status(404).json({ error: 'Usuario no encontrado.' })
+      if (!(await bcrypt.compare(String(password_actual), actual.rows[0].password_hash))) {
+        return res.status(401).json({ error: 'La contraseña actual no es correcta.' })
       }
       params.push(await bcrypt.hash(password, 10))
       sets.push(`password_hash = $${params.length}`)

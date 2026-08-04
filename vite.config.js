@@ -51,6 +51,11 @@ function securityHeaders() {
         res.setHeader('X-Content-Type-Options', 'nosniff')
         res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin')
         res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()')
+        // HSTS: obliga al navegador a usar HTTPS en visitas posteriores (evita
+        // el downgrade a HTTP y el SSL stripping). SIN `preload` a propósito: el
+        // preload queda cacheado en los navegadores hasta un año y es muy difícil
+        // de revertir. Se puede añadir más adelante si el dominio ya es 100% HTTPS.
+        res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains')
         // CSP en modo BLOQUEANTE (verificado sin violaciones en Report-Only).
         res.setHeader('Content-Security-Policy', csp)
         next()
@@ -129,7 +134,7 @@ export default defineConfig(({ isSsrBuild }) => ({
             manualChunks: {
               'react-vendor': ['react', 'react-dom', 'react-router-dom'],
               'animation-vendor': ['gsap', 'framer-motion'],
-              'ui-vendor': ['swiper', 'lenis'],
+              'ui-vendor': ['lenis'],
             },
           },
     },

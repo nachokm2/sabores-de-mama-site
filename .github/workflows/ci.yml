@@ -92,9 +92,10 @@ jobs:
       DATABASE_URL: postgresql://sdm:sdm_dev@localhost:5432/sabores_de_mama
       PGSSL: 'false'
       RUN_MIGRATIONS: 'true'
-      JWT_SECRET: ci_secret_para_e2e
-      ADMIN_EMAIL: admin@saboresdemama.com
-      ADMIN_PASSWORD: admin123
+      # El email del admin de CI NO debe coincidir con el de producción: este
+      # repositorio es público y el valor anterior (admin@saboresdemama.com)
+      # revelaba el usuario administrativo real del sitio.
+      ADMIN_EMAIL: ci-admin@example.invalid
       ADMIN_NOMBRE: Admin CI
       PEDIDOS_RATE_LIMIT: '1000' # alto para no toparse con 429 desde una sola IP
       CORS_ORIGIN: http://localhost:5173
@@ -106,6 +107,19 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
+
+      # JWT_SECRET y ADMIN_PASSWORD se generan aleatoriamente en cada corrida y
+      # viven solo en este job. Antes estaban escritos en claro en este archivo,
+      # que es público. No se usan `secrets.*` a propósito: no están disponibles
+      # en pull requests desde forks y el CI quedaría roto.
+      - name: Generar credenciales efímeras de CI
+        run: |
+          echo "JWT_SECRET=$(openssl rand -hex 32)" >> "$GITHUB_ENV"
+          PASS="$(openssl rand -base64 24 | tr -d '/+=' | cut -c1-20)"
+          echo "::add-mask::$PASS"
+          echo "ADMIN_PASSWORD=$PASS" >> "$GITHUB_ENV"
+          echo "E2E_ADMIN_PASSWORD=$PASS" >> "$GITHUB_ENV"
+          echo "E2E_ADMIN_EMAIL=ci-admin@example.invalid" >> "$GITHUB_ENV"
 
       - name: Instalar dependencias (root + backend)
         run: |

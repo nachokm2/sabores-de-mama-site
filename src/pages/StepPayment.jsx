@@ -1,30 +1,33 @@
 import { useEffect, useState } from 'react'
-import { useParams, useLocation, Link } from 'react-router-dom'
+import { useParams, useLocation, useSearchParams, Link } from 'react-router-dom'
 import { Helmet } from 'react-helmet-async'
 import { BANK, fmtCLP } from '../lib/flowConfig'
 import { getPedidoResumen } from '../lib/publicApi'
 
 /**
- * Página de pago (/pago/:pedidoId).
+ * Página de pago (/pago/:pedidoId?t=<token>).
  * Muestra los datos bancarios, el monto exacto a transferir y las instrucciones.
  * El monto llega por el state de navegación; si se recarga, se obtiene del
- * endpoint público de resumen.
+ * endpoint de resumen usando el token `t` de la URL (el endpoint ya no es
+ * abierto: sin token responde 403).
  */
 export default function StepPayment() {
   const { pedidoId } = useParams()
   const location = useLocation()
+  const [searchParams] = useSearchParams()
+  const token = searchParams.get('t')
   const [total, setTotal] = useState(location.state?.total ?? null)
 
   useEffect(() => {
-    if (total != null) return
+    if (total != null || !token) return
     let active = true
-    getPedidoResumen(pedidoId)
+    getPedidoResumen(pedidoId, token)
       .then((p) => active && p && setTotal(p.total))
       .catch(() => {})
     return () => {
       active = false
     }
-  }, [pedidoId, total])
+  }, [pedidoId, token, total])
 
   const filas = [
     ['Titular', BANK.titular],

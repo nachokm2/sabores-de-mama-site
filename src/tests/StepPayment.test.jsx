@@ -15,10 +15,13 @@ vi.mock('../lib/publicApi', () => ({
 import { getPedidoResumen } from '../lib/publicApi'
 import StepPayment from '../pages/StepPayment'
 
-function renderPayment({ state } = {}) {
+// `t` es el token del resumen: sin él la página no consulta la API (el endpoint
+// responde 403). El flujo real lo pone en la URL al confirmar el pedido.
+function renderPayment({ state, token = 'tok123' } = {}) {
+  const search = token ? `?t=${token}` : ''
   return render(
     <HelmetProvider>
-      <MemoryRouter initialEntries={[{ pathname: '/pago/123', state }]}>
+      <MemoryRouter initialEntries={[{ pathname: '/pago/123', search, state }]}>
         <Routes>
           <Route path="/pago/:pedidoId" element={<StepPayment />} />
           <Route path="/" element={<div>HOME PAGE</div>} />
@@ -47,8 +50,14 @@ describe('StepPayment', () => {
   it('muestra el monto correcto del pedido', async () => {
     renderPayment()
     // Sin state → lo obtiene del endpoint de resumen (mock: total 74000).
-    await waitFor(() => expect(getPedidoResumen).toHaveBeenCalledWith('123'))
+    await waitFor(() => expect(getPedidoResumen).toHaveBeenCalledWith('123', 'tok123'))
     expect(await screen.findByText('$74.000')).toBeInTheDocument()
+  })
+
+  it('sin token en la URL no consulta el resumen', async () => {
+    renderPayment({ token: null })
+    expect(screen.getByText('¡Casi listo!')).toBeInTheDocument()
+    expect(getPedidoResumen).not.toHaveBeenCalled()
   })
 
   it('usa el monto del state de navegación si está presente', async () => {

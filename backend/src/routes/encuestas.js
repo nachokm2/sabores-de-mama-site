@@ -1,7 +1,7 @@
 import { Router } from 'express'
 import { query } from '../models/index.js'
 import { requireAdmin } from '../middleware/authJWT.js'
-import { tokenValido } from '../utils/encuestaToken.js'
+import { tokenValido } from '../utils/tokens.js'
 
 const router = Router()
 const COMMENT_MAX = 500

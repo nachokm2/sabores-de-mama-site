@@ -49,11 +49,11 @@ export default function ClienteReset() {
         <form onSubmit={onSubmit} className="bg-background-surface border border-espresso/10 rounded-2xl p-6">
           <label className="block mb-3 text-sm">
             <span className="block text-espresso font-medium mb-1.5">Nueva contraseña <span className="text-warm-gray font-normal">(mín. 6)</span></span>
-            <input type="password" className={cuentaInputCls} value={password} onChange={(e) => setPassword(e.target.value)} minLength={6} required />
+            <input type="password" className={cuentaInputCls} value={password} onChange={(e) => setPassword(e.target.value)} minLength={12} required />
           </label>
           <label className="block mb-4 text-sm">
             <span className="block text-espresso font-medium mb-1.5">Repite la contraseña</span>
-            <input type="password" className={cuentaInputCls} value={password2} onChange={(e) => setPassword2(e.target.value)} minLength={6} required />
+            <input type="password" className={cuentaInputCls} value={password2} onChange={(e) => setPassword2(e.target.value)} minLength={12} required />
           </label>
           {error && <p className="mb-3 text-sm text-primary-700 bg-primary-50 border border-primary-200 rounded-lg px-4 py-2">{error}</p>}
           <button type="submit" disabled={loading} className="w-full bg-terracotta text-ivory font-semibold rounded-full px-5 py-3 text-sm hover:bg-ember transition-colors disabled:opacity-50">
