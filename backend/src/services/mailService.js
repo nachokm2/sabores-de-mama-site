@@ -3,7 +3,7 @@ import dotenv from 'dotenv'
 import { query } from '../models/index.js'
 import { presignGet } from './storage.js'
 import { consolidarIngredientes } from '../utils/ingredientes.js'
-import { surveyToken } from '../utils/encuestaToken.js'
+import { surveyToken } from '../utils/tokens.js'
 
 dotenv.config()
 

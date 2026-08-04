@@ -5,6 +5,11 @@ import { defineConfig } from 'vitest/config'
 // - Los tests de integración usan una BD de test real (sabores_test) en el
 //   Postgres de Docker (localhost:5433). globalSetup la crea si no existe.
 export default defineConfig({
+  // El backend no usa CSS. Sin esto, Vitest sube hasta la raíz del repo, encuentra
+  // el postcss.config.js del FRONTEND (que carga tailwindcss, ausente aquí) y
+  // aborta la suite entera con "Cannot find module 'tailwindcss'". Un postcss
+  // inline vacío evita la búsqueda del archivo hacia arriba.
+  css: { postcss: {} },
   test: {
     environment: 'node',
     globals: true,

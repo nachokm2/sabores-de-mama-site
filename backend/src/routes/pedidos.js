@@ -2,6 +2,7 @@ import { Router } from 'express'
 import { query, withTransaction } from '../models/index.js'
 import { authJWT, requireAdmin, optionalUserId } from '../middleware/authJWT.js'
 import { sendEstadoEmail, ESTADOS_VALIDOS } from '../services/mailService.js'
+import { resumenToken, resumenTokenValido } from '../utils/tokens.js'
 
 const router = Router()
 
@@ -133,7 +134,9 @@ router.post('/', async (req, res, next) => {
       console.error('[mail] no se pudo enviar "solicitud_recibida":', e?.message || e)
     )
 
-    return res.status(201).json({ pedido })
+    // `resumen_token` lo usa el frontend para armar la URL de la página de pago
+    // (/pago/:id?t=…), que es lo único que puede leer el resumen del pedido.
+    return res.status(201).json({ pedido, resumen_token: resumenToken(pedido.id) })
   } catch (err) {
     if (err.status === 409) {
       return res.status(409).json({ error: err.message })
@@ -220,7 +223,7 @@ router.post('/admin', requireAdmin, async (req, res, next) => {
       )
     }
 
-    return res.status(201).json({ pedido })
+    return res.status(201).json({ pedido, resumen_token: resumenToken(pedido.id) })
   } catch (err) {
     next(err)
   }
@@ -324,15 +327,28 @@ router.get('/mis', authJWT, async (req, res, next) => {
 })
 
 /**
- * GET /api/pedidos/:id/resumen  (público)
- * Datos mínimos para la página de pago (sin información sensible):
- * monto total, estado y fecha de entrega.
+ * GET /api/pedidos/:id/resumen?token=...  (público, pero con token)
+ * Datos mínimos para la página de pago: monto total, estado y fecha de entrega.
+ *
+ * Exige el token HMAC del pedido. Antes era abierto y `:id` es secuencial, así
+ * que cualquiera podía recorrer 1,2,3… y leer el monto, estado y fecha de TODOS
+ * los pedidos (facturación y volumen de negocio). El token lo entrega la API al
+ * crear el pedido y viaja en la URL de la página de pago.
  */
 router.get('/:id/resumen', async (req, res, next) => {
   try {
+    // Validar el id antes de la consulta: un id no numérico llegaba a PostgreSQL
+    // y provocaba un 500 (error 22P02) en vez de un 400 limpio.
+    const id = parseInt(req.params.id, 10)
+    if (!Number.isInteger(id) || id <= 0) {
+      return res.status(400).json({ error: 'Número de pedido inválido.' })
+    }
+    if (!resumenTokenValido(id, req.query.token)) {
+      return res.status(403).json({ error: 'El enlace del pedido no es válido.' })
+    }
     const { rows } = await query(
       'SELECT id, total, estado, fecha_entrega FROM pedidos WHERE id = $1',
-      [req.params.id]
+      [id]
     )
     if (!rows[0]) return res.status(404).json({ error: 'Pedido no encontrado.' })
     return res.json({ pedido: rows[0] })

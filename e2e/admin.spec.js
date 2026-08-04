@@ -1,8 +1,9 @@
 import { test, expect } from '@playwright/test'
 import { API_URL, ensureCupo, fechaFutura } from './helpers/api'
 
-const ADMIN_EMAIL = process.env.E2E_ADMIN_EMAIL || 'admin@saboresdemama.com'
-const ADMIN_PASSWORD = process.env.E2E_ADMIN_PASSWORD || 'admin123'
+// Sin valores por defecto: este repositorio es público (ver e2e/helpers/api.js).
+const ADMIN_EMAIL = process.env.E2E_ADMIN_EMAIL
+const ADMIN_PASSWORD = process.env.E2E_ADMIN_PASSWORD
 
 test.describe('Panel administrador', () => {
   test('login admin y cambio de estado de un pedido', async ({ page, request }) => {

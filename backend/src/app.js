@@ -1,6 +1,7 @@
 import express from 'express'
 import cors from 'cors'
 import helmet from 'helmet'
+import morgan from 'morgan'
 import dotenv from 'dotenv'
 
 import { pool } from './models/index.js'
@@ -39,24 +40,45 @@ app.use(
   })
 )
 
+// ── Log de acceso HTTP ──
+// Sin esto no había NINGÚN registro de peticiones: era imposible detectar o
+// investigar fuerza bruta, escaneos o enumeración de recursos.
+//
+// `ruta` descarta deliberadamente el query string: ahí viajan los tokens HMAC de
+// /pedidos/:id/resumen y de las encuestas, y no deben quedar escritos en los logs.
+// Se omite /api/health para no inundar el log con los chequeos de Railway.
+morgan.token('ruta', (req) => req.originalUrl.split('?')[0])
+morgan.token('cliente', (req) => req.ip || '-')
+app.use(
+  morgan(':cliente :method :ruta :status :res[content-length] :response-time ms', {
+    skip: (req) => req.path === '/api/health',
+  })
+)
+
 // ── CORS ──
-// Orígenes permitidos = CORS_ORIGIN/CLIENT_URL (coma-separado) + los dominios del
-// sitio + cualquier subdominio *.up.railway.app. Así funciona en el dominio propio
-// sin depender de variables. '*' abre todo (se desaconseja en producción).
+// Orígenes permitidos = CORS_ORIGIN/CLIENT_URL (coma-separado) + los dominios
+// propios del sitio, en lista EXPLÍCITA.
+//
+// Antes se aceptaba cualquier subdominio `*.up.railway.app`: como Railway asigna
+// esos hostnames a cualquier usuario de la plataforma, un tercero podía desplegar
+// una página y leer la API desde el navegador de la víctima. La allowlist ahora
+// nombra el host de Railway del sitio en vez de usar un comodín.
 const corsOriginEnv = process.env.CORS_ORIGIN || process.env.CLIENT_URL || ''
 const envOrigins = corsOriginEnv.split(',').map((o) => o.trim()).filter(Boolean)
 const allowAll = envOrigins.includes('*')
-const DEFAULT_ORIGINS = ['https://saboresdemama.com', 'https://www.saboresdemama.com']
+const DEFAULT_ORIGINS = [
+  'https://saboresdemama.com',
+  'https://www.saboresdemama.com',
+  // Host de Railway del servicio del sitio (es el valor real de CORS_ORIGIN en
+  // producción; se deja fijo para que la API siga funcionando aunque la variable
+  // se borre por accidente).
+  'https://sabores-de-mama-site-production.up.railway.app',
+]
 const allowedOrigins = [...new Set([...envOrigins.filter((o) => o !== '*'), ...DEFAULT_ORIGINS])]
 
 function corsPermitido(origin) {
   if (!origin) return true // curl / health checks / same-origin
-  if (allowAll || allowedOrigins.includes(origin)) return true
-  try {
-    return /\.up\.railway\.app$/i.test(new URL(origin).host)
-  } catch {
-    return false
-  }
+  return allowAll || allowedOrigins.includes(origin)
 }
 
 if (process.env.NODE_ENV === 'production' && allowAll) {

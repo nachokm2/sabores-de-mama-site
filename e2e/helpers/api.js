@@ -4,9 +4,17 @@
 
 export const API_URL = process.env.E2E_API_URL || 'http://localhost:4000/api'
 
+// Credenciales del admin de PRUEBAS. Sin valores por defecto a propósito: antes
+// había un email/contraseña reales escritos aquí, y este repositorio es público.
+// El CI las genera aleatoriamente en cada corrida; en local se exportan a mano.
 const ADMIN = {
-  email: process.env.E2E_ADMIN_EMAIL || 'admin@saboresdemama.com',
-  password: process.env.E2E_ADMIN_PASSWORD || 'admin123',
+  email: process.env.E2E_ADMIN_EMAIL,
+  password: process.env.E2E_ADMIN_PASSWORD,
+}
+if (!ADMIN.email || !ADMIN.password) {
+  throw new Error(
+    'Faltan E2E_ADMIN_EMAIL y E2E_ADMIN_PASSWORD. Deben coincidir con ADMIN_EMAIL/ADMIN_PASSWORD del backend de pruebas.'
+  )
 }
 
 export async function adminToken(request) {

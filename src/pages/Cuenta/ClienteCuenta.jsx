@@ -70,7 +70,7 @@ export default function ClienteCuenta() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [msg, setMsg] = useState('')
-  const [perfil, setPerfil] = useState({ nombre: '', telefono: '', direccion: '', password: '' })
+  const [perfil, setPerfil] = useState({ nombre: '', telefono: '', direccion: '', password: '', password_actual: '' })
   const [savingPerfil, setSavingPerfil] = useState(false)
 
   const salir = () => {
@@ -84,7 +84,7 @@ export default function ClienteCuenta() {
       try {
         const [p, rs] = await Promise.all([getPerfil(), getMisReservas()])
         if (!active) return
-        setPerfil({ nombre: p.user?.nombre || '', telefono: p.user?.telefono || '', direccion: p.user?.direccion || '', password: '' })
+        setPerfil({ nombre: p.user?.nombre || '', telefono: p.user?.telefono || '', direccion: p.user?.direccion || '', password: '', password_actual: '' })
         setReservas(rs.pedidos || [])
       } catch (err) {
         if (err instanceof ApiError && err.status === 401) return salir()
@@ -110,9 +110,12 @@ export default function ClienteCuenta() {
         telefono: perfil.telefono.trim() || null,
         direccion: perfil.direccion.trim() || null,
       }
-      if (perfil.password) body.password = perfil.password
+      if (perfil.password) {
+        body.password = perfil.password
+        body.password_actual = perfil.password_actual
+      }
       await editarPerfil(body)
-      setPerfil((p) => ({ ...p, password: '' }))
+      setPerfil((p) => ({ ...p, password: '', password_actual: '' }))
       setMsg('Datos actualizados.')
     } catch (err) {
       if (err instanceof ApiError && err.status === 401) return salir()
@@ -205,8 +208,16 @@ export default function ClienteCuenta() {
                     </label>
                     <label className="text-sm">
                       <span className="block text-espresso font-medium mb-1.5">Nueva contraseña <span className="text-warm-gray font-normal">(opcional)</span></span>
-                      <input type="password" className={cuentaInputCls} value={perfil.password} onChange={(e) => setPerfil((p) => ({ ...p, password: e.target.value }))} placeholder="Dejar en blanco para no cambiar" />
+                      <input type="password" className={cuentaInputCls} value={perfil.password} onChange={(e) => setPerfil((p) => ({ ...p, password: e.target.value }))} placeholder="Dejar en blanco para no cambiar" minLength={12} autoComplete="new-password" />
                     </label>
+                    {/* Solo aparece si se está cambiando la contraseña: el backend
+                        exige la actual para que un token robado no baste. */}
+                    {perfil.password && (
+                      <label className="text-sm">
+                        <span className="block text-espresso font-medium mb-1.5">Contraseña actual</span>
+                        <input type="password" className={cuentaInputCls} value={perfil.password_actual} onChange={(e) => setPerfil((p) => ({ ...p, password_actual: e.target.value }))} placeholder="Para confirmar el cambio" autoComplete="current-password" required />
+                      </label>
+                    )}
                   </div>
                   <button type="submit" disabled={savingPerfil} className="mt-4 bg-terracotta text-ivory font-semibold rounded-full px-5 py-2.5 text-sm hover:bg-ember transition-colors disabled:opacity-50">
                     {savingPerfil ? 'Guardando…' : 'Guardar datos'}

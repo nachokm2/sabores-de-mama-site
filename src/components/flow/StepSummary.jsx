@@ -89,7 +89,10 @@ export default function StepSummary({ data, update, onBack }) {
         currency: 'CLP',
       })
       // replace: true → evita volver atrás al resumen una vez en la página de pago.
-      navigate(`/pago/${pedido.id}`, { replace: true, state: { total: pedido.total } })
+      // El token va en la URL (no solo en el state) para que la página siga
+      // mostrando el monto si el cliente la recarga o la guarda en favoritos.
+      const t = pedido.resumen_token ? `?t=${encodeURIComponent(pedido.resumen_token)}` : ''
+      navigate(`/pago/${pedido.id}${t}`, { replace: true, state: { total: pedido.total } })
     } catch (err) {
       if (err instanceof ApiError && err.status === 409) {
         setError('La fecha elegida acaba de llenarse. Vuelve al paso de Fecha y elige otra.')

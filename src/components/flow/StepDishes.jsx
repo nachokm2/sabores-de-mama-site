@@ -58,7 +58,6 @@ export default function StepDishes({ data, update, onNext, onBack }) {
     return () => {
       active = false
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data.servicio])
 
   // Principales (cuentan para los 5) vs. acompañamientos (guarnición a elección).

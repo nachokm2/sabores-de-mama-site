@@ -90,7 +90,7 @@ describe('Registro y perfil de cliente (dirección)', () => {
     const res = await request(app).post('/api/auth/registro').send({
       nombre: 'Cliente Dir',
       email: 'cliente.dir@example.com',
-      password: 'secreto123',
+      password: 'secreto123456',
       telefono: '+56900000000',
       direccion: 'Av. Siempre Viva 742, Ñuñoa',
     })
@@ -106,7 +106,7 @@ describe('Registro y perfil de cliente (dirección)', () => {
     const reg = await request(app).post('/api/auth/registro').send({
       nombre: 'Cliente Dir2',
       email: 'cliente.dir2@example.com',
-      password: 'secreto123',
+      password: 'secreto123456',
     })
     const token = reg.body.token
     const res = await request(app)

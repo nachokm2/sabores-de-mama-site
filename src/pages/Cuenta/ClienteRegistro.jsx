@@ -52,7 +52,7 @@ export default function ClienteRegistro() {
         </label>
         <label className="block mb-4 text-sm">
           <span className="block text-espresso font-medium mb-1.5">Contraseña <span className="text-warm-gray font-normal">(mín. 6)</span></span>
-          <input type="password" className={cuentaInputCls} value={form.password} onChange={(e) => set('password', e.target.value)} minLength={6} required />
+          <input type="password" className={cuentaInputCls} value={form.password} onChange={(e) => set('password', e.target.value)} minLength={12} required />
         </label>
         {error && <p className="mb-3 text-sm text-primary-700 bg-primary-50 border border-primary-200 rounded-lg px-4 py-2">{error}</p>}
         <button type="submit" disabled={loading} className="w-full bg-terracotta text-ivory font-semibold rounded-full px-5 py-3 text-sm hover:bg-ember transition-colors disabled:opacity-50">

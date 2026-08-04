@@ -12,8 +12,15 @@ async function crearPlatoConIngredientes(nombre, ingredientes) {
   )
   const id = rows[0].id
   for (const ing of ingredientes) {
+    // El endpoint /ingredientes lee las columnas por nº de personas (p1..p5),
+    // NO la columna legacy `cantidad`. Poblamos p1..p5 con la misma cantidad para
+    // que el test refleje el contrato real (por defecto el endpoint usa p5).
+    // $3 se castea a ::text en todas sus posiciones: `cantidad` es VARCHAR y
+    // p1..p5 son TEXT, y reutilizar el mismo placeholder sin cast provoca
+    // "inconsistent types deduced for parameter $3" (42P08).
     await pool.query(
-      `INSERT INTO ingredientes (plato_id, nombre, cantidad, unidad) VALUES ($1,$2,$3,$4)`,
+      `INSERT INTO ingredientes (plato_id, nombre, cantidad, unidad, p1, p2, p3, p4, p5)
+       VALUES ($1,$2,$3::text,$4,$3::text,$3::text,$3::text,$3::text,$3::text)`,
       [id, ing.nombre, ing.cantidad, ing.unidad]
     )
   }
@@ -62,7 +69,9 @@ describe('GET /api/platos/ingredientes (consolidación)', () => {
 
     expect(res.status).toBe(200)
     const arroz = res.body.ingredientes.find((i) => /arroz/i.test(i.nombre))
-    expect(arroz.cantidad_total).toBe(350)
+    // El endpoint devuelve `cantidad` (contrato real que consume el frontend en
+    // ShoppingList.jsx); `cantidad_total` era un nombre de campo que nunca existió.
+    expect(arroz.cantidad).toBe(350)
     expect(arroz.unidad).toBe('g')
   })
 
