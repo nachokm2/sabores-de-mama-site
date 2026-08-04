@@ -22,8 +22,16 @@ export async function elegirFecha(page, etiqueta) {
 // la hamburguesa del navbar (lg:hidden → display:none en el viewport Desktop del
 // e2e), así que solo matchea las cabeceras de categoría.
 export async function expandirCategorias(page) {
-  for (const header of await page.getByRole('button', { expanded: false }).all()) {
-    await header.click()
+  // OJO: no usar `.all()` aquí. El locator es dinámico (expanded:false) y al abrir
+  // una categoría ésta sale del conjunto, corriendo los índices → `.nth(n)` de un
+  // snapshot previo se queda esperando un elemento que ya no existe. En su lugar,
+  // clickeamos SIEMPRE la primera colapsada y esperamos a que el conjunto baje.
+  const colapsadas = page.getByRole('button', { expanded: false })
+  for (let guard = 0; guard < 30; guard++) {
+    const n = await colapsadas.count()
+    if (n === 0) break
+    await colapsadas.first().click()
+    await expect(colapsadas).toHaveCount(n - 1) // confirma que se expandió una
   }
 }
 
