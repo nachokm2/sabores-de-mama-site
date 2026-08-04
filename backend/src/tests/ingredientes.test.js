@@ -15,9 +15,12 @@ async function crearPlatoConIngredientes(nombre, ingredientes) {
     // El endpoint /ingredientes lee las columnas por nº de personas (p1..p5),
     // NO la columna legacy `cantidad`. Poblamos p1..p5 con la misma cantidad para
     // que el test refleje el contrato real (por defecto el endpoint usa p5).
+    // $3 se castea a ::text en todas sus posiciones: `cantidad` es VARCHAR y
+    // p1..p5 son TEXT, y reutilizar el mismo placeholder sin cast provoca
+    // "inconsistent types deduced for parameter $3" (42P08).
     await pool.query(
       `INSERT INTO ingredientes (plato_id, nombre, cantidad, unidad, p1, p2, p3, p4, p5)
-       VALUES ($1,$2,$3,$4,$3,$3,$3,$3,$3)`,
+       VALUES ($1,$2,$3::text,$4,$3::text,$3::text,$3::text,$3::text,$3::text)`,
       [id, ing.nombre, ing.cantidad, ing.unidad]
     )
   }
