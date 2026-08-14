@@ -91,6 +91,12 @@ export default function Hero() {
       {/* ── Cinematic background ── */}
       <div ref={bgRef} className="absolute inset-0 will-change-transform">
         {/* Hero image from saboresdemama.com */}
+        {/* `fetchpriority` va en minúscula a propósito: React 18 no conoce la
+            forma camelCase (llega recién en React 19) y avisaba por consola en
+            cada render, en el navegador y en las 19 páginas del build SSG. El
+            HTML es idéntico —React igual emitía el atributo en minúscula—, así
+            que el cambio solo saca el ruido. eslint-plugin-react asume React 19
+            y pide el camelCase, de ahí el disable de una línea. */}
         <img
           src="/assets/images/hero-bg.png"
           alt=""
@@ -99,7 +105,8 @@ export default function Hero() {
           className="absolute inset-0 w-full h-full object-cover object-center opacity-[0.12]"
           loading="eager"
           decoding="sync"
-          fetchPriority="high"
+          // eslint-disable-next-line react/no-unknown-property
+          fetchpriority="high"
         />
 
         {/* Light cream wash on top of image (mantiene texto oscuro legible) */}
