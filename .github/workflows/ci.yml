@@ -7,7 +7,9 @@ on:
 
 # Variables compartidas para los jobs que usan Postgres.
 env:
-  NODE_VERSION: '20'
+  # Node 22 LTS, igual que el Dockerfile del backend: el CI debe probar sobre el
+  # mismo runtime que produce el deploy. Node 20 salió de soporte (EOL 2026-04-30).
+  NODE_VERSION: '22'
   PG_USER: sdm
   PG_PASSWORD: sdm_dev
   PG_DB: sabores_de_mama
