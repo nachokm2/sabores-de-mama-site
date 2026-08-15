@@ -170,6 +170,13 @@ ALTER TABLE admin_users ADD COLUMN IF NOT EXISTS telefono VARCHAR(50);
 ALTER TABLE admin_users ADD COLUMN IF NOT EXISTS direccion VARCHAR(255);
 ALTER TABLE admin_users ADD COLUMN IF NOT EXISTS reset_token VARCHAR(255);
 ALTER TABLE admin_users ADD COLUMN IF NOT EXISTS reset_token_exp TIMESTAMPTZ;
+-- Versión de sesión: se incrementa al cambiar la contraseña y se compara contra
+-- el claim "tv" del JWT. Sin esto, restablecer la contraseña NO cerraba las
+-- sesiones abiertas: un token robado seguía sirviendo hasta 8h después, y la
+-- víctima creía haber cerrado la puerta. Arranca en 0, igual que el "tv" que se
+-- asume para los tokens emitidos antes de que existiera la columna, así que
+-- desplegar esto no desloguea a nadie.
+ALTER TABLE admin_users ADD COLUMN IF NOT EXISTS token_version INTEGER NOT NULL DEFAULT 0;
 -- Vincula una reserva/pedido a la cuenta del cliente (null = pedido público).
 ALTER TABLE pedidos ADD COLUMN IF NOT EXISTS usuario_id INTEGER REFERENCES admin_users(id);
 -- Comunas: costo y disponibilidad INDEPENDIENTES por servicio.

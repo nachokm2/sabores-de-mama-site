@@ -51,7 +51,7 @@ export default function ClienteRegistro() {
           <input className={cuentaInputCls} value={form.direccion} onChange={(e) => set('direccion', e.target.value)} placeholder="Calle, número, comuna" required />
         </label>
         <label className="block mb-4 text-sm">
-          <span className="block text-espresso font-medium mb-1.5">Contraseña <span className="text-warm-gray font-normal">(mín. 6)</span></span>
+          <span className="block text-espresso font-medium mb-1.5">Contraseña <span className="text-warm-gray font-normal">(mín. 12)</span></span>
           <input type="password" className={cuentaInputCls} value={form.password} onChange={(e) => set('password', e.target.value)} minLength={12} required />
         </label>
         {error && <p className="mb-3 text-sm text-primary-700 bg-primary-50 border border-primary-200 rounded-lg px-4 py-2">{error}</p>}

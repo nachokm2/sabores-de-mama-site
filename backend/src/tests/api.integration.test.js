@@ -188,6 +188,90 @@ describe('POST /api/pedidos', () => {
   })
 })
 
+describe('Cambiar la contraseña cierra las sesiones abiertas (M2)', () => {
+  const nuevoCliente = async (over = {}) => {
+    const email = `sesion.${Date.now()}.${Math.round(performance.now() * 1000)}@example.com`
+    const res = await request(app).post('/api/auth/registro').send({
+      nombre: 'Cliente Sesión',
+      email,
+      password: 'contraseña-larga-12',
+      ...over,
+    })
+    return { email, token: res.body.token }
+  }
+
+  it('el token sigue sirviendo mientras no cambie la contraseña', async () => {
+    const { token } = await nuevoCliente()
+    const res = await request(app).get('/api/auth/perfil').set('Authorization', `Bearer ${token}`)
+    expect(res.status).toBe(200)
+  })
+
+  it('tras un /auth/reset, el token anterior deja de valer (401)', async () => {
+    const { email, token } = await nuevoCliente()
+
+    // Se dispara el flujo de recuperación y se toma el token del correo desde la
+    // BD (guarda el sha256, así que se genera uno propio y se escribe su hash).
+    const crypto = await import('node:crypto')
+    const resetToken = crypto.randomBytes(32).toString('hex')
+    const hash = crypto.createHash('sha256').update(resetToken).digest('hex')
+    await pool.query(
+      `UPDATE admin_users SET reset_token = $1, reset_token_exp = now() + interval '1 hour' WHERE email = $2`,
+      [hash, email]
+    )
+
+    const reset = await request(app)
+      .post('/api/auth/reset')
+      .send({ token: resetToken, password: 'otra-contraseña-larga' })
+    expect(reset.status).toBe(200)
+
+    const res = await request(app).get('/api/auth/perfil').set('Authorization', `Bearer ${token}`)
+    expect(res.status).toBe(401)
+    expect(res.body.error).toMatch(/sesión|contraseña/i)
+  })
+
+  it('cambiar la contraseña desde el perfil invalida el token viejo y devuelve uno nuevo', async () => {
+    const { token } = await nuevoCliente()
+
+    const patch = await request(app)
+      .patch('/api/auth/perfil')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ password: 'contraseña-nueva-larga', password_actual: 'contraseña-larga-12' })
+    expect(patch.status).toBe(200)
+    expect(patch.body.token).toBeTruthy()
+    expect(patch.body.token).not.toBe(token)
+
+    // El viejo ya no vale...
+    const viejo = await request(app).get('/api/auth/perfil').set('Authorization', `Bearer ${token}`)
+    expect(viejo.status).toBe(401)
+
+    // ...y el nuevo sí, para no echar de su propia sesión a quien hizo el cambio.
+    const nuevo = await request(app).get('/api/auth/perfil').set('Authorization', `Bearer ${patch.body.token}`)
+    expect(nuevo.status).toBe(200)
+  })
+
+  it('un token de una cuenta borrada deja de valer (401)', async () => {
+    const { email, token } = await nuevoCliente()
+    await pool.query('DELETE FROM admin_users WHERE email = $1', [email])
+
+    const res = await request(app).get('/api/auth/perfil').set('Authorization', `Bearer ${token}`)
+    expect(res.status).toBe(401)
+  })
+
+  it('un token sin el claim tv (emitido antes de la columna) sigue siendo válido', async () => {
+    const { email } = await nuevoCliente()
+    const { rows } = await pool.query('SELECT id, email, nombre, rol FROM admin_users WHERE email = $1', [email])
+    const jwt = (await import('jsonwebtoken')).default
+    const legado = jwt.sign(
+      { sub: rows[0].id, email: rows[0].email, nombre: rows[0].nombre, rol: rows[0].rol },
+      process.env.JWT_SECRET,
+      { expiresIn: '8h' }
+    )
+
+    const res = await request(app).get('/api/auth/perfil').set('Authorization', `Bearer ${legado}`)
+    expect(res.status).toBe(200)
+  })
+})
+
 describe('El total del pedido lo calcula el servidor (A1)', () => {
   const COMUNA = 'Las Condes'
 
