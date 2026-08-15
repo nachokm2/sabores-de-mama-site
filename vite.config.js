@@ -59,7 +59,12 @@ function securityHeaders() {
       // roto. El riesgo de una inyección de CSS es muy inferior al de una de JS.
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
       "font-src 'self' https://fonts.gstatic.com",
-      "img-src 'self' data: https:",
+      // `blob:` es imprescindible: el panel previsualiza las fotos que se van a
+      // subir con URL.createObjectURL(), que produce URLs blob:. Sin esto el
+      // navegador las bloquea y la previsualización aparece como imagen rota.
+      // No debilita la política: solo el propio script del sitio puede crear un
+      // blob, y cargar imágenes de cualquier origen https ya estaba permitido.
+      "img-src 'self' data: blob: https:",
       // media-src: videos servidos por el backend / bucket (otro origen).
       "media-src 'self' data: https:",
       "connect-src 'self' https://*.up.railway.app https://api.emailjs.com https://www.google-analytics.com https://*.google-analytics.com https://*.analytics.google.com https://t3.storageapi.dev https://www.facebook.com https://connect.facebook.net",

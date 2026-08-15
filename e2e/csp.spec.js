@@ -73,6 +73,16 @@ test.describe('CSP de producción (servidor de preview)', () => {
     expect(scriptSrc).toMatch(/'sha256-/)
   })
 
+  test('img-src permite blob: (previsualización de fotos en el panel)', async ({ request }) => {
+    // El panel previsualiza las fotos a subir con URL.createObjectURL(), que
+    // genera URLs blob:. Sin blob: en la política el navegador las bloquea y la
+    // miniatura sale como imagen rota — pasó en producción y no lo detectó nada,
+    // porque el resto de estos tests solo recorre páginas públicas.
+    const csp = (await request.get(`${PREVIEW}/`)).headers()['content-security-policy']
+    const imgSrc = csp.split(';').map((d) => d.trim()).find((d) => d.startsWith('img-src'))
+    expect(imgSrc).toContain('blob:')
+  })
+
   test('los scripts inline SÍ se ejecutan (la página hidrata y el píxel carga)', async ({ page }) => {
     await capturarViolaciones(page)
     await page.goto(`${PREVIEW}/`, { waitUntil: 'networkidle' })
