@@ -174,6 +174,45 @@ describe('mailService', () => {
     expect(choclo.detalle).toHaveLength(2)
   })
 
+  it('el checklist lleva los ingredientes de la ensalada pero NO los postres', async () => {
+    // Regla del negocio: las ensaladas las arma Sabores de Mamá con ingredientes
+    // que el cliente envía, así que entran a la lista de compras. Los Postres y
+    // Snacks son productos propios ya elaborados: no llevan ingredientes del
+    // cliente y no corresponde que aparezcan.
+    process.env.CHECKLIST_EMAIL = 'cocina@test'
+    queryMock.mockResolvedValue({
+      rows: [
+        { plato_id: 1, nombre: 'Pechuga de pollo', cantidad: '850', unidad: 'g' },
+        // plato_id 7 = la ensalada que viene como adicional "ensalada-7".
+        { plato_id: 7, nombre: 'Lechuga', cantidad: '1', unidad: 'unidad' },
+        { plato_id: 7, nombre: 'Nueces', cantidad: '100', unidad: 'g' },
+      ],
+    })
+
+    await sendEstadoEmail(
+      {
+        ...PEDIDO,
+        platos: [{ id: 1, nombre: 'Pollo al Curry' }],
+        productos_hornear: [{ id: 1, nombre: 'Kuchen de nuez', precio: 8000 }],
+        adicionales: [{ clave: 'ensalada-7', nombre: 'Ensalada sabor de casa', precio: 1500 }],
+      },
+      'pagado'
+    )
+
+    // La ensalada se consulta junto a los platos: su id entra en la query de
+    // ingredientes. Se busca esa llamada por su SQL y no por su posición, porque
+    // antes va la de duraciones (que solo lleva los ids de los platos).
+    const queryIngredientes = queryMock.mock.calls.find((c) => String(c[0]).includes('FROM ingredientes'))
+    expect(queryIngredientes).toBeTruthy()
+    expect(queryIngredientes[1][0]).toContain(7)
+
+    const checklist = sendMailMock.mock.calls.find((c) => c[0].to === 'cocina@test')[0]
+    expect(checklist.html).toContain('Lechuga')
+    expect(checklist.html).toContain('Nueces')
+    expect(checklist.html).not.toContain('Kuchen')
+    delete process.env.CHECKLIST_EMAIL
+  })
+
   it('el checklist se omite si no está configurado el destinatario', async () => {
     const previo = process.env.CHECKLIST_EMAIL
     delete process.env.CHECKLIST_EMAIL
