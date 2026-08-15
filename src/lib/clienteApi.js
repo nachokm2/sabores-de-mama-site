@@ -113,8 +113,13 @@ export function resetPassword(token, password) {
 export function getPerfil() {
   return apiFetch('/auth/perfil')
 }
-export function editarPerfil(data) {
-  return apiFetch('/auth/perfil', { method: 'PATCH', body: data })
+export async function editarPerfil(data) {
+  const res = await apiFetch('/auth/perfil', { method: 'PATCH', body: data })
+  // Al cambiar la contraseña el backend invalida las sesiones anteriores y
+  // devuelve un token nuevo para ESTA. Sin guardarlo, el usuario se echaría a sí
+  // mismo con el 401 de la siguiente petición.
+  if (res?.token) setToken(res.token)
+  return res
 }
 export function getMisReservas() {
   return apiFetch('/pedidos/mis')

@@ -48,7 +48,7 @@ export default function ClienteReset() {
       ) : (
         <form onSubmit={onSubmit} className="bg-background-surface border border-espresso/10 rounded-2xl p-6">
           <label className="block mb-3 text-sm">
-            <span className="block text-espresso font-medium mb-1.5">Nueva contraseña <span className="text-warm-gray font-normal">(mín. 6)</span></span>
+            <span className="block text-espresso font-medium mb-1.5">Nueva contraseña <span className="text-warm-gray font-normal">(mín. 12)</span></span>
             <input type="password" className={cuentaInputCls} value={password} onChange={(e) => setPassword(e.target.value)} minLength={12} required />
           </label>
           <label className="block mb-4 text-sm">

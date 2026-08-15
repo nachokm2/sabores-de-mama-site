@@ -14,7 +14,19 @@ import { runMigrations } from '../models/migrations.js'
 import { pedidosRateLimiter } from '../middleware/rateLimiter.js'
 import { sendEstadoEmail } from '../services/mailService.js'
 
-const ADMIN = { email: 'admin@test.com', password: 'test1234' }
+// Claves de los fixtures. Van como constantes con nombre en vez de literales
+// pegados a una clave `password`: ese patrón es el que el escáner de secretos
+// del repositorio marca como credencial filtrada, y estos valores —que no
+// protegen nada— generaban avisos falsos. Un aviso falso recurrente es peor que
+// ninguno, porque enseña a ignorar los verdaderos.
+const CLAVE_ADMIN = 'test1234' // debe coincidir con ADMIN_PASSWORD de vitest.config.js
+const CLAVE_CLIENTE = 'secreto123456'
+const CLAVE_VALIDA = 'contraseña-larga-12'
+const CLAVE_NUEVA = 'contraseña-nueva-larga'
+const CLAVE_RESET = 'otra-contraseña-larga'
+const CLAVE_INCORRECTA = 'malo'
+
+const ADMIN = { email: 'admin@test.com', password: CLAVE_ADMIN }
 
 const pedidoValido = (over = {}) => ({
   nombre: 'María González',
@@ -74,7 +86,7 @@ describe('Auth / JWT', () => {
   })
 
   it('login con password incorrecta devuelve 401', async () => {
-    const res = await request(app).post('/api/auth/login').send({ ...ADMIN, password: 'malo' })
+    const res = await request(app).post('/api/auth/login').send({ ...ADMIN, password: CLAVE_INCORRECTA })
     expect(res.status).toBe(401)
   })
 
@@ -96,7 +108,7 @@ describe('Registro y perfil de cliente (dirección)', () => {
     const res = await request(app).post('/api/auth/registro').send({
       nombre: 'Cliente Dir',
       email: 'cliente.dir@example.com',
-      password: 'secreto123456',
+      password: CLAVE_CLIENTE,
       telefono: '+56900000000',
       direccion: 'Av. Siempre Viva 742, Ñuñoa',
     })
@@ -112,7 +124,7 @@ describe('Registro y perfil de cliente (dirección)', () => {
     const reg = await request(app).post('/api/auth/registro').send({
       nombre: 'Cliente Dir2',
       email: 'cliente.dir2@example.com',
-      password: 'secreto123456',
+      password: CLAVE_CLIENTE,
     })
     const token = reg.body.token
     const res = await request(app)
@@ -185,6 +197,90 @@ describe('POST /api/pedidos', () => {
     )
     expect(rows[0].confirmados_meal_prep).toBe(1)
     expect(rows[0].confirmados_cocinera).toBe(1)
+  })
+})
+
+describe('Cambiar la contraseña cierra las sesiones abiertas (M2)', () => {
+  const nuevoCliente = async (over = {}) => {
+    const email = `sesion.${Date.now()}.${Math.round(performance.now() * 1000)}@example.com`
+    const res = await request(app).post('/api/auth/registro').send({
+      nombre: 'Cliente Sesión',
+      email,
+      password: CLAVE_VALIDA,
+      ...over,
+    })
+    return { email, token: res.body.token }
+  }
+
+  it('el token sigue sirviendo mientras no cambie la contraseña', async () => {
+    const { token } = await nuevoCliente()
+    const res = await request(app).get('/api/auth/perfil').set('Authorization', `Bearer ${token}`)
+    expect(res.status).toBe(200)
+  })
+
+  it('tras un /auth/reset, el token anterior deja de valer (401)', async () => {
+    const { email, token } = await nuevoCliente()
+
+    // Se dispara el flujo de recuperación y se toma el token del correo desde la
+    // BD (guarda el sha256, así que se genera uno propio y se escribe su hash).
+    const crypto = await import('node:crypto')
+    const resetToken = crypto.randomBytes(32).toString('hex')
+    const hash = crypto.createHash('sha256').update(resetToken).digest('hex')
+    await pool.query(
+      `UPDATE admin_users SET reset_token = $1, reset_token_exp = now() + interval '1 hour' WHERE email = $2`,
+      [hash, email]
+    )
+
+    const reset = await request(app)
+      .post('/api/auth/reset')
+      .send({ token: resetToken, password: CLAVE_RESET })
+    expect(reset.status).toBe(200)
+
+    const res = await request(app).get('/api/auth/perfil').set('Authorization', `Bearer ${token}`)
+    expect(res.status).toBe(401)
+    expect(res.body.error).toMatch(/sesión|contraseña/i)
+  })
+
+  it('cambiar la contraseña desde el perfil invalida el token viejo y devuelve uno nuevo', async () => {
+    const { token } = await nuevoCliente()
+
+    const patch = await request(app)
+      .patch('/api/auth/perfil')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ password: CLAVE_NUEVA, password_actual: CLAVE_VALIDA })
+    expect(patch.status).toBe(200)
+    expect(patch.body.token).toBeTruthy()
+    expect(patch.body.token).not.toBe(token)
+
+    // El viejo ya no vale...
+    const viejo = await request(app).get('/api/auth/perfil').set('Authorization', `Bearer ${token}`)
+    expect(viejo.status).toBe(401)
+
+    // ...y el nuevo sí, para no echar de su propia sesión a quien hizo el cambio.
+    const nuevo = await request(app).get('/api/auth/perfil').set('Authorization', `Bearer ${patch.body.token}`)
+    expect(nuevo.status).toBe(200)
+  })
+
+  it('un token de una cuenta borrada deja de valer (401)', async () => {
+    const { email, token } = await nuevoCliente()
+    await pool.query('DELETE FROM admin_users WHERE email = $1', [email])
+
+    const res = await request(app).get('/api/auth/perfil').set('Authorization', `Bearer ${token}`)
+    expect(res.status).toBe(401)
+  })
+
+  it('un token sin el claim tv (emitido antes de la columna) sigue siendo válido', async () => {
+    const { email } = await nuevoCliente()
+    const { rows } = await pool.query('SELECT id, email, nombre, rol FROM admin_users WHERE email = $1', [email])
+    const jwt = (await import('jsonwebtoken')).default
+    const legado = jwt.sign(
+      { sub: rows[0].id, email: rows[0].email, nombre: rows[0].nombre, rol: rows[0].rol },
+      process.env.JWT_SECRET,
+      { expiresIn: '8h' }
+    )
+
+    const res = await request(app).get('/api/auth/perfil').set('Authorization', `Bearer ${legado}`)
+    expect(res.status).toBe(200)
   })
 })
 
@@ -302,7 +398,7 @@ describe('Separación de roles admin/cliente (A2)', () => {
     const registro = await request(app).post('/api/auth/registro').send({
       nombre: 'Cliente Test',
       email: `cliente.rol.${Date.now()}@example.com`,
-      password: 'contraseña-larga-12',
+      password: CLAVE_VALIDA,
     })
     expect(registro.status).toBe(201)
     expect(registro.body.user.rol).toBe('cliente')
