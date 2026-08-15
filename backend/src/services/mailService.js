@@ -415,12 +415,36 @@ const TEMPLATES = {
            </td></tr>
          </table>`
       : ''
+    // Plazo de entrega. Va ANTES del resumen y de la foto: es la información que
+    // el cliente necesita en el momento en que abre este correo, y de la que
+    // depende que esté disponible para recibir el pedido.
+    const plazoHtml = `
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:16px;background:${CREAM};border:1px solid ${BORDER};border-radius:12px;">
+        <tr><td style="padding:16px 18px;">
+          <div style="font-weight:bold;color:${BRAND};margin-bottom:10px;font-size:14px;">🚚 Horario estimado de entrega</div>
+          <p style="margin:0 0 10px;color:${INK};font-size:14px;line-height:1.6;">
+            A partir de la recepción de este correo, recibirás tu pedido dentro de un plazo
+            estimado que puede variar según la comuna de entrega, con un máximo aproximado de
+            <strong>2:30 horas</strong>.
+          </p>
+          <p style="margin:0 0 12px;color:${MUTED};font-size:13px;line-height:1.6;">
+            No existe un rango fijo de entrega, ya que los horarios de despacho pueden variar
+            dependiendo de la comuna. Sin embargo, la entrega se realizará dentro del plazo
+            estimado correspondiente a tu ubicación.
+          </p>
+          <p style="margin:0;padding-top:12px;border-top:1px solid ${BORDER};color:${INK};font-size:13px;line-height:1.6;">
+            ☑️ Entiendo y acepto que mi pedido será entregado dentro del horario indicado y me
+            comprometo a estar disponible para recibirlo o dejar a alguien encargado de recibirlo.
+          </p>
+        </td></tr>
+      </table>`
+
     return {
       subject: 'Tu pedido va en camino 🚗',
       html: baseTemplate({
         titulo: 'En delivery',
         intro: `¡${nombre}, tu pedido va en camino! 🚗 Pronto llegará a tu dirección${pedido.comuna ? ` en <strong>${esc(pedido.comuna)}</strong>` : ''}.`,
-        bodyHtml: fotoHtml + resumenPedidoHtml(pedido),
+        bodyHtml: plazoHtml + fotoHtml + resumenPedidoHtml(pedido),
         footerNota: 'Mantén tu teléfono a mano por si el repartidor necesita contactarte.',
       }),
     }
