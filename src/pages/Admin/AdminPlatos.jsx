@@ -11,6 +11,9 @@ import {
 } from '../../lib/adminApi'
 import { imagenUrl } from '../../lib/publicApi'
 
+// Valor centinela del desplegable de categoría: no es una categoría real.
+const NUEVA_CATEGORIA = '__nueva__'
+
 const ING_VACIO = { nombre: '', unidad: '', p1: '', p2: '', p3: '', p4: '', p5: '' }
 
 const FORM_VACIO = {
@@ -74,6 +77,9 @@ export default function AdminPlatos() {
   const [saving, setSaving] = useState(false)
   const [subiendo, setSubiendo] = useState(false)
   const [form, setForm] = useState(FORM_VACIO)
+  // El desplegable de categoría incluye una opción para crear una nueva; esto
+  // recuerda si está activa, para mostrar el campo de texto.
+  const [categoriaNueva, setCategoriaNueva] = useState(false)
   // Categorías colapsadas (un set; por defecto todas abiertas).
   const [colapsadas, setColapsadas] = useState(() => new Set())
 
@@ -140,9 +146,13 @@ export default function AdminPlatos() {
   const removeIngrediente = (i) =>
     setForm((f) => ({ ...f, ingredientes: f.ingredientes.filter((_, idx) => idx !== i) }))
 
-  const resetForm = () => setForm(FORM_VACIO)
+  const resetForm = () => {
+    setForm(FORM_VACIO)
+    setCategoriaNueva(false)
+  }
 
   const onEditar = (p) => {
+    setCategoriaNueva(false)
     setForm({
       id: p.id,
       nombre: p.nombre || '',
@@ -280,18 +290,43 @@ export default function AdminPlatos() {
 
           <label className="block mb-3 text-sm">
             <span className="block text-espresso font-medium mb-1">Categoría</span>
-            <input
+            {/*
+              Desplegable con las categorías que ya existen, para no crear
+              duplicados por un tilde o una mayúscula ("Quiches y Tortillas" vs
+              "quiches y tortillas") — antes era texto libre y eso partía el menú
+              en dos secciones casi iguales. La última opción permite crear una
+              categoría nueva, que con un desplegable a secas se perdería.
+            */}
+            <select
               className={inputCls}
-              value={form.categoria}
-              onChange={(e) => setField('categoria', e.target.value)}
-              placeholder="Carnes y Pollo, Quiches…"
-              list="categorias-existentes"
-            />
-            <datalist id="categorias-existentes">
+              value={categoriaNueva ? NUEVA_CATEGORIA : form.categoria}
+              onChange={(e) => {
+                if (e.target.value === NUEVA_CATEGORIA) {
+                  setCategoriaNueva(true)
+                  setField('categoria', '')
+                } else {
+                  setCategoriaNueva(false)
+                  setField('categoria', e.target.value)
+                }
+              }}
+            >
+              <option value="">Sin categoría</option>
               {categoriasExistentes.map((c) => (
-                <option key={c} value={c} />
+                <option key={c} value={c}>
+                  {c}
+                </option>
               ))}
-            </datalist>
+              <option value={NUEVA_CATEGORIA}>+ Crear categoría nueva…</option>
+            </select>
+            {categoriaNueva && (
+              <input
+                className={`${inputCls} mt-2`}
+                value={form.categoria}
+                onChange={(e) => setField('categoria', e.target.value)}
+                placeholder="Nombre de la categoría nueva"
+                autoFocus
+              />
+            )}
           </label>
 
           <label className="block mb-3 text-sm">
