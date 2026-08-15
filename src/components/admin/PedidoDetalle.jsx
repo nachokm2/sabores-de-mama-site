@@ -24,7 +24,7 @@ function Bloque({ titulo, children }) {
   )
 }
 
-export default function PedidoDetalle({ pedido, platosCatalogo = [], comunas = [], onSaved, onError, on401 }) {
+export default function PedidoDetalle({ pedido, platosCatalogo = [], postresCatalogo = [], comunas = [], onSaved, onError, on401 }) {
   const [editando, setEditando] = useState(false)
   const [saving, setSaving] = useState(false)
   const [form, setForm] = useState(() => ({
@@ -39,6 +39,9 @@ export default function PedidoDetalle({ pedido, platosCatalogo = [], comunas = [
     costo_despacho: Number(pedido.costo_despacho) || 0,
     total: Number(pedido.total) || 0,
     platosIds: new Set((pedido.platos || []).map((p) => (typeof p === 'object' ? p.id : null)).filter(Boolean)),
+    postresIds: new Set(
+      (pedido.productos_hornear || []).map((p) => (typeof p === 'object' ? p.id : null)).filter(Boolean)
+    ),
   }))
 
   const platos = Array.isArray(pedido.platos) ? pedido.platos : []
@@ -53,6 +56,30 @@ export default function PedidoDetalle({ pedido, platosCatalogo = [], comunas = [
   )
 
   const setCampo = (k, v) => setForm((f) => ({ ...f, [k]: v }))
+
+  const postresOrdenados = useMemo(
+    () => [...postresCatalogo].sort((a, b) => a.nombre.localeCompare(b.nombre)),
+    [postresCatalogo]
+  )
+
+  /**
+   * Marca o desmarca un postre y AJUSTA el total con su precio.
+   *
+   * El total es un campo libre para la admin, pero si al agregar un postre no se
+   * sumara, el pedido quedaría cobrado de menos sin ninguna señal — el mismo
+   * problema que el flujo público ya evita calculando el total en el servidor.
+   * Queda editable después, así que el ajuste orienta sin imponer.
+   */
+  const togglePostre = (postre) => {
+    setForm((f) => {
+      const next = new Set(f.postresIds)
+      const precio = Number(postre.precio) || 0
+      const estaba = next.has(postre.id)
+      estaba ? next.delete(postre.id) : next.add(postre.id)
+      const total = (Number(f.total) || 0) + (estaba ? -precio : precio)
+      return { ...f, postresIds: next, total: Math.max(0, total) }
+    })
+  }
 
   const togglePlato = (id) => {
     setForm((f) => {
@@ -80,6 +107,9 @@ export default function PedidoDetalle({ pedido, platosCatalogo = [], comunas = [
         costo_despacho: Number(form.costo_despacho) || 0,
         total: Number(form.total) || 0,
         platos: platosSel,
+        productos_hornear: postresOrdenados
+          .filter((p) => form.postresIds.has(p.id))
+          .map((p) => ({ id: p.id, nombre: p.nombre, precio: Number(p.precio) || 0 })),
       })
       setEditando(false)
       onSaved?.(data.pedido)
@@ -232,6 +262,28 @@ export default function PedidoDetalle({ pedido, platosCatalogo = [], comunas = [
           ))}
           {catalogoOrdenado.length === 0 && <p className="text-warm-gray text-sm">No hay platos en el catálogo.</p>}
         </div>
+      </div>
+
+      <div className="mt-3">
+        <p className="text-xs font-semibold uppercase tracking-wide text-warm-gray mb-1">
+          Postres y Snacks ({form.postresIds.size} seleccionados)
+        </p>
+        <div className="max-h-48 overflow-y-auto rounded-lg border border-espresso/10 p-2 grid sm:grid-cols-2 gap-1">
+          {postresOrdenados.map((p) => (
+            <label key={p.id} className="flex items-center gap-2 text-sm text-espresso px-1 py-0.5 rounded hover:bg-espresso/[0.04]">
+              <input type="checkbox" checked={form.postresIds.has(p.id)} onChange={() => togglePostre(p)} />
+              <span className="truncate">{p.nombre}</span>
+              {p.activo === false && <span className="text-[11px] text-warm-gray">(inactivo)</span>}
+              <span className="text-[11px] text-warm-gray ml-auto">{fmtCLP(p.precio)}</span>
+            </label>
+          ))}
+          {postresOrdenados.length === 0 && (
+            <p className="text-warm-gray text-sm">No hay Postres y Snacks en el catálogo.</p>
+          )}
+        </div>
+        <p className="text-[11px] text-warm-gray mt-1">
+          Al marcar o desmarcar, el total se ajusta con el precio del producto. Puedes corregirlo a mano.
+        </p>
       </div>
 
       <div className="mt-4 flex items-center justify-end gap-3">
