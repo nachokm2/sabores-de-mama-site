@@ -166,6 +166,13 @@ jobs:
           VITE_BANK_EMAIL=estela.zavalla@saboresdemama.com
           EOF
 
+      # El build va DESPUÉS de escribir .env.local (para que VITE_API_URL quede
+      # dentro del bundle) y ANTES del E2E: csp.spec.js verifica las cabeceras de
+      # seguridad contra `vite preview`, que sirve dist/. El resto de la suite
+      # sigue corriendo contra el dev server.
+      - name: Construir el sitio (lo necesita el preview del test de CSP)
+        run: npm run build
+
       - name: Correr E2E
         run: npm run e2e
 

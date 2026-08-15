@@ -31,12 +31,24 @@ export default defineConfig({
   projects: [
     { name: 'chromium', use: { ...devices['Desktop Chrome'] } },
   ],
+  // Dos servidores: el dev server, contra el que corre el grueso de la suite, y
+  // el de `vite preview`, que es el que sirve producción en Railway y el único
+  // que emite las cabeceras de seguridad (csp.spec.js las verifica ahí).
+  // `vite preview` necesita un dist/ construido: en CI el build va antes del e2e.
   webServer: isLocal
-    ? {
-        command: 'npm run dev',
-        url: baseURL,
-        reuseExistingServer: !process.env.CI,
-        timeout: 120_000,
-      }
+    ? [
+        {
+          command: 'npm run dev',
+          url: baseURL,
+          reuseExistingServer: !process.env.CI,
+          timeout: 120_000,
+        },
+        {
+          command: 'npm run preview',
+          url: process.env.E2E_PREVIEW_URL || 'http://localhost:4173',
+          reuseExistingServer: !process.env.CI,
+          timeout: 120_000,
+        },
+      ]
     : undefined,
 })

@@ -29,20 +29,52 @@ function wwwRedirect() {
 // violaciones en la consola del navegador. Tras verificar que no hay falsos
 // positivos, se cambia la cabecera a 'Content-Security-Policy' para hacerla efectiva.
 function securityHeaders() {
-  const csp = [
-    "default-src 'self'",
-    "base-uri 'self'",
-    "object-src 'none'",
-    "script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://www.google-analytics.com https://*.google-analytics.com",
-    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-    "font-src 'self' https://fonts.gstatic.com",
-    "img-src 'self' data: https:",
-    // media-src: videos servidos por el backend / bucket (otro origen).
-    "media-src 'self' data: https:",
-    "connect-src 'self' https://*.up.railway.app https://api.emailjs.com https://www.google-analytics.com https://*.google-analytics.com https://*.analytics.google.com https://t3.storageapi.dev",
-    "frame-src https://www.googletagmanager.com",
-    "frame-ancestors 'none'",
-  ].join('; ')
+  // Hashes de los scripts inline por página, generados en el build por
+  // scripts/csp-hashes.mjs. Sin ellos habría que volver a 'unsafe-inline', que
+  // es exactamente lo que anula la protección de la CSP frente a un XSS.
+  let hashesPorRuta = {}
+  try {
+    hashesPorRuta = JSON.parse(fs.readFileSync(path.resolve(__dirname, 'dist/csp-hashes.json'), 'utf8'))
+  } catch {
+    console.warn(
+      '[csp] No se encontró dist/csp-hashes.json. Se sirve la CSP sin hashes: ' +
+        'los scripts inline quedarán BLOQUEADOS. Corre `npm run build` completo.'
+    )
+  }
+
+  const csp = (hashes) =>
+    [
+      "default-src 'self'",
+      "base-uri 'self'",
+      "object-src 'none'",
+      // Sin 'unsafe-inline': cada script inline entra por su hash. Los navegadores
+      // ignoran 'unsafe-inline' en cuanto hay un hash presente, así que dejarlo
+      // sería, además de inseguro, engañoso.
+      `script-src 'self' ${hashes.join(' ')} https://www.googletagmanager.com https://www.google-analytics.com https://*.google-analytics.com https://connect.facebook.net`.replace(
+        /\s+/g,
+        ' '
+      ),
+      // style-src conserva 'unsafe-inline' a propósito: GSAP y framer-motion
+      // animan escribiendo `style` en los elementos, y sin esto el sitio se ve
+      // roto. El riesgo de una inyección de CSS es muy inferior al de una de JS.
+      "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+      "font-src 'self' https://fonts.gstatic.com",
+      "img-src 'self' data: https:",
+      // media-src: videos servidos por el backend / bucket (otro origen).
+      "media-src 'self' data: https:",
+      "connect-src 'self' https://*.up.railway.app https://api.emailjs.com https://www.google-analytics.com https://*.google-analytics.com https://*.analytics.google.com https://t3.storageapi.dev https://www.facebook.com https://connect.facebook.net",
+      "frame-src https://www.googletagmanager.com https://www.facebook.com",
+      "frame-ancestors 'none'",
+    ].join('; ')
+
+  // Las rutas que no son páginas pre-renderizadas (flujo de pedido, portal,
+  // admin) las sirve el fallback SPA con dist/index.html, así que heredan sus
+  // hashes.
+  const hashesDe = (url) => {
+    const ruta = (url || '/').split('?')[0].replace(/\/+$/, '') || '/'
+    return hashesPorRuta[ruta] || hashesPorRuta['/'] || []
+  }
+
   return {
     name: 'security-headers',
     configurePreviewServer(server) {
@@ -56,8 +88,9 @@ function securityHeaders() {
         // preload queda cacheado en los navegadores hasta un año y es muy difícil
         // de revertir. Se puede añadir más adelante si el dominio ya es 100% HTTPS.
         res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains')
-        // CSP en modo BLOQUEANTE (verificado sin violaciones en Report-Only).
-        res.setHeader('Content-Security-Policy', csp)
+        // CSP en modo BLOQUEANTE, con los hashes de los scripts inline de ESTA
+        // página (no la unión de todas: mantiene la cabecera corta).
+        res.setHeader('Content-Security-Policy', csp(hashesDe(req.url)))
         next()
       })
     },
