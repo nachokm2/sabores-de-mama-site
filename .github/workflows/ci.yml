@@ -170,6 +170,13 @@ jobs:
       # dentro del bundle) y ANTES del E2E: csp.spec.js verifica las cabeceras de
       # seguridad contra `vite preview`, que sirve dist/. El resto de la suite
       # sigue corriendo contra el dev server.
+      # El sitemap toma su lastmod del último commit de cada archivo de contenido
+      # (scripts/sitemap.mjs). El checkout de arriba es shallow, así que acá se
+      # trae el historial completo: sin él el generador no puede fechar nada y el
+      # sitemap sale sin lastmod, que es justo lo que el test comprueba que NO pase.
+      - name: Traer el historial de git (lo necesita el sitemap)
+        run: git fetch --unshallow --quiet || true
+
       - name: Construir el sitio (lo necesita el preview del test de CSP)
         run: npm run build
 

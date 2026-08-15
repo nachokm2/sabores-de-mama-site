@@ -108,3 +108,41 @@ test.describe('CSP de producción (servidor de preview)', () => {
       .toBe('stylesheet')
   })
 })
+
+/**
+ * El sitemap se genera en el build (scripts/sitemap.mjs) a partir del HTML
+ * realmente producido. Estos tests cubren el modo de fallo que tenía cuando era
+ * un archivo escrito a mano: quedarse corto respecto de las páginas del sitio, o
+ * traer fechas que no corresponden a ningún cambio real.
+ */
+test.describe('Sitemap generado en el build', () => {
+  test('declara exactamente las páginas que el sitio sirve', async ({ request }) => {
+    const xml = await (await request.get(`${PREVIEW}/sitemap.xml`)).text()
+    const rutas = [...xml.matchAll(/<loc>([^<]+)<\/loc>/g)]
+      .map((m) => m[1].replace('https://saboresdemama.com', '') || '/')
+      .sort()
+
+    expect(rutas.length).toBeGreaterThanOrEqual(19)
+    // Cada ruta declarada debe responder de verdad en el servidor.
+    for (const ruta of rutas) {
+      const res = await request.get(`${PREVIEW}${ruta}`)
+      expect(res.status(), `${ruta} declarada en el sitemap`).toBe(200)
+    }
+    // Y las páginas clave no pueden faltar.
+    for (const debe of ['/', '/preguntas-frecuentes', '/blog', '/comida-a-domicilio/las-condes']) {
+      expect(rutas, `${debe} debe estar en el sitemap`).toContain(debe)
+    }
+  })
+
+  test('cada URL trae lastmod y no son todas la misma fecha', async ({ request }) => {
+    const xml = await (await request.get(`${PREVIEW}/sitemap.xml`)).text()
+    const urls = [...xml.matchAll(/<url>[\s\S]*?<\/url>/g)].map((m) => m[0])
+    const fechas = urls.map((u) => (u.match(/<lastmod>([^<]+)/) || [])[1])
+
+    expect(fechas.every(Boolean), 'todas las URLs deben traer lastmod').toBe(true)
+    expect(fechas.every((f) => /^\d{4}-\d{2}-\d{2}$/.test(f))).toBe(true)
+    // Si todas fueran iguales, sería la fecha del deploy y no diría nada sobre
+    // qué cambió: es justo lo que este generador viene a evitar.
+    expect(new Set(fechas).size).toBeGreaterThan(1)
+  })
+})
