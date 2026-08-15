@@ -18,7 +18,7 @@ const DULCE_GRADIENTS = [
   'from-bark via-amber to-wheat',
 ]
 
-// Producto Healthy (productos_hornear) → formato de la tarjeta DulceCard.
+// Producto de Postres y Snacks (productos_hornear) → formato de DulceCard.
 function mapDulce(p, i) {
   return {
     name: p.nombre,
@@ -30,7 +30,7 @@ function mapDulce(p, i) {
   }
 }
 
-// Respaldo estático si aún no hay productos Healthy cargados / backend caído.
+// Respaldo estático si aún no hay productos cargados / backend caído.
 const DULCES_FALLBACK = [...DULCES_FAMILIAR, ...DULCES_SNACKS]
 import { useScrollReveal } from '../../hooks/useScrollAnimation'
 import { WHATSAPP, getWhatsAppLink } from '../../data/siteConfig'
@@ -416,7 +416,7 @@ export default function MenuSection() {
   const [categories, setCategories] = useState(DISH_CATEGORIES)
   const [descriptions, setDescriptions] = useState(DISH_DESCRIPTIONS)
   const [images, setImages] = useState({})
-  // Dulces Saludables: productos administrables (pestaña Healthy del panel).
+  // Dulces Saludables: productos administrables (pestaña Postres y Snacks).
   const [dulces, setDulces] = useState([])
 
   useEffect(() => {
@@ -439,7 +439,7 @@ export default function MenuSection() {
     }
   }, [])
 
-  // Si hay productos Healthy cargados, se muestran; si no, los estáticos.
+  // Si hay productos cargados desde el panel se muestran; si no, los estáticos.
   const dulcesShow = dulces.length ? dulces.map(mapDulce) : DULCES_FALLBACK
 
   return (
@@ -512,7 +512,7 @@ export default function MenuSection() {
             </p>
           </div>
 
-          {/* Productos Healthy (administrables desde el panel) */}
+          {/* Postres y Snacks (administrables desde el panel) */}
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mb-14">
             {dulcesShow.map((d, i) => (
               <DulceCard key={`${d.name}-${i}`} item={d} index={i} />

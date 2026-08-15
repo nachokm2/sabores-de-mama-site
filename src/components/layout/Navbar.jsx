@@ -10,7 +10,7 @@ const NAV_LINKS = [
   { label: 'Inicio',               href: '/' },
   { label: 'Meal Prep',            href: '/meal-prep-en-casa' },
   { label: 'Cocinera a Domicilio', href: '/cocinera' },
-  { label: 'Healthy',              href: '/healthy' },
+  { label: 'Postres y Snacks',     href: '/healthy' },
   { label: 'Nosotros',             href: '/nosotros' },
   { label: 'Contacto',             href: '/contacto' },
 ]
