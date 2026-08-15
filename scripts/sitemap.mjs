@@ -79,7 +79,30 @@ function htmlsDe(dir) {
   return salida
 }
 
-let hayGit = true
+/**
+ * ¿Se puede confiar en el historial de git?
+ *
+ * Un clon SHALLOW (el que hace actions/checkout por defecto, y posiblemente el
+ * del builder de Railway) tiene un solo commit: `git log -1 -- archivo` devuelve
+ * vacío para todo lo que no se tocó en ese commit. Sin esto, cada archivo caería
+ * al respaldo del sistema de archivos, cuyas fechas en un clon reciente son todas
+ * la del clon — o sea, la fecha del deploy disfrazada de fecha de contenido.
+ * Preferible no declarar lastmod que declarar uno falso.
+ */
+function historialConfiable() {
+  try {
+    const shallow = execFileSync('git', ['rev-parse', '--is-shallow-repository'], {
+      cwd: RAIZ,
+      encoding: 'utf8',
+      stdio: ['ignore', 'pipe', 'ignore'],
+    }).trim()
+    return shallow === 'false'
+  } catch {
+    return false
+  }
+}
+
+let hayGit = historialConfiable()
 /** Fecha ISO del último commit que tocó una ruta del repo (archivo o carpeta). */
 function fechaCommit(rel) {
   if (!hayGit) return null
@@ -93,25 +116,6 @@ function fechaCommit(rel) {
   } catch {
     // Sin git (o sin historia) no se puede saber cuándo cambió el contenido.
     hayGit = false
-    return null
-  }
-}
-
-/** Fecha del sistema de archivos, como respaldo. */
-function fechaArchivo(rel) {
-  const abs = path.join(RAIZ, rel)
-  try {
-    const st = fs.statSync(abs)
-    if (st.isDirectory()) {
-      let max = 0
-      for (const e of fs.readdirSync(abs)) {
-        const t = fs.statSync(path.join(abs, e)).mtimeMs
-        if (t > max) max = t
-      }
-      return max ? new Date(max).toISOString() : null
-    }
-    return st.mtime.toISOString()
-  } catch {
     return null
   }
 }
@@ -130,10 +134,8 @@ function lastmodDe(ruta) {
   }
   if (!fuentes?.length) return null
 
-  const fechas = fuentes
-    .map((f) => fechaCommit(f) || fechaArchivo(f))
-    .filter(Boolean)
-    .sort()
+  // Solo git. El respaldo por mtime se descartó a propósito: ver historialConfiable().
+  const fechas = fuentes.map(fechaCommit).filter(Boolean).sort()
   return fechas.length ? fechas[fechas.length - 1].slice(0, 10) : null
 }
 
@@ -182,8 +184,13 @@ console.log(
 )
 if (!hayGit) {
   console.warn(
-    '[sitemap] ADVERTENCIA: sin git en el build, las fechas salen del sistema de ' +
-      'archivos. En un clon reciente todas serán iguales a la fecha del deploy.'
+    '[sitemap] ADVERTENCIA: sin historial de git completo (clon shallow o sin git), ' +
+      'el sitemap va SIN lastmod. Para tener fechas reales por página, el build ' +
+      'necesita el historial: en GitHub Actions, actions/checkout con fetch-depth: 0.'
   )
 }
-if (sinFecha.length) console.warn(`[sitemap] Sin lastmod (no se declararon fuentes): ${sinFecha.join(', ')}`)
+// Solo con historial disponible la falta de fecha significa "fuentes sin declarar";
+// sin historial faltan todas y el aviso de arriba ya lo explica.
+if (hayGit && sinFecha.length) {
+  console.warn(`[sitemap] Sin lastmod (falta declarar sus fuentes en FUENTES): ${sinFecha.join(', ')}`)
+}
