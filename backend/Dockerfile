@@ -18,5 +18,11 @@ ENV NODE_ENV=production
 ENV PORT=4000
 EXPOSE 4000
 
+# Sin privilegios: la imagen de Node ya trae el usuario `node`, pero si no se
+# declara, el proceso corre como root y cualquier ejecución de código dentro del
+# contenedor queda con uid 0. El puerto es > 1024, así que no hace falta root.
+# Va DESPUÉS del npm ci (que sí necesita escribir node_modules) y del COPY.
+USER node
+
 # Arranque (ejecuta migraciones idempotentes si RUN_MIGRATIONS=true)
 CMD ["node", "src/server.js"]

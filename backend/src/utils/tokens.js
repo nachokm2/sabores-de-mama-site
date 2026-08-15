@@ -11,7 +11,23 @@ import crypto from 'node:crypto'
  * OJO: si defines SURVEY_SECRET o RESUMEN_SECRET, los enlaces ya enviados por
  * correo con el secreto anterior dejan de validar.
  */
-const fallback = () => process.env.JWT_SECRET || 'sabores-token-secret'
+/**
+ * Secreto base. Antes caía a la cadena literal 'sabores-token-secret' si faltaba
+ * JWT_SECRET: como este repositorio es público, ese default convertía todos los
+ * tokens en forjables por cualquiera —anulando el cierre del IDOR del resumen y
+ * permitiendo responder encuestas ajenas—, y lo hacía en silencio. Ahora falla
+ * ruidosamente: es preferible un 500 visible a un token que no protege nada.
+ */
+const fallback = () => {
+  const secreto = process.env.JWT_SECRET
+  if (!secreto) {
+    throw new Error(
+      'Falta JWT_SECRET: no se pueden firmar los tokens de pedido/encuesta. ' +
+        'Defínelo (o define SURVEY_SECRET / RESUMEN_SECRET) en las variables de entorno.'
+    )
+  }
+  return secreto
+}
 const secretoEncuesta = () => process.env.SURVEY_SECRET || fallback()
 const secretoResumen = () => process.env.RESUMEN_SECRET || fallback()
 
