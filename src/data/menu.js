@@ -15,6 +15,7 @@ export const SERVICES = [
       'Cocino directamente en tu hogar usando tus propios ingredientes. Eliges hasta 5 preparaciones y yo me encargo del resto.',
     features: [
       'Hasta 5 preparaciones a elegir',
+      'De 1 a 5 porciones por preparación',
       'Duración: 2 a 5 horas',
       'Usas tus propios ingredientes',
       'Dejo la cocina limpia y ordenada',
@@ -38,6 +39,7 @@ export const SERVICES = [
       'Preparo tus comidas en mi cocina, porcionadas individualmente y selladas al vacío. Tú eliges y yo cocino.',
     features: [
       'Hasta 5 preparaciones a elegir',
+      'De 1 a 5 porciones por preparación',
       'Porcionado y sellado al vacío',
       'Envías ingredientes vía delivery',
       // El monto exacto lo muestra la tarjeta bajo las comunas, leyéndolo de la
