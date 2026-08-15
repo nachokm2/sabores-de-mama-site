@@ -12,6 +12,7 @@ import {
   reenviarCorreo,
   getPlatos,
   getComunas,
+  getProductosHornear,
   estadosDeServicio,
   ESTADOS_LABELS,
   SERVICIOS,
@@ -34,6 +35,8 @@ export default function AdminPedidos() {
   const [savingId, setSavingId] = useState(null)
   const [expandedId, setExpandedId] = useState(null)
   const [catalogo, setCatalogo] = useState([])
+  // Catálogo de Postres y Snacks, para poder agregarlos/quitarlos de un pedido.
+  const [postres, setPostres] = useState([])
   const [comunas, setComunas] = useState([])
   const [creando, setCreando] = useState(false)
   // Pedido a la espera de foto para pasar a "En delivery" (abre el modal).
@@ -64,10 +67,16 @@ export default function AdminPedidos() {
     cargar()
   }, [cargar])
 
-  // Catálogo de platos + comunas (del servicio) para los formularios.
+  // Catálogo de platos + Postres y Snacks + comunas (del servicio), para los
+  // formularios. Los postres se piden con `todos:true` a propósito: si un pedido
+  // ya tiene uno que después se desactivó, sin él desaparecería del listado y al
+  // guardar se borraría del pedido sin que nadie lo note.
   useEffect(() => {
     getPlatos({ incluirInactivos: true })
       .then((d) => setCatalogo(d.platos || []))
+      .catch(() => {})
+    getProductosHornear({ todos: true })
+      .then((d) => setPostres(d.productos || []))
       .catch(() => {})
     getComunas({ todos: true, servicio })
       .then((d) => setComunas(d.comunas || []))
@@ -201,6 +210,7 @@ export default function AdminPedidos() {
         <PedidoNuevo
           servicio={servicio}
           platosCatalogo={catalogo}
+          postresCatalogo={postres}
           comunas={comunas}
           onCreated={onPedidoCreado}
           onCancel={() => setCreando(false)}
@@ -351,6 +361,7 @@ export default function AdminPedidos() {
                         <PedidoDetalle
                           pedido={p}
                           platosCatalogo={catalogo}
+                          postresCatalogo={postres}
                           comunas={comunas}
                           onSaved={onPedidoEditado}
                           onError={setError}

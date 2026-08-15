@@ -12,12 +12,13 @@ const SERVICIO_LABEL = { meal_prep: 'Meal Prep', cocinera: 'Cocinera a Domicilio
  * servicio viene del contexto (/admin/:servicio/...). Sugiere el total
  * (precio base + despacho) pero el admin puede ajustarlo.
  */
-export default function PedidoNuevo({ servicio, platosCatalogo = [], comunas = [], onCreated, onCancel, onError, on401 }) {
+export default function PedidoNuevo({ servicio, platosCatalogo = [], postresCatalogo = [], comunas = [], onCreated, onCancel, onError, on401 }) {
   const esCocinera = servicio === 'cocinera'
   const [saving, setSaving] = useState(false)
   const [basePrecio, setBasePrecio] = useState(0)
   const [totalManual, setTotalManual] = useState(false)
   const [platosIds, setPlatosIds] = useState(() => new Set())
+  const [postresIds, setPostresIds] = useState(() => new Set())
   const [form, setForm] = useState({
     nombre: '',
     email: '',
@@ -43,12 +44,32 @@ export default function PedidoNuevo({ servicio, platosCatalogo = [], comunas = [
       .catch(() => {})
   }, [servicio])
 
-  // Sugerencia de total = base + despacho (mientras el admin no lo edite a mano).
+  const postresOrdenados = useMemo(
+    () => [...postresCatalogo].sort((a, b) => a.nombre.localeCompare(b.nombre)),
+    [postresCatalogo]
+  )
+
+  // Suma de los Postres y Snacks marcados, para el total sugerido.
+  const totalPostres = useMemo(
+    () => postresOrdenados.filter((p) => postresIds.has(p.id)).reduce((n, p) => n + (Number(p.precio) || 0), 0),
+    [postresOrdenados, postresIds]
+  )
+
+  // Sugerencia de total = base + despacho + postres (mientras el admin no lo
+  // edite a mano). Incluir los postres evita crear la reserva cobrada de menos.
   useEffect(() => {
     if (totalManual) return
     const despacho = form.tipo_entrega === 'delivery' ? Number(form.costo_despacho) || 0 : 0
-    setForm((f) => ({ ...f, total: basePrecio + despacho }))
-  }, [basePrecio, form.costo_despacho, form.tipo_entrega, totalManual])
+    setForm((f) => ({ ...f, total: basePrecio + despacho + totalPostres }))
+  }, [basePrecio, form.costo_despacho, form.tipo_entrega, totalManual, totalPostres])
+
+  const togglePostre = (id) => {
+    setPostresIds((prev) => {
+      const next = new Set(prev)
+      next.has(id) ? next.delete(id) : next.add(id)
+      return next
+    })
+  }
 
   const onComuna = (nombre) => {
     const c = comunas.find((x) => x.nombre === nombre)
@@ -106,6 +127,9 @@ export default function PedidoNuevo({ servicio, platosCatalogo = [], comunas = [
         fecha_entrega: form.fecha_entrega,
         tipo_entrega: form.tipo_entrega,
         platos: platosSel,
+        productos_hornear: postresOrdenados
+          .filter((p) => postresIds.has(p.id))
+          .map((p) => ({ id: p.id, nombre: p.nombre, precio: Number(p.precio) || 0 })),
         restricciones,
         observaciones: form.observaciones.trim() || null,
         costo_despacho: Number(form.costo_despacho) || 0,
@@ -220,6 +244,25 @@ export default function PedidoNuevo({ servicio, platosCatalogo = [], comunas = [
             </label>
           ))}
           {catalogoOrdenado.length === 0 && <p className="text-warm-gray text-sm">No hay platos en el catálogo.</p>}
+        </div>
+      </div>
+
+      <div className="mt-3">
+        <p className="text-xs font-semibold uppercase tracking-wide text-warm-gray mb-1">
+          Postres y Snacks ({postresIds.size} seleccionados{totalPostres ? ` · ${fmtCLP(totalPostres)}` : ''})
+        </p>
+        <div className="max-h-48 overflow-y-auto rounded-lg border border-espresso/10 p-2 grid sm:grid-cols-2 gap-1">
+          {postresOrdenados.map((p) => (
+            <label key={p.id} className="flex items-center gap-2 text-sm text-espresso px-1 py-0.5 rounded hover:bg-espresso/[0.04]">
+              <input type="checkbox" checked={postresIds.has(p.id)} onChange={() => togglePostre(p.id)} />
+              <span className="truncate">{p.nombre}</span>
+              {p.activo === false && <span className="text-[11px] text-warm-gray">(inactivo)</span>}
+              <span className="text-[11px] text-warm-gray ml-auto">{fmtCLP(p.precio)}</span>
+            </label>
+          ))}
+          {postresOrdenados.length === 0 && (
+            <p className="text-warm-gray text-sm">No hay Postres y Snacks en el catálogo.</p>
+          )}
         </div>
       </div>
 
