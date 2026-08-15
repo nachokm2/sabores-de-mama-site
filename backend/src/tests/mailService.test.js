@@ -123,6 +123,30 @@ describe('mailService', () => {
     expect(html.indexOf('Horario estimado de entrega')).toBeLessThan(html.indexOf('Resumen de tu pedido'))
   })
 
+  it('el resumen lista los Postres y Snacks y los adicionales con su precio', async () => {
+    await sendEstadoEmail(
+      {
+        ...PEDIDO,
+        productos_hornear: [{ id: 1, nombre: 'Kuchen de nuez', precio: 8000 }],
+        adicionales: [{ clave: 'porcionado', nombre: 'Porcionado', precio: 3000 }],
+      },
+      'pagado'
+    )
+    const html = ultimoHtml()
+    expect(html).toContain('Postres y Snacks')
+    expect(html).toContain('Kuchen de nuez')
+    expect(html).toContain('$8.000')
+    expect(html).toContain('Servicios adicionales')
+    expect(html).toContain('Porcionado')
+  })
+
+  it('sin extras, el resumen no imprime esas secciones vacías', async () => {
+    await sendEstadoEmail(PEDIDO, 'pagado')
+    const html = ultimoHtml()
+    expect(html).not.toContain('Postres y Snacks')
+    expect(html).not.toContain('Servicios adicionales')
+  })
+
   it('clasifica los ingredientes en su categoría (incluidos los nombres compuestos)', () => {
     expect(categorizarIngrediente('Pechuga de pollo')).toBe('Proteínas')
     expect(categorizarIngrediente('Huevos')).toBe('Proteínas')

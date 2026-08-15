@@ -182,6 +182,29 @@ function listaPlatosHtml(platos) {
   return `<ul style="margin:6px 0 0;padding-left:18px">${items}</ul>`
 }
 
+/**
+ * Extras del pedido con su precio: Postres y Snacks (productos_hornear) y
+ * servicios adicionales (ingredientes, porcionado, ensaladas).
+ *
+ * Faltaban en el resumen: el correo solo listaba los platos, así que el cliente
+ * veía un total que incluía cosas que el correo no nombraba en ninguna parte —y
+ * eso, en un correo de confirmación de pago, se lee como un error de cobro.
+ */
+function listaExtrasHtml(items, titulo) {
+  const arr = (Array.isArray(items) ? items : []).filter((x) => x && (typeof x === 'string' || x.nombre))
+  if (!arr.length) return ''
+  const li = arr
+    .map((x) => {
+      const precio = Number(x?.precio)
+      const monto = Number.isFinite(precio) && precio > 0 ? ` — ${esc(fmtCLP(precio))}` : ''
+      return `<li style="margin:2px 0;color:${INK}">${esc(platoNombre(x))}${monto}</li>`
+    })
+    .join('')
+  return `
+      <div style="margin:12px 0 4px;font-size:13px;color:${MUTED};">${esc(titulo)}</div>
+      <ul style="margin:6px 0 0;padding-left:18px">${li}</ul>`
+}
+
 // ── Layout base (tabla, compatible con Outlook) ─────────────────────────────
 function baseTemplate({ titulo, intro, bodyHtml, footerNota }) {
   const clientUrl = process.env.CLIENT_URL || 'https://saboresdemama.com'
@@ -237,6 +260,8 @@ function resumenPedidoHtml(pedido) {
       </table>
       <div style="margin:12px 0 4px;font-size:13px;color:${MUTED};">Platos seleccionados</div>
       ${listaPlatosHtml(pedido.platos)}
+      ${listaExtrasHtml(pedido.productos_hornear, 'Postres y Snacks')}
+      ${listaExtrasHtml(pedido.adicionales, 'Servicios adicionales')}
     </td></tr>
   </table>`
 }
