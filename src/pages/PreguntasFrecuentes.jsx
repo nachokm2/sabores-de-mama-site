@@ -33,6 +33,12 @@ const FAQ_ITEMS = [
     a: 'Hasta 5 preparaciones por pedido, de un menú de más de 60 platos caseros. Si tienes un plato en mente que no está en el listado, nos adaptamos y armamos un menú personalizado.',
   },
   {
+    // Va en la página de FAQ además de en la home: es la pregunta que decide la
+    // compra y esta página es la que aparece en las búsquedas de Google.
+    q: '¿Cuántas porciones rinde cada preparación?',
+    a: 'Cada preparación se puede hacer de 1 a 5 porciones, según lo que necesites. Como eliges hasta 5 preparaciones por pedido, el servicio rinde entre 5 y 25 porciones individuales, porcionadas y selladas al vacío una por una. En la Cocinera a Domicilio defines el número de comensales al armar el pedido y con eso calculamos la lista de compras.',
+  },
+  {
     q: '¿Cómo hago un pedido?',
     a: 'Eliges tus platos, la fecha de entrega y tu comuna directamente en el sitio web. Al confirmar coordinamos el pago. También puedes escribirnos por WhatsApp para hacer tu pedido.',
   },

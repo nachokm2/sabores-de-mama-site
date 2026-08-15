@@ -17,6 +17,13 @@ const FAQ_ITEMS = [
     a: 'Puedes elegir hasta 5 preparaciones por servicio. Si tienes un plato en mente que no está en el listado, sin problema — me adapto a tus preferencias y creamos un menú totalmente personalizado.',
   },
   {
+    // El rendimiento no estaba publicado en ninguna parte del sitio y es el dato
+    // que permite juzgar el precio: sin él nadie puede calcular si le conviene.
+    // De hecho ya lo preguntaban en público, en los comentarios de Instagram.
+    q: '¿Cuántas porciones rinde cada preparación?',
+    a: 'Cada preparación se puede hacer de 1 a 5 porciones, según lo que necesites. Como puedes elegir hasta 5 preparaciones por pedido, el servicio rinde entre 5 y 25 porciones individuales. En la Cocinera a Domicilio eliges el número de comensales al armar el pedido y con eso calculamos la lista de compras.',
+  },
+  {
     q: '¿En qué comunas trabajan?',
     a: 'El Meal Prep llega a: Las Condes, Providencia, La Reina, Ñuñoa, Vitacura, Santiago, Lo Barnechea y San Miguel. La Cocinera a Domicilio cubre: Las Condes, Providencia, Vitacura y Ñuñoa.',
   },
