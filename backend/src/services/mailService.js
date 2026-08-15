@@ -3,6 +3,7 @@ import dotenv from 'dotenv'
 import { query } from '../models/index.js'
 import { presignGet } from './storage.js'
 import { consolidarIngredientes } from '../utils/ingredientes.js'
+import { agruparPorCategoria } from '../utils/categorias.js'
 import { surveyToken } from '../utils/tokens.js'
 
 dotenv.config()
@@ -551,6 +552,112 @@ async function enrichDuraciones(pedido) {
 }
 
 /**
+ * CHECKLIST DE INGREDIENTES (interno, para cocina)
+ *
+ * Replica el checklist en papel que se usa hoy: ingredientes agrupados por
+ * categoría, con una casilla para marcar, el total consolidado y —cuando el
+ * ingrediente se reparte entre varios platos— el desglose de cuánto va a cada
+ * uno, igual que "Choclo: 300 g en total (panqueques 200 g + ensalada 100 g)".
+ *
+ * Pensado para imprimirse y anotarse a mano: filas altas, línea de base en cada
+ * ítem y una columna en blanco a la derecha para escribir lo que llegó.
+ */
+function checklistIngredientesHtml(pedido, grupos) {
+  const casilla = `<td width="26" valign="top" style="padding:9px 0 9px 0;">
+      <div style="width:14px;height:14px;border:1.5px solid ${INK};border-radius:3px;"></div>
+    </td>`
+
+  const seccion = (grupo) => {
+    const filas = grupo.items
+      .map((it) => {
+        const cantidad = `${esc(it.total)}${it.unidad ? ' ' + esc(it.unidad) : ''}`
+        // El desglose solo aporta cuando el ingrediente va a más de un plato.
+        const desglose =
+          it.detalle.length > 1
+            ? ` <span style="color:${MUTED};font-weight:normal;">(${it.detalle
+                .map((d) => `${esc(d.plato)} ${esc(d.cantidad)}${it.unidad ? ' ' + esc(it.unidad) : ''}`)
+                .join(' + ')})</span>`
+            : it.detalle.length === 1
+              ? ` <span style="color:${MUTED};font-weight:normal;">(${esc(it.detalle[0].plato)})</span>`
+              : ''
+        return `<tr>
+          ${casilla}
+          <td valign="top" style="padding:9px 0;border-bottom:1px solid ${BORDER};color:${INK};font-size:14px;line-height:1.5;">
+            <strong>${esc(it.nombre)}: ${cantidad}</strong>${desglose}
+          </td>
+          <td width="110" valign="top" style="padding:9px 0;border-bottom:1px solid ${BORDER};"></td>
+        </tr>`
+      })
+      .join('')
+
+    return `
+      <tr><td colspan="3" style="padding:22px 0 6px;">
+        <div style="font-weight:bold;color:${INK};font-size:16px;border-bottom:2px solid ${BRAND};padding-bottom:6px;">
+          ${esc(grupo.categoria)}
+        </div>
+      </td></tr>
+      ${filas}`
+  }
+
+  const platos = (Array.isArray(pedido.platos) ? pedido.platos : []).map(platoNombre).filter(Boolean)
+  const totalItems = grupos.reduce((n, g) => n + g.items.length, 0)
+
+  return baseTemplate({
+    titulo: `Checklist de ingredientes · Pedido #${esc(pedido.id)}`,
+    intro: `Ingredientes a revisar para el pedido de <strong>${esc(pedido.nombre || 'cliente')}</strong>, con entrega el <strong>${esc(fmtFecha(pedido.fecha_entrega))}</strong>. ${totalItems} ingredientes en total.`,
+    bodyHtml: `
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${CREAM};border:1px solid ${BORDER};border-radius:12px;margin-bottom:16px;">
+        <tr><td style="padding:14px 16px;">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+            ${row('Pedido', `#${pedido.id}`)}
+            ${row('Servicio', pedido.servicio === 'meal_prep' ? 'Meal Prep' : 'Cocinera a Domicilio')}
+            ${row('Entrega', fmtFecha(pedido.fecha_entrega))}
+            ${pedido.personas ? row('Comensales', pedido.personas) : ''}
+            ${platos.length ? row('Preparaciones', platos.join(' · ')) : ''}
+          </table>
+        </td></tr>
+      </table>
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+        ${grupos.map(seccion).join('')}
+      </table>`,
+    footerNota:
+      'La columna de la derecha queda en blanco a propósito: es para anotar lo que llegó ' +
+      'y lo que sobró, como en el checklist impreso.',
+  })
+}
+
+/**
+ * Envía el checklist interno. Va SEPARADO del correo al cliente y nunca puede
+ * romperlo: si falla, se registra y se sigue.
+ *
+ * La dirección se lee de CHECKLIST_EMAIL y no está escrita en el código a
+ * propósito: este repositorio es público, y un correo personal en el código
+ * queda expuesto a los recolectores de spam (por lo mismo se sacó de aquí el
+ * ADMIN_EMAIL real en su momento). Sin la variable, el checklist se omite.
+ */
+export async function sendChecklistIngredientes(pedido, platosConIng) {
+  const destino = (process.env.CHECKLIST_EMAIL || '').trim()
+  if (!destino) {
+    console.warn('[mail] CHECKLIST_EMAIL sin definir: se omite el checklist de ingredientes.')
+    return { ok: false, skipped: true, reason: 'CHECKLIST_EMAIL sin definir' }
+  }
+
+  const grupos = agruparPorCategoria(platosConIng)
+  if (!grupos.length) {
+    return { ok: false, skipped: true, reason: 'el pedido no tiene ingredientes' }
+  }
+
+  return dispatchMail({
+    to: destino,
+    subject: `Checklist de ingredientes — Pedido #${pedido.id} (${fmtFecha(pedido.fecha_entrega)})`,
+    html: checklistIngredientesHtml(pedido, grupos),
+    label: 'checklist',
+    // Es un correo operativo interno: no se copia a las direcciones de negocio.
+    conCopia: false,
+  })
+}
+
+/**
  * Envía el correo del estado indicado. No lanza si falla: devuelve
  * { ok:false, ... } y registra el error, para no romper la operación principal.
  */
@@ -576,7 +683,18 @@ export async function sendEstadoEmail(pedido, estado) {
   }
 
   const { subject, html } = builder(pedido, extra)
-  return dispatchMail({ to: pedido.email, subject, html, label: estado })
+  const resultado = await dispatchMail({ to: pedido.email, subject, html, label: estado })
+
+  // Al confirmar el pago se dispara además el checklist interno de ingredientes.
+  // Va DESPUÉS y aislado: el correo al cliente ya salió, así que un fallo acá no
+  // puede afectarlo. No se espera su resultado por la misma razón.
+  if (estado === 'pagado') {
+    sendChecklistIngredientes(pedido, extra.platosConIng).catch((err) =>
+      console.error('[mail] no se pudo enviar el checklist de ingredientes:', err?.message || err)
+    )
+  }
+
+  return resultado
 }
 
 /**

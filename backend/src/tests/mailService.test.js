@@ -17,7 +17,8 @@ vi.mock('../models/index.js', () => ({
   pool: { query: queryMock },
 }))
 
-import { sendEstadoEmail, ESTADOS_VALIDOS } from '../services/mailService.js'
+import { sendEstadoEmail, sendChecklistIngredientes, ESTADOS_VALIDOS } from '../services/mailService.js'
+import { categorizarIngrediente, agruparPorCategoria } from '../utils/categorias.js'
 
 const PEDIDO = {
   id: 99,
@@ -120,6 +121,84 @@ describe('mailService', () => {
 
     // Va ANTES del resumen del pedido: es lo primero que el cliente necesita leer.
     expect(html.indexOf('Horario estimado de entrega')).toBeLessThan(html.indexOf('Resumen de tu pedido'))
+  })
+
+  it('clasifica los ingredientes en su categoría (incluidos los nombres compuestos)', () => {
+    expect(categorizarIngrediente('Pechuga de pollo')).toBe('Proteínas')
+    expect(categorizarIngrediente('Huevos')).toBe('Proteínas')
+    expect(categorizarIngrediente('Zapallo italiano')).toBe('Verduras')
+    expect(categorizarIngrediente('Pera')).toBe('Frutas')
+    expect(categorizarIngrediente('Crema de leche')).toBe('Lácteos')
+    expect(categorizarIngrediente('Harina')).toBe('Carbohidratos')
+    // Compuestos que contienen la palabra de OTRA categoría: si se resolvieran
+    // por simple inclusión, "salsa de tomate" caería en Verduras y "pan rallado"
+    // competiría con Proteínas por el pan.
+    expect(categorizarIngrediente('Salsa de tomate')).toBe('Otros')
+    expect(categorizarIngrediente('Pan rallado')).toBe('Carbohidratos')
+    // Lo desconocido va a Otros: aparece igual en la lista, nunca se pierde.
+    expect(categorizarIngrediente('Ingrediente inventado')).toBe('Otros')
+  })
+
+  it('consolida el total por ingrediente y conserva el desglose por plato', () => {
+    const grupos = agruparPorCategoria([
+      { nombre: 'Panqueques', ingredientes: [{ nombre: 'Choclo', cantidad: 200, unidad: 'g' }] },
+      { nombre: 'Ensalada mediterránea', ingredientes: [{ nombre: 'Choclo', cantidad: 100, unidad: 'g' }] },
+    ])
+    const verduras = grupos.find((g) => g.categoria === 'Verduras')
+    const choclo = verduras.items.find((i) => i.nombre === 'Choclo')
+    expect(choclo.total).toBe(300)
+    expect(choclo.detalle).toHaveLength(2)
+  })
+
+  it('el checklist se omite si no está configurado el destinatario', async () => {
+    const previo = process.env.CHECKLIST_EMAIL
+    delete process.env.CHECKLIST_EMAIL
+    const res = await sendChecklistIngredientes(PEDIDO, [
+      { nombre: 'Pollo al Curry', ingredientes: [{ nombre: 'Pechuga de pollo', cantidad: 600, unidad: 'g' }] },
+    ])
+    expect(res.skipped).toBe(true)
+    expect(sendMailMock).not.toHaveBeenCalled()
+    if (previo !== undefined) process.env.CHECKLIST_EMAIL = previo
+  })
+
+  it('el checklist agrupa por categorías y va al destinatario configurado', async () => {
+    process.env.CHECKLIST_EMAIL = 'cocina@test'
+    await sendChecklistIngredientes(PEDIDO, [
+      {
+        nombre: 'Pollo al Curry',
+        ingredientes: [
+          { nombre: 'Pechuga de pollo', cantidad: 600, unidad: 'g' },
+          { nombre: 'Crema de leche', cantidad: 200, unidad: 'ml' },
+          { nombre: 'Cebolla', cantidad: 2, unidad: 'unidad' },
+        ],
+      },
+      { nombre: 'Queque', ingredientes: [{ nombre: 'Harina', cantidad: 320, unidad: 'g' }] },
+    ])
+
+    const llamada = sendMailMock.mock.calls[0][0]
+    expect(llamada.to).toBe('cocina@test')
+    expect(llamada.subject).toContain('Checklist de ingredientes')
+    expect(llamada.subject).toContain('#99')
+    // El checklist interno NO se copia a las direcciones de negocio.
+    expect(llamada.bcc == null || llamada.bcc.length === 0).toBe(true)
+
+    const html = llamada.html
+    for (const cat of ['Proteínas', 'Verduras', 'Lácteos', 'Carbohidratos']) expect(html).toContain(cat)
+    expect(html).toContain('Pechuga de pollo: 600 g')
+    // Sin ingredientes de fruta, esa sección no se imprime.
+    expect(html).not.toContain('>Frutas<')
+    delete process.env.CHECKLIST_EMAIL
+  })
+
+  it('el correo al cliente de "pagado" NO cambia por el checklist', async () => {
+    process.env.CHECKLIST_EMAIL = 'cocina@test'
+    await sendEstadoEmail(PEDIDO, 'pagado')
+    // El PRIMER envío es siempre el del cliente, con su asunto y su contenido.
+    const alCliente = sendMailMock.mock.calls[0][0]
+    expect(alCliente.to).toBe(PEDIDO.email)
+    expect(alCliente.subject).toBe('¡Tu pago fue confirmado! 🎉')
+    expect(alCliente.html).toContain('Lista de ingredientes')
+    delete process.env.CHECKLIST_EMAIL
   })
 
   it('todas las plantillas generan HTML válido sin errores', async () => {
