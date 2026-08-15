@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import SectionLabel from '../ui/SectionLabel'
-import { getWhatsAppLink } from '../../data/siteConfig'
+import { WHATSAPP, getWhatsAppLink } from '../../data/siteConfig'
 
 const FAQ_ITEMS = [
   {
@@ -98,7 +98,7 @@ export default function FAQ() {
               te respondemos en minutos.
             </p>
             <motion.a
-              href={getWhatsAppLink()}
+              href={getWhatsAppLink(WHATSAPP.faqMessage)}
               target="_blank"
               rel="noopener noreferrer"
               className="btn-whatsapp text-sm"

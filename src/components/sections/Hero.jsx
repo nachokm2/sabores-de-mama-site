@@ -220,6 +220,24 @@ export default function Hero() {
             pasar horas en la cocina.
           </motion.p>
 
+          {/*
+            La condición de los ingredientes estaba varias secciones más abajo
+            ("Tú pones los ingredientes, yo pongo el amor"). Quien llegaba desde un
+            anuncio podía leer el encabezado, ver el precio y escribir por WhatsApp
+            sin haberse enterado. No es una debilidad que convenga esconder: para
+            quien compra orgánico, sin lactosa o marcas específicas es justamente
+            el beneficio, pero tiene que estar arriba.
+          */}
+          <motion.p
+            className="font-body text-espresso/80 text-sm md:text-base leading-relaxed mb-8 max-w-xl border-l-2 border-amber/60 pl-4"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 1.1 }}
+          >
+            <strong className="font-semibold">Tú eliges y envías los ingredientes.</strong> Nosotros
+            ponemos la cocina, las horas y el sellado al vacío.
+          </motion.p>
+
           {/* CTA buttons */}
           <motion.div
             className="flex flex-wrap gap-4 items-center"

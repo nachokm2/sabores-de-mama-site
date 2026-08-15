@@ -6,7 +6,7 @@ import Footer from '../components/layout/Footer'
 import PageHero from '../components/ui/PageHero'
 import SectionLabel from '../components/ui/SectionLabel'
 import UtensilsIcon from '../components/ui/UtensilsIcon'
-import { SITE, getWhatsAppLink } from '../data/siteConfig'
+import { SITE, WHATSAPP, getWhatsAppLink } from '../data/siteConfig'
 import { openChatBot } from '../lib/openChatBot'
 
 const WhatsAppIcon = ({ className = 'w-6 h-6' }) => (
@@ -110,7 +110,7 @@ export default function Contacto() {
           subtitle="Un mensaje y en minutos tienes tu pedido confirmado. Sin apps, sin registros. Solo comida de verdad."
           breadcrumb={[{ label: 'Inicio', href: '/' }, { label: 'Contacto', href: '/contacto' }]}
         >
-          <a href={getWhatsAppLink()} target="_blank" rel="noopener noreferrer" className="btn-whatsapp">
+          <a href={getWhatsAppLink(WHATSAPP.contactoMessage)} target="_blank" rel="noopener noreferrer" className="btn-whatsapp">
             <WhatsAppIcon className="w-5 h-5" />
             Abrir WhatsApp
           </a>
@@ -132,7 +132,7 @@ export default function Contacto() {
 
                 {/* WhatsApp card */}
                 <motion.a
-                  href={getWhatsAppLink()}
+                  href={getWhatsAppLink(WHATSAPP.contactoMessage)}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center gap-5 bg-[#25D366]/8 border-2 border-[#25D366]/30 rounded-2xl p-6 mb-4 hover:border-[#25D366]/60 hover:bg-[#25D366]/12 transition-all duration-300 group"

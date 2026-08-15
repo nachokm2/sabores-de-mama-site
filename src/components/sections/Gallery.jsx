@@ -122,6 +122,7 @@ export default function Gallery() {
                 <img
                   src={item.image}
                   alt=""
+                  loading="lazy"
                   aria-hidden="true"
                   className="absolute inset-0 w-full h-full object-cover scale-110 blur-2xl opacity-40 select-none pointer-events-none"
                 />

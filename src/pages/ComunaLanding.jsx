@@ -6,7 +6,7 @@ import Footer from '../components/layout/Footer'
 import PageHero from '../components/ui/PageHero'
 import SectionLabel from '../components/ui/SectionLabel'
 import { openChatBot } from '../lib/openChatBot'
-import { WHATSAPP, getWhatsAppLink } from '../data/siteConfig'
+import { WHATSAPP, getWhatsAppLink, mensajeComuna } from '../data/siteConfig'
 import { COMUNAS_LANDING, COMUNA_SLUGS } from '../data/comunasLanding'
 
 const PASOS = [
@@ -157,7 +157,7 @@ export default function ComunaLanding() {
             </p>
             <div className="flex flex-wrap gap-3 justify-center">
               <button onClick={openChatBot} className="btn-primary">Pedir ahora</button>
-              <a href={getWhatsAppLink(WHATSAPP.defaultMessage)} target="_blank" rel="noopener noreferrer" className="btn-whatsapp">
+              <a href={getWhatsAppLink(mensajeComuna(data.nombre))} target="_blank" rel="noopener noreferrer" className="btn-whatsapp">
                 Consultar por WhatsApp
               </a>
             </div>

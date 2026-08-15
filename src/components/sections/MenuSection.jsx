@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { SERVICES, DISH_CATEGORIES, DULCES_FAMILIAR, DULCES_SNACKS, DISH_DESCRIPTIONS } from '../../data/menu'
 import SectionLabel from '../ui/SectionLabel'
 import UtensilsIcon from '../ui/UtensilsIcon'
-import { getPlatos, getComunas, getProductosHornear, imagenUrl } from '../../lib/publicApi'
+import { getPlatos, getComunas, getCupos, getProductosHornear, imagenUrl } from '../../lib/publicApi'
 import { fmtCLP } from '../../lib/flowConfig'
 import { openChatBot } from '../../lib/openChatBot'
 
@@ -90,6 +90,33 @@ function buildImagesFromApi(platos) {
 function ServiceCard({ service, index }) {
   const navigate = useNavigate()
   const [comunasSrv, setComunasSrv] = useState([])
+  const [rangoDespacho, setRangoDespacho] = useState(null)
+  // null = todavía no sabemos; no se anuncia "sin cupos" hasta tener respuesta,
+  // para no espantar a nadie por una API lenta.
+  const [hayCupos, setHayCupos] = useState(null)
+
+  // Disponibilidad REAL del servicio. Antes el destacado y el llamado a la acción
+  // eran fijos en el código, y se dio el caso de promocionar como "Más popular"
+  // un servicio sin ninguna fecha con cupo. Leyéndolo de la API, la tarjeta se
+  // corrige sola cuando se abren o se agotan cupos en el panel.
+  useEffect(() => {
+    const key = SERVICE_KEY[service.id]
+    if (!key) return
+    let active = true
+    ;(async () => {
+      try {
+        const cupos = await getCupos(key)
+        if (!active) return
+        setHayCupos(Array.isArray(cupos) && cupos.some((c) => c.activo && Number(c.disponibles) > 0))
+      } catch {
+        // Ante un fallo de red no se afirma nada: se deja la tarjeta como estaba.
+        if (active) setHayCupos(null)
+      }
+    })()
+    return () => {
+      active = false
+    }
+  }, [service.id])
 
   // Comunas habilitadas para ESTE servicio (administradas en el panel).
   useEffect(() => {
@@ -101,6 +128,12 @@ function ServiceCard({ service, index }) {
         const lista = await getComunas(key)
         if (active && Array.isArray(lista) && lista.length) {
           setComunasSrv(lista.map((c) => c.nombre))
+          // Rango real de despacho. El sitio decía "costo adicional" sin monto en
+          // ninguna parte, y en Meal Prep el cliente además paga el envío de ida
+          // de los ingredientes: sin esta cifra no puede estimar cuánto gastará,
+          // y la sorpresa aparece al final, que es donde se cae la venta.
+          const costos = lista.map((c) => Number(c.costo_despacho)).filter((n) => Number.isFinite(n) && n > 0)
+          if (costos.length) setRangoDespacho({ min: Math.min(...costos), max: Math.max(...costos) })
         }
       } catch {
         /* se mantiene el fallback estático */
@@ -114,6 +147,13 @@ function ServiceCard({ service, index }) {
   const comunasMostrar = comunasSrv.length ? comunasSrv : service.communes
 
   const irAlFlujo = () => {
+    // Sin cupos el checkout no lleva a ninguna parte: el paso de fecha no tendría
+    // ninguna disponible. Se deriva a WhatsApp, que es donde se puede quedar en
+    // lista de espera.
+    if (hayCupos === false) {
+      window.open(getWhatsAppLink(WHATSAPP.sinCuposMessage), '_blank', 'noopener')
+      return
+    }
     // Cocinera a Domicilio se coordina por WhatsApp; el resto usa su flujo.
     if (service.id === 'cocinera') {
       window.open(getWhatsAppLink(WHATSAPP.cocineraMessage), '_blank', 'noopener')
@@ -122,7 +162,12 @@ function ServiceCard({ service, index }) {
     navigate(SERVICE_ROUTES[service.id] || '/meal-prep')
   }
   // Cocinera se coordina por WhatsApp → "Agendar servicio"; el resto, checkout.
-  const ctaLabel = service.id === 'cocinera' ? 'Agendar servicio' : 'Comenzar pedido'
+  const ctaLabel =
+    hayCupos === false
+      ? 'Avisarme cuando haya cupos'
+      : service.id === 'cocinera'
+        ? 'Agendar servicio'
+        : 'Comenzar pedido'
   return (
     <motion.article
       className={`relative rounded-3xl overflow-hidden flex flex-col shadow-[0_10px_40px_rgba(42,28,18,0.08)] ${service.highlight ? 'ring-2 ring-amber/50' : 'ring-1 ring-espresso/10'}`}
@@ -132,10 +177,18 @@ function ServiceCard({ service, index }) {
       viewport={{ once: true, margin: '-60px' }}
       transition={{ duration: 0.7, delay: index * 0.15, ease: [0.19, 1, 0.22, 1] }}
     >
-      {service.highlight && (
-        <div className="absolute top-4 right-4 bg-amber text-espresso text-2xs font-semibold tracking-wider uppercase px-3 py-1 rounded-full">
-          Más Popular
+      {/* Sin cupos manda sobre el destacado: no tiene sentido gritar "Más
+          popular" sobre algo que hoy no se puede reservar. */}
+      {hayCupos === false ? (
+        <div className="absolute top-4 right-4 bg-espresso/10 text-espresso text-2xs font-semibold tracking-wider uppercase px-3 py-1 rounded-full border border-espresso/15">
+          Sin cupos por ahora
         </div>
+      ) : (
+        service.highlight && (
+          <div className="absolute top-4 right-4 bg-amber text-espresso text-2xs font-semibold tracking-wider uppercase px-3 py-1 rounded-full">
+            Más Popular
+          </div>
+        )
       )}
 
       {/* Top accent */}
@@ -176,6 +229,14 @@ function ServiceCard({ service, index }) {
         <div className="mb-7 p-3.5 rounded-xl bg-espresso/[0.04] border border-espresso/10">
           <p className="font-body text-warm-gray text-xs font-semibold uppercase tracking-wider mb-2">📍 Comunas disponibles</p>
           <p className="font-body text-warm-gray text-xs leading-relaxed">{comunasMostrar.join(' · ')}</p>
+          {rangoDespacho && (
+            <p className="font-body text-espresso text-xs leading-relaxed mt-2 pt-2 border-t border-espresso/10">
+              <span className="font-semibold">Despacho:</span>{' '}
+              {rangoDespacho.min === rangoDespacho.max
+                ? fmtCLP(rangoDespacho.min)
+                : `${fmtCLP(rangoDespacho.min)} a ${fmtCLP(rangoDespacho.max)} según comuna`}
+            </p>
+          )}
         </div>
 
         {/* CTA → inicia el flujo del servicio */}
@@ -272,6 +333,7 @@ function CategoryAccordion({ cat, index, descriptions = {}, images = {} }) {
                       <img
                         src={imagenUrl(images[activeDish])}
                         alt={activeDish}
+                        loading="lazy"
                         className="w-16 h-16 rounded-lg object-cover flex-shrink-0"
                         onError={(e) => { e.currentTarget.style.display = 'none' }}
                       />
