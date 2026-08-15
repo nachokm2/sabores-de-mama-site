@@ -5,6 +5,7 @@ import { presignGet } from './storage.js'
 import { consolidarIngredientes } from '../utils/ingredientes.js'
 import { agruparPorCategoria } from '../utils/categorias.js'
 import { surveyToken } from '../utils/tokens.js'
+import { fotosDePedido } from '../utils/fotos.js'
 
 dotenv.config()
 
@@ -433,11 +434,23 @@ const TEMPLATES = {
   },
   en_delivery(pedido, extra = {}) {
     const nombre = esc((pedido.nombre || '').split(' ')[0] || 'hola')
-    const fotoHtml = extra.fotoUrl
+    // Una o varias fotos. Se apilan en vez de ponerlas en columnas: los clientes
+    // de correo manejan mal las grillas, y a pantalla completa se ven mejor.
+    const fotos = Array.isArray(extra.fotoUrls) ? extra.fotoUrls.filter(Boolean) : []
+    const fotoHtml = fotos.length
       ? `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:16px;background:${CREAM};border:1px solid ${BORDER};border-radius:12px;">
            <tr><td style="padding:16px 18px;">
-             <div style="font-weight:bold;color:${BRAND};margin-bottom:8px;font-size:14px;">Foto de tu pedido</div>
-             <img src="${esc(extra.fotoUrl)}" alt="Foto de tu pedido" style="display:block;width:100%;max-width:100%;border-radius:10px;" />
+             <div style="font-weight:bold;color:${BRAND};margin-bottom:8px;font-size:14px;">${
+               fotos.length > 1 ? `Fotos de tu pedido (${fotos.length})` : 'Foto de tu pedido'
+             }</div>
+             ${fotos
+               .map(
+                 (url, i) =>
+                   `<img src="${esc(url)}" alt="Foto ${i + 1} de tu pedido" style="display:block;width:100%;max-width:100%;border-radius:10px;${
+                     i ? 'margin-top:10px;' : ''
+                   }" />`
+               )
+               .join('')}
            </td></tr>
          </table>`
       : ''
@@ -697,13 +710,23 @@ export async function sendEstadoEmail(pedido, estado) {
   // Datos extra por estado (ingredientes para "pagado"; foto para "en_delivery").
   const extra = {}
   if (estado === 'pagado') extra.platosConIng = await getPlatosConIngredientes(pedido)
-  if (estado === 'en_delivery' && pedido.foto_entrega) {
-    // URL firmada de larga duración (≈7 días) para embeber la foto en el correo.
-    // Si el almacenamiento no está configurado, se omite sin romper el envío.
-    try {
-      extra.fotoUrl = await presignGet(pedido.foto_entrega, 604800)
-    } catch (err) {
-      console.error('[mail] no se pudo firmar la foto de entrega:', err?.message || err)
+  if (estado === 'en_delivery') {
+    // URLs firmadas de larga duración (≈7 días) para embeber las fotos en el
+    // correo. Si el almacenamiento no está configurado, se omiten sin romper el
+    // envío. Se lee `fotos_entrega` y se cae a `foto_entrega` para los pedidos
+    // anteriores a que existiera el array.
+    const keys = fotosDePedido(pedido)
+    if (keys.length) {
+      const urls = await Promise.all(
+        keys.map((k) =>
+          presignGet(k, 604800).catch((err) => {
+            // Una foto que falla no debe llevarse las demás ni el correo entero.
+            console.error('[mail] no se pudo firmar una foto de entrega:', err?.message || err)
+            return null
+          })
+        )
+      )
+      extra.fotoUrls = urls.filter(Boolean)
     }
   }
 

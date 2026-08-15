@@ -5,6 +5,7 @@ import { EstadoBadge, fmtCLP, fmtFecha } from '../../components/admin/adminHelpe
 import PedidoDetalle from '../../components/admin/PedidoDetalle'
 import PedidoNuevo from '../../components/admin/PedidoNuevo'
 import FotoEntregaModal from '../../components/admin/FotoEntregaModal'
+import { fotosDePedido } from '../../lib/fotosPedido'
 import PlazoIngredientesModal from '../../components/admin/PlazoIngredientesModal'
 import {
   getPedidos,
@@ -97,10 +98,10 @@ export default function AdminPedidos() {
 
   // Aplica el cambio de estado (con foto opcional). Lanza el error para que el
   // llamador decida dónde mostrarlo (fila vs. modal); el 401 navega al login.
-  const aplicarEstado = async (pedido, estado, fotoKey, plazoIngredientes) => {
+  const aplicarEstado = async (pedido, estado, fotoKeys, plazoIngredientes) => {
     setSavingId(pedido.id)
     try {
-      const res = await cambiarEstadoPedido(pedido.id, estado, fotoKey, plazoIngredientes)
+      const res = await cambiarEstadoPedido(pedido.id, estado, fotoKeys, plazoIngredientes)
       setPedidos((prev) => prev.map((p) => (p.id === pedido.id ? res.pedido : p)))
       const correo = res.email?.ok
         ? 'correo enviado.'
@@ -122,8 +123,9 @@ export default function AdminPedidos() {
     if (estado === pedido.estado) return
     setMsg('')
     setError('')
-    // Regla: "En delivery" exige una foto del pedido. Si aún no hay, pedirla.
-    if (estado === 'en_delivery' && !pedido.foto_entrega) {
+    // Regla: "En delivery" exige al menos una foto del pedido. Si aún no hay,
+    // pedirlas.
+    if (estado === 'en_delivery' && !fotosDePedido(pedido).length) {
       setFotoPedido(pedido)
       return
     }
@@ -142,12 +144,12 @@ export default function AdminPedidos() {
     }
   }
 
-  // Confirmación del modal: la foto ya se subió (key); aplica "En delivery".
+  // Confirmación del modal: las fotos ya se subieron (keys); aplica "En delivery".
   // Si falla, se relanza para que el modal muestre el error y no se cierre.
-  const onFotoConfirmada = async (key) => {
+  const onFotoConfirmada = async (keys) => {
     setMsg('')
     setError('')
-    await aplicarEstado(fotoPedido, 'en_delivery', key)
+    await aplicarEstado(fotoPedido, 'en_delivery', keys)
     setFotoPedido(null)
   }
 

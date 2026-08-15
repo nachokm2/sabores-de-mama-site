@@ -2,48 +2,76 @@ import { useEffect, useState } from 'react'
 import { subirImagen, ApiError } from '../../lib/adminApi'
 
 /**
- * Modal bloqueante para subir la fotografía del pedido antes de marcarlo
- * "En delivery". Sube la imagen al bucket y devuelve su key vía onConfirm(key).
- * El cambio de estado lo aplica el componente padre (AdminPedidos).
+ * Modal bloqueante para subir las fotografías del pedido antes de marcarlo
+ * "En delivery". Sube las imágenes al bucket y devuelve sus keys vía
+ * onConfirm(keys). El cambio de estado lo aplica el componente padre.
+ *
+ * Acepta VARIAS fotos: una sola no alcanzaba para mostrar un pedido de hasta 25
+ * porciones. Se pueden ir agregando en tandas (elegir, agregar más) y quitar
+ * antes de subir.
  */
 export default function FotoEntregaModal({ pedido, onConfirm, onClose }) {
-  const [file, setFile] = useState(null)
-  const [preview, setPreview] = useState('')
+  const [files, setFiles] = useState([])
+  const [previews, setPreviews] = useState([])
   const [subiendo, setSubiendo] = useState(false)
+  const [progreso, setProgreso] = useState({ hechas: 0, total: 0 })
   const [error, setError] = useState('')
 
-  // Previsualización local del archivo elegido.
+  // Previsualización local. Se revocan las URLs al cambiar la lista para no
+  // filtrar memoria del navegador.
   useEffect(() => {
-    if (!file) {
-      setPreview('')
-      return
-    }
-    const url = URL.createObjectURL(file)
-    setPreview(url)
-    return () => URL.revokeObjectURL(url)
-  }, [file])
+    const urls = files.map((f) => URL.createObjectURL(f))
+    setPreviews(urls)
+    return () => urls.forEach((u) => URL.revokeObjectURL(u))
+  }, [files])
 
   const onElegir = (e) => {
     setError('')
-    setFile(e.target.files?.[0] || null)
+    const nuevos = Array.from(e.target.files || [])
+    // Se ACUMULAN en vez de reemplazar: así se pueden agregar fotos en varias
+    // tandas (el selector de archivos solo permite elegir dentro de una carpeta
+    // a la vez). Se descartan las repetidas por nombre y tamaño.
+    setFiles((prev) => {
+      const clave = (f) => `${f.name}|${f.size}`
+      const vistos = new Set(prev.map(clave))
+      return [...prev, ...nuevos.filter((f) => !vistos.has(clave(f)))]
+    })
+    // Permite volver a elegir el mismo archivo si se quitó de la lista.
+    e.target.value = ''
   }
 
+  const quitar = (i) => setFiles((prev) => prev.filter((_, j) => j !== i))
+
   const confirmar = async () => {
-    if (!file || subiendo) return
+    if (!files.length || subiendo) return
     setSubiendo(true)
     setError('')
+    setProgreso({ hechas: 0, total: files.length })
     try {
-      const key = await subirImagen(file, 'entregas')
-      await onConfirm(key)
+      // Secuencial a propósito: cada subida es un PUT directo al bucket y así el
+      // progreso es real y no se saturan la red ni el presign en un pedido con
+      // muchas fotos.
+      const keys = []
+      for (const f of files) {
+        keys.push(await subirImagen(f, 'entregas'))
+        setProgreso((p) => ({ ...p, hechas: p.hechas + 1 }))
+      }
+      await onConfirm(keys)
     } catch (err) {
       if (err instanceof ApiError && err.status === 503) {
-        setError('El almacenamiento de imágenes no está configurado. No se puede subir la foto.')
+        setError('El almacenamiento de imágenes no está configurado. No se pueden subir las fotos.')
       } else {
-        setError(err.message || 'No se pudo subir la foto. Intenta nuevamente.')
+        setError(err.message || 'No se pudieron subir las fotos. Intenta nuevamente.')
       }
       setSubiendo(false)
     }
   }
+
+  const etiquetaBoton = subiendo
+    ? progreso.total > 1
+      ? `Subiendo ${progreso.hechas + 1} de ${progreso.total}…`
+      : 'Subiendo…'
+    : `Subir ${files.length || ''} ${files.length === 1 ? 'foto' : 'fotos'} y marcar En delivery`.replace(/\s+/g, ' ')
 
   return (
     <div
@@ -52,32 +80,50 @@ export default function FotoEntregaModal({ pedido, onConfirm, onClose }) {
       aria-modal="true"
       aria-labelledby="foto-entrega-titulo"
     >
-      <div className="bg-background-surface rounded-2xl border border-espresso/10 shadow-xl w-full max-w-md p-5">
+      <div className="bg-background-surface rounded-2xl border border-espresso/10 shadow-xl w-full max-w-md p-5 max-h-[90vh] overflow-y-auto">
         <h2 id="foto-entrega-titulo" className="font-display text-lg font-bold text-espresso mb-1">
-          Foto del pedido #{pedido.id}
+          Fotos del pedido #{pedido.id}
         </h2>
         <p className="text-sm text-warm-gray mb-4">
-          Para marcar este pedido como <strong>En delivery</strong> debes subir una fotografía del
-          pedido listo para salir.
+          Para marcar este pedido como <strong>En delivery</strong> debes subir al menos una
+          fotografía del pedido listo para salir. Puedes agregar varias.
         </p>
 
         <label className="block text-sm mb-3">
-          <span className="block text-espresso font-medium mb-1.5">Fotografía *</span>
+          <span className="block text-espresso font-medium mb-1.5">
+            Fotografías * {files.length > 0 && <span className="text-warm-gray font-normal">({files.length} elegidas)</span>}
+          </span>
           <input
             type="file"
             accept="image/*"
+            multiple
             onChange={onElegir}
             disabled={subiendo}
             className="block w-full text-sm text-warm-gray file:mr-3 file:rounded-full file:border-0 file:bg-terracotta file:text-ivory file:font-semibold file:px-4 file:py-2 file:text-sm hover:file:bg-ember disabled:opacity-50"
           />
         </label>
 
-        {preview && (
-          <img
-            src={preview}
-            alt="Previsualización de la foto del pedido"
-            className="w-full max-h-64 object-contain rounded-xl border border-espresso/10 mb-3 bg-background"
-          />
+        {previews.length > 0 && (
+          <ul className="grid grid-cols-3 gap-2 mb-3">
+            {previews.map((url, i) => (
+              <li key={url} className="relative">
+                <img
+                  src={url}
+                  alt={`Previsualización ${i + 1}`}
+                  className="w-full h-24 object-cover rounded-lg border border-espresso/10 bg-background"
+                />
+                {!subiendo && (
+                  <button
+                    onClick={() => quitar(i)}
+                    aria-label={`Quitar foto ${i + 1}`}
+                    className="absolute -top-1.5 -right-1.5 w-6 h-6 rounded-full bg-espresso text-ivory text-xs leading-none flex items-center justify-center hover:bg-ember"
+                  >
+                    ✕
+                  </button>
+                )}
+              </li>
+            ))}
+          </ul>
         )}
 
         {error && (
@@ -96,10 +142,10 @@ export default function FotoEntregaModal({ pedido, onConfirm, onClose }) {
           </button>
           <button
             onClick={confirmar}
-            disabled={!file || subiendo}
+            disabled={!files.length || subiendo}
             className="bg-terracotta text-ivory font-semibold rounded-full px-5 py-2.5 text-sm hover:bg-ember transition-colors disabled:opacity-50"
           >
-            {subiendo ? 'Subiendo…' : 'Subir y marcar En delivery'}
+            {etiquetaBoton}
           </button>
         </div>
       </div>
