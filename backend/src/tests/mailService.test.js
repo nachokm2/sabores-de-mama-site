@@ -106,6 +106,22 @@ describe('mailService', () => {
     expect(html).toContain('Carne molida')
   })
 
+  it('en_delivery informa el plazo estimado y la condición de recepción', async () => {
+    await sendEstadoEmail(PEDIDO, 'en_delivery')
+    const html = ultimoHtml()
+    expect(ultimoAsunto()).toBe('Tu pedido va en camino 🚗')
+
+    expect(html).toContain('Horario estimado de entrega')
+    expect(html).toContain('2:30 horas')
+    // El plazo depende de la comuna: se dice explícitamente que no hay rango fijo,
+    // para no generar una expectativa de hora exacta que no se puede cumplir.
+    expect(html).toContain('No existe un rango fijo de entrega')
+    expect(html).toContain('comprometo a estar disponible para recibirlo')
+
+    // Va ANTES del resumen del pedido: es lo primero que el cliente necesita leer.
+    expect(html.indexOf('Horario estimado de entrega')).toBeLessThan(html.indexOf('Resumen de tu pedido'))
+  })
+
   it('todas las plantillas generan HTML válido sin errores', async () => {
     const asuntosEsperados = {
       solicitud_recibida: 'Sabores de Mamá — Recibimos tu pedido',
