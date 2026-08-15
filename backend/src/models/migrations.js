@@ -203,6 +203,18 @@ UPDATE servicios_config SET costo_porcionado   = 3000 WHERE servicio = 'meal_pre
 ALTER TABLE pedidos ADD COLUMN IF NOT EXISTS adicionales JSONB NOT NULL DEFAULT '[]'::jsonb;
 -- Foto de la entrega (obligatoria para pasar a "en_delivery"). Guarda la key del bucket.
 ALTER TABLE pedidos ADD COLUMN IF NOT EXISTS foto_entrega TEXT;
+-- Fotos de la entrega: ahora se pueden subir VARIAS. Es un array de keys.
+--
+-- "foto_entrega" se mantiene y sigue guardando la PRIMERA foto, en vez de
+-- migrarlo y borrarlo: así los pedidos antiguos siguen mostrando su imagen y
+-- cualquier lectura de esa columna sigue funcionando mientras conviven ambas.
+ALTER TABLE pedidos ADD COLUMN IF NOT EXISTS fotos_entrega JSONB NOT NULL DEFAULT '[]'::jsonb;
+-- Backfill de una sola vez: los pedidos que ya tenían foto entran al array.
+UPDATE pedidos
+   SET fotos_entrega = jsonb_build_array(foto_entrega)
+ WHERE foto_entrega IS NOT NULL
+   AND foto_entrega <> ''
+   AND fotos_entrega = '[]'::jsonb;
 -- Servicio por plato (un plato puede estar en Meal Prep, Cocinera o ambos).
 ALTER TABLE platos ADD COLUMN IF NOT EXISTS meal_prep BOOLEAN NOT NULL DEFAULT true;
 ALTER TABLE platos ADD COLUMN IF NOT EXISTS cocinera  BOOLEAN NOT NULL DEFAULT true;

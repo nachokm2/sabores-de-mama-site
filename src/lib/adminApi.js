@@ -135,10 +135,15 @@ export function getPedido(id) {
 export function crearPedidoAdmin(data) {
   return apiFetch('/pedidos/admin', { method: 'POST', body: data })
 }
-export function cambiarEstadoPedido(id, estado, fotoEntrega, plazoIngredientes) {
+/**
+ * Cambia el estado de un pedido. `fotosEntrega` acepta un array de keys (varias
+ * fotos) o un string (una sola, forma antigua que el backend sigue admitiendo).
+ */
+export function cambiarEstadoPedido(id, estado, fotosEntrega, plazoIngredientes) {
+  const fotos = (Array.isArray(fotosEntrega) ? fotosEntrega : [fotosEntrega]).filter(Boolean)
   const body = {
     estado,
-    ...(fotoEntrega ? { foto_entrega: fotoEntrega } : {}),
+    ...(fotos.length ? { fotos_entrega: fotos } : {}),
     ...(plazoIngredientes ? { plazo_ingredientes: plazoIngredientes } : {}),
   }
   return apiFetch(`/pedidos/${id}/estado`, { method: 'PATCH', body })

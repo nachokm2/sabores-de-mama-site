@@ -249,7 +249,7 @@ router.post('/consultar', async (req, res, next) => {
     }
     const { rows } = await query(
       `SELECT id, estado, fecha_entrega, total, servicio, tipo_entrega, comuna,
-              costo_despacho, platos, lista_compras, productos_hornear, adicionales, personas, observaciones, foto_entrega, created_at
+              costo_despacho, platos, lista_compras, productos_hornear, adicionales, personas, observaciones, foto_entrega, fotos_entrega, created_at
          FROM pedidos
         WHERE id = $1 AND lower(email) = lower($2)`,
       [idNum, String(email).trim()]
@@ -319,7 +319,7 @@ router.get('/mis', authJWT, async (req, res, next) => {
   try {
     const { rows } = await query(
       `SELECT id, estado, fecha_entrega, total, servicio, tipo_entrega, comuna,
-              costo_despacho, platos, lista_compras, productos_hornear, adicionales, personas, observaciones, foto_entrega, created_at
+              costo_despacho, platos, lista_compras, productos_hornear, adicionales, personas, observaciones, foto_entrega, fotos_entrega, created_at
          FROM pedidos
         WHERE usuario_id = $1
         ORDER BY fecha_entrega DESC, created_at DESC`,
@@ -389,17 +389,34 @@ router.patch('/:id/estado', requireAdmin, async (req, res, next) => {
       })
     }
 
-    // Estado actual + foto ya cargada (para el enforcement de "en_delivery").
-    const actual = await query('SELECT foto_entrega FROM pedidos WHERE id = $1', [req.params.id])
+    // Estado actual + fotos ya cargadas (para el enforcement de "en_delivery").
+    const actual = await query(
+      'SELECT foto_entrega, fotos_entrega FROM pedidos WHERE id = $1',
+      [req.params.id]
+    )
     if (!actual.rows[0]) return res.status(404).json({ error: 'Pedido no encontrado.' })
 
-    const fotoBody = typeof b.foto_entrega === 'string' && b.foto_entrega.trim() ? b.foto_entrega.trim() : null
-    const finalFoto = fotoBody || actual.rows[0].foto_entrega || null
+    // Fotos de la entrega. Se aceptan las dos formas: `fotos_entrega` (array, lo
+    // que manda el panel ahora) y `foto_entrega` (string), que se conserva para
+    // no romper a ningún cliente de la API que siga enviando una sola.
+    const limpiarKeys = (v) =>
+      (Array.isArray(v) ? v : [v])
+        .map((k) => (typeof k === 'string' ? k.trim() : ''))
+        .filter(Boolean)
+
+    const fotosBody = [...limpiarKeys(b.fotos_entrega), ...limpiarKeys(b.foto_entrega)]
+    const fotosPrevias = [...limpiarKeys(actual.rows[0].fotos_entrega), ...limpiarKeys(actual.rows[0].foto_entrega)]
+    // Las nuevas reemplazan a las previas (el panel manda el conjunto completo);
+    // si no vienen fotos, se conservan las que ya estaban.
+    const finalFotos = [...new Set(fotosBody.length ? fotosBody : fotosPrevias)]
+    // `foto_entrega` sigue guardando la primera: los pedidos antiguos y cualquier
+    // lectura de esa columna siguen funcionando.
+    const finalFoto = finalFotos[0] || null
 
     // Regla: no se puede marcar "En delivery" sin una fotografía del pedido.
-    if (estado === 'en_delivery' && !finalFoto) {
+    if (estado === 'en_delivery' && !finalFotos.length) {
       return res.status(422).json({
-        error: 'Debes subir una fotografía del pedido antes de marcarlo "En delivery".',
+        error: 'Debes subir al menos una fotografía del pedido antes de marcarlo "En delivery".',
       })
     }
 
@@ -412,10 +429,10 @@ router.patch('/:id/estado', requireAdmin, async (req, res, next) => {
 
     const { rows } = await query(
       `UPDATE pedidos
-          SET estado = $1, foto_entrega = $2,
-              plazo_ingredientes = COALESCE($3, plazo_ingredientes)
-        WHERE id = $4 RETURNING *`,
-      [estado, finalFoto, plazoBody, req.params.id]
+          SET estado = $1, foto_entrega = $2, fotos_entrega = $3::jsonb,
+              plazo_ingredientes = COALESCE($4, plazo_ingredientes)
+        WHERE id = $5 RETURNING *`,
+      [estado, finalFoto, JSON.stringify(finalFotos), plazoBody, req.params.id]
     )
     if (!rows[0]) return res.status(404).json({ error: 'Pedido no encontrado.' })
 
@@ -454,6 +471,7 @@ router.patch('/:id', requireAdmin, async (req, res, next) => {
     if (b.costo_despacho !== undefined) add('costo_despacho', Number(b.costo_despacho) || 0)
     if (b.total !== undefined) add('total', Number(b.total) || 0)
     if (b.foto_entrega !== undefined) add('foto_entrega', b.foto_entrega || null)
+    if (b.fotos_entrega !== undefined) add('fotos_entrega', JSON.stringify(asArray(b.fotos_entrega)), '::jsonb')
     if (b.personas !== undefined) {
       add('personas', Number.isInteger(Number(b.personas)) && Number(b.personas) > 0 ? Number(b.personas) : null)
     }

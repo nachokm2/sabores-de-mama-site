@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { fmtCLP, fmtFecha } from './adminHelpers'
 import { editarPedido, ApiError } from '../../lib/adminApi'
 import { imagenUrl } from '../../lib/publicApi'
+import { fotosDePedido } from '../../lib/fotosPedido'
 
 /**
  * Panel desplegable de un pedido: muestra TODO lo que pidió el cliente
@@ -49,6 +50,7 @@ export default function PedidoDetalle({ pedido, platosCatalogo = [], postresCata
   const baking = Array.isArray(pedido.productos_hornear) ? pedido.productos_hornear : []
   const adicionales = Array.isArray(pedido.adicionales) ? pedido.adicionales : []
   const lista = Array.isArray(pedido.lista_compras) ? pedido.lista_compras : []
+  const fotosEntrega = fotosDePedido(pedido)
 
   const catalogoOrdenado = useMemo(
     () => [...platosCatalogo].sort((a, b) => (a.categoria || '').localeCompare(b.categoria || '') || a.nombre.localeCompare(b.nombre)),
@@ -191,14 +193,20 @@ export default function PedidoDetalle({ pedido, platosCatalogo = [], postresCata
             </Bloque>
           )}
 
-          {pedido.foto_entrega && (
-            <Bloque titulo="Foto de entrega">
-              <img
-                src={imagenUrl(pedido.foto_entrega)}
-                alt={`Foto de entrega del pedido #${pedido.id}`}
-                className="w-full max-w-xs rounded-xl border border-espresso/10 object-cover"
-                loading="lazy"
-              />
+          {fotosEntrega.length > 0 && (
+            <Bloque titulo={fotosEntrega.length > 1 ? `Fotos de entrega (${fotosEntrega.length})` : 'Foto de entrega'}>
+              <div className="flex flex-wrap gap-2">
+                {fotosEntrega.map((key, i) => (
+                  <a key={key} href={imagenUrl(key)} target="_blank" rel="noopener noreferrer" title="Abrir en tamaño completo">
+                    <img
+                      src={imagenUrl(key)}
+                      alt={`Foto ${i + 1} de entrega del pedido #${pedido.id}`}
+                      className="w-32 h-32 rounded-xl border border-espresso/10 object-cover hover:opacity-90 transition-opacity"
+                      loading="lazy"
+                    />
+                  </a>
+                ))}
+              </div>
             </Bloque>
           )}
         </div>

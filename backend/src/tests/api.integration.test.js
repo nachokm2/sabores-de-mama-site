@@ -538,6 +538,52 @@ describe('PATCH /api/pedidos/:id/estado', () => {
     expect(res.body.pedido.estado).toBe('en_delivery')
     expect(res.body.pedido.foto_entrega).toBe('entregas/previa.jpg')
   })
+
+  it('acepta VARIAS fotos y las guarda todas', async () => {
+    const id = await crearPedidoDirecto()
+    const token = await login()
+    const fotos = ['entregas/a.jpg', 'entregas/b.jpg', 'entregas/c.jpg']
+    const res = await request(app)
+      .patch(`/api/pedidos/${id}/estado`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({ estado: 'en_delivery', fotos_entrega: fotos })
+
+    expect(res.status).toBe(200)
+    expect(res.body.pedido.fotos_entrega).toEqual(fotos)
+    // `foto_entrega` sigue guardando la primera: los pedidos y las vistas que
+    // leen esa columna no se rompen mientras conviven ambos campos.
+    expect(res.body.pedido.foto_entrega).toBe('entregas/a.jpg')
+  })
+
+  it('una sola foto en el campo antiguo también entra al array', async () => {
+    const id = await crearPedidoDirecto()
+    const token = await login()
+    const res = await request(app)
+      .patch(`/api/pedidos/${id}/estado`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({ estado: 'en_delivery', foto_entrega: 'entregas/sola.jpg' })
+
+    expect(res.status).toBe(200)
+    expect(res.body.pedido.fotos_entrega).toEqual(['entregas/sola.jpg'])
+  })
+
+  it('un pedido con foto antigua conserva su imagen al pasar a en_delivery', async () => {
+    // Pedidos creados ANTES de que existiera el array: la foto vive solo en la
+    // columna vieja y no debe perderse.
+    const id = await crearPedidoDirecto()
+    await pool.query(`UPDATE pedidos SET foto_entrega = $1, fotos_entrega = '[]'::jsonb WHERE id = $2`, [
+      'entregas/legado.jpg',
+      id,
+    ])
+    const token = await login()
+    const res = await request(app)
+      .patch(`/api/pedidos/${id}/estado`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({ estado: 'en_delivery' })
+
+    expect(res.status).toBe(200)
+    expect(res.body.pedido.fotos_entrega).toEqual(['entregas/legado.jpg'])
+  })
 })
 
 describe('GET /api/platos (servicio y cantidades exactas)', () => {

@@ -4,6 +4,7 @@ import Navbar from '../components/layout/Navbar'
 import Footer from '../components/layout/Footer'
 import SectionLabel from '../components/ui/SectionLabel'
 import { consultarPedido, imagenUrl, ApiError } from '../lib/publicApi'
+import { fotosDePedido } from '../lib/fotosPedido'
 import { fmtCLP } from '../lib/flowConfig'
 
 const ESTADOS = {
@@ -224,16 +225,23 @@ export default function ConsultarPedido() {
                 </Bloque>
               )}
 
-              {pedido.foto_entrega && (pedido.estado === 'en_delivery' || pedido.estado === 'entregado') && (
-                <Bloque titulo="Foto de tu pedido">
-                  <img
-                    src={imagenUrl(pedido.foto_entrega)}
-                    alt="Foto de tu pedido"
-                    className="w-full max-w-sm rounded-xl border border-espresso/10 object-cover"
-                    loading="lazy"
-                  />
-                </Bloque>
-              )}
+              {fotosDePedido(pedido).length > 0 &&
+                (pedido.estado === 'en_delivery' || pedido.estado === 'entregado') && (
+                  <Bloque titulo={fotosDePedido(pedido).length > 1 ? 'Fotos de tu pedido' : 'Foto de tu pedido'}>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-w-lg">
+                      {fotosDePedido(pedido).map((key, i) => (
+                        <a key={key} href={imagenUrl(key)} target="_blank" rel="noopener noreferrer">
+                          <img
+                            src={imagenUrl(key)}
+                            alt={`Foto ${i + 1} de tu pedido`}
+                            className="w-full h-32 rounded-xl border border-espresso/10 object-cover"
+                            loading="lazy"
+                          />
+                        </a>
+                      ))}
+                    </div>
+                  </Bloque>
+                )}
 
               {pedido.observaciones && (
                 <Bloque titulo="Observaciones">
