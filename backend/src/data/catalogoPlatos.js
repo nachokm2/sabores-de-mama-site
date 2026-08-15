@@ -151,7 +151,7 @@ export const CATALOGO_PLATOS = [
   },
   {
     nombre: 'Estofado',
-    categoria: 'Carnes y Pollo',
+    categoria: 'Otros Platos',
     servicios: AMBOS,
     ingredientes: [
       i('Papas', 'unidad', '1', '2', '3', '4', '4'),
