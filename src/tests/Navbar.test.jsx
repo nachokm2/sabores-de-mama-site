@@ -21,7 +21,7 @@ const EXPECTED_LABELS = [
   'Inicio',
   'Meal Prep',
   'Cocinera a Domicilio',
-  'Healthy',
+  'Postres y Snacks',
   'Nosotros',
   'Contacto',
 ]
@@ -30,7 +30,7 @@ const EXPECTED_HREFS = {
   Inicio: '/',
   'Meal Prep': '/meal-prep-en-casa',
   'Cocinera a Domicilio': '/cocinera',
-  Healthy: '/healthy',
+  'Postres y Snacks': '/healthy',
   Nosotros: '/nosotros',
   Contacto: '/contacto',
 }

@@ -7,7 +7,7 @@ const claveDe = (id) => `ensalada-${id}`
 
 /**
  * Add-on opcional (ambos flujos): ensaladas. Se cobran aparte —igual que los
- * productos Healthy— a un valor fijo por unidad (ENSALADA_PRECIO). Cada ensalada
+ * productos de Postres y Snacks— a un valor fijo por unidad (ENSALADA_PRECIO). Cada ensalada
  * elegida se guarda como una entrada en `data.adicionales` (clave `ensalada-<id>`),
  * de modo que se suma al total y viaja en el pedido con el resto de adicionales.
  */

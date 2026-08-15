@@ -99,11 +99,11 @@ export default function HornearEnCasa() {
       <main>
         {/* ── Hero ── */}
         <PageHero
-          label="Healthy"
+          label="Postres y Snacks"
           title="Dulces caseros,"
           titleHighlight="elaborados con ingredientes seleccionados y listos para disfrutar."
           subtitle="Dulces saludables hechos en casa: los recibes listos para disfrutar, con ingredientes seleccionados y sin conservantes."
-          breadcrumb={[{ label: 'Inicio', href: '/' }, { label: 'Healthy', href: '/healthy' }]}
+          breadcrumb={[{ label: 'Inicio', href: '/' }, { label: 'Postres y Snacks', href: '/healthy' }]}
         >
           <button onClick={pedir} className="btn-primary text-sm">
             Pedir ahora

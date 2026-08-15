@@ -4,14 +4,14 @@ import { getAdminUser, logout } from '../../lib/adminApi'
 
 const SERVICIO_LABEL = { meal_prep: 'Meal Prep', cocinera: 'Cocinera a Domicilio' }
 
-// Construye la navegación según el servicio. "Healthy" sólo aplica a Meal Prep.
+// Construye la navegación según el servicio. "Postres y Snacks" sólo aplica a Meal Prep.
 function buildNav(servicio) {
   const base = `/admin/${servicio}`
   return [
     { to: `${base}/dashboard`, label: 'Dashboard', icon: '📊' },
     { to: `${base}/pedidos`, label: 'Reservas', icon: '🧾' },
     { to: `${base}/platos`, label: 'Platos', icon: '🍽️' },
-    ...(servicio === 'meal_prep' ? [{ to: `${base}/productos`, label: 'Healthy', icon: '🧁' }] : []),
+    ...(servicio === 'meal_prep' ? [{ to: `${base}/productos`, label: 'Postres y Snacks', icon: '🧁' }] : []),
     { to: `${base}/cupos`, label: 'Cupos', icon: '📅' },
     { to: `${base}/comunas`, label: 'Comunas', icon: '📍' },
     { to: `${base}/satisfaccion`, label: 'Satisfacción', icon: '⭐' },
