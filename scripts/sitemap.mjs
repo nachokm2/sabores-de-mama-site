@@ -89,17 +89,40 @@ function htmlsDe(dir) {
  * la del clon — o sea, la fecha del deploy disfrazada de fecha de contenido.
  * Preferible no declarar lastmod que declarar uno falso.
  */
-function historialConfiable() {
+function esShallow() {
   try {
-    const shallow = execFileSync('git', ['rev-parse', '--is-shallow-repository'], {
+    return (
+      execFileSync('git', ['rev-parse', '--is-shallow-repository'], {
+        cwd: RAIZ,
+        encoding: 'utf8',
+        stdio: ['ignore', 'pipe', 'ignore'],
+      }).trim() === 'true'
+    )
+  } catch {
+    return null // sin git
+  }
+}
+
+function historialConfiable() {
+  const shallow = esShallow()
+  if (shallow === null) return false
+  if (!shallow) return true
+
+  // Clon shallow: se intenta completar el historial. El repositorio es público,
+  // así que no hacen falta credenciales. Es lo que permite tener fechas reales en
+  // el build de Railway, cuyo clon viene shallow; si no hay red o remoto, se sigue
+  // sin lastmod y queda el aviso.
+  try {
+    console.log('[sitemap] Clon shallow: recuperando el historial de git…')
+    execFileSync('git', ['fetch', '--unshallow', '--quiet'], {
       cwd: RAIZ,
-      encoding: 'utf8',
-      stdio: ['ignore', 'pipe', 'ignore'],
-    }).trim()
-    return shallow === 'false'
+      stdio: 'ignore',
+      timeout: 120_000,
+    })
   } catch {
     return false
   }
+  return esShallow() === false
 }
 
 let hayGit = historialConfiable()
