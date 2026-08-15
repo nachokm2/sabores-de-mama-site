@@ -3,6 +3,7 @@ import { query, withTransaction } from '../models/index.js'
 import { authJWT, requireAdmin, optionalUserId } from '../middleware/authJWT.js'
 import { sendEstadoEmail, ESTADOS_VALIDOS } from '../services/mailService.js'
 import { resumenToken, resumenTokenValido } from '../utils/tokens.js'
+import { calcularTotal } from '../services/pricing.js'
 
 const router = Router()
 
@@ -45,20 +46,22 @@ router.post('/', async (req, res, next) => {
       return res.status(400).json({ error: 'Faltan o son inválidos los campos: ' + errores.join(', ') })
     }
 
-    // Piso de precio (A2): el backend NO confía sin límite en el `total` que envía
-    // el cliente. Rechaza cualquier total por debajo del precio base del servicio
-    // (fuente autoritativa: servicios_config). Bloquea manipulaciones tipo
-    // `total: 1` sin poder rechazar pedidos legítimos (siempre >= base, porque el
-    // total es base + despacho + adicionales). Si no se puede leer la config, no bloquea.
-    try {
-      const cfg = await query('SELECT precio_base FROM servicios_config WHERE servicio = $1', [b.servicio])
-      const base = Number(cfg.rows[0]?.precio_base)
-      const total = Number(b.total)
-      if (Number.isFinite(base) && base > 0 && (!Number.isFinite(total) || total < base)) {
-        return res.status(400).json({ error: 'El total del pedido no es válido. Vuelve a intentarlo.' })
-      }
-    } catch {
-      /* si no se puede leer servicios_config, no bloqueamos la creación */
+    // El total y el costo de despacho se calculan ACÁ, no se aceptan del cliente.
+    //
+    // Antes sólo se validaba un piso (total >= precio base). Eso dejaba pasar la
+    // manipulación rentable: un pedido con despacho y adicionales enviado con
+    // `total` igual al precio base pasaba el filtro, y como el correo de
+    // instrucciones de transferencia se arma con ese mismo campo, la clienta
+    // recibía y confirmaba a mano el monto adulterado.
+    const precio = await calcularTotal(b)
+    if (Number(b.total) !== precio.total) {
+      // No se rechaza: el cálculo del servidor manda. Se registra para detectar
+      // si el frontend y el backend se desincronizan (un precio cambiado en
+      // Ajustes a mitad del flujo produce esto de forma legítima).
+      console.warn(
+        `[pedidos] total del cliente ${Number(b.total) || 0} != calculado ${precio.total}`,
+        precio.detalle
+      )
     }
 
     const c = cuposCols(b.servicio)
@@ -114,8 +117,8 @@ router.post('/', async (req, res, next) => {
           JSON.stringify(asArray(b.restricciones)),
           b.observaciones || null,
           b.tipo_entrega || null,
-          Number(b.costo_despacho) || 0,
-          Number(b.total) || 0,
+          precio.costo_despacho,
+          precio.total,
           b.servicio,
           JSON.stringify(asArray(b.productos_hornear)),
           JSON.stringify(asArray(b.lista_compras)),
@@ -138,8 +141,10 @@ router.post('/', async (req, res, next) => {
     // (/pago/:id?t=…), que es lo único que puede leer el resumen del pedido.
     return res.status(201).json({ pedido, resumen_token: resumenToken(pedido.id) })
   } catch (err) {
-    if (err.status === 409) {
-      return res.status(409).json({ error: err.message })
+    // 409: sin cupo. 400: el pedido no es despachable (comuna sin cobertura),
+    // que lo levanta el cálculo de precio.
+    if (err.status === 409 || err.status === 400) {
+      return res.status(err.status).json({ error: err.message })
     }
     next(err)
   }
