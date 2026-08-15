@@ -24,6 +24,23 @@ export const WHATSAPP = {
   orderMessage:   '¡Hola! Quiero hacer un pedido de: ',
   cocineraMessage: '¡Hola! Quiero agendar el servicio de Cocinera a Domicilio 👩‍🍳 para coordinar fecha y detalles.',
   horneadosMessage: '¡Hola! Quiero pedir postres/galletas saludables, listos para disfrutar 🍪 ¿Me cuentas disponibilidad?',
+
+  // Un texto distinto por sección. No es cosmético: WhatsApp no dice de dónde
+  // viene una conversación, así que sin esto es imposible saber si alguien llegó
+  // por un anuncio, por el blog o por una landing de comuna. Con el texto
+  // precargado, el propio mensaje trae su origen escrito y la atribución sale
+  // gratis, sin CRM ni herramientas nuevas.
+  sinCuposMessage: '¡Hola! Vi que no hay cupos disponibles. ¿Me avisan cuando se abran? 🙌',
+  faqMessage: '¡Hola! Tengo una duda que no encontré en las preguntas frecuentes.',
+  contactoMessage: '¡Hola! Escribo desde la página de contacto ✉️',
+  flotanteMessage: '¡Hola! Tengo una consulta 👋',
+  almuerzosMessage: '¡Hola! Me interesan los almuerzos a domicilio para la semana 🍱',
+  empresasMessage: '¡Hola! Quiero cotizar comida para mi empresa 🏢',
+}
+
+/** Mensaje de una landing por comuna: la conversación llega con la comuna puesta. */
+export function mensajeComuna(comuna) {
+  return `¡Hola! Quiero pedir comida casera para ${comuna} 📍`
 }
 
 export function getWhatsAppLink(message = WHATSAPP.defaultMessage) {

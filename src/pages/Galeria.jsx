@@ -65,7 +65,7 @@ function Lightbox({ item, onClose, onPrev, onNext }) {
         >
           <div className="aspect-square w-full">
             {item.image ? (
-              <img src={item.image} alt={item.label} className="w-full h-full object-cover" />
+              <img src={item.image} alt={item.label} loading="lazy" className="w-full h-full object-cover" />
             ) : (
               <div className={`w-full h-full bg-gradient-to-br ${item.gradient} flex items-center justify-center`}>
                 <span className="text-[100px]" aria-hidden="true">{item.emoji}</span>

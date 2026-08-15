@@ -20,7 +20,11 @@ export const SERVICES = [
       'Dejo la cocina limpia y ordenada',
     ],
     gradient: 'from-bark via-ember to-amber',
-    highlight: true,
+    // El destacado se movió a Meal Prep: Cocinera a Domicilio no tiene fechas con
+    // cupo configuradas, así que destacarlo dirigía la atención al único servicio
+    // que no se puede reservar. La tarjeta además avisa "Sin cupos por ahora"
+    // sola, leyendo la disponibilidad real de la API.
+    highlight: false,
     communes: ['Las Condes', 'Providencia', 'Vitacura', 'Ñuñoa'],
   },
   {
@@ -36,10 +40,13 @@ export const SERVICES = [
       'Hasta 5 preparaciones a elegir',
       'Porcionado y sellado al vacío',
       'Envías ingredientes vía delivery',
-      'Entrega a domicilio (costo adicional)',
+      // El monto exacto lo muestra la tarjeta bajo las comunas, leyéndolo de la
+      // API: así no queda una cifra escrita a mano que se desactualice cuando la
+      // admin cambie los costos en el panel.
+      'Entrega a domicilio (ver costo por comuna)',
     ],
     gradient: 'from-espresso via-bark to-terracotta',
-    highlight: false,
+    highlight: true,
     communes: ['Las Condes', 'Providencia', 'La Reina', 'Ñuñoa', 'Vitacura', 'Santiago', 'Lo Barnechea', 'San Miguel'],
   },
 ]

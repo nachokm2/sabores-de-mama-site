@@ -107,7 +107,7 @@ export default function PreguntasFrecuentes() {
           subtitle="Comunas de entrega, precios, cómo pedir y pagar, y cuánto dura la comida. Si te queda una duda, escríbenos por WhatsApp."
           breadcrumb={[{ label: 'Inicio', href: '/' }, { label: 'Preguntas frecuentes', href: '/preguntas-frecuentes' }]}
         >
-          <a href={getWhatsAppLink(WHATSAPP.defaultMessage)} target="_blank" rel="noopener noreferrer" className="btn-whatsapp text-sm">
+          <a href={getWhatsAppLink(WHATSAPP.faqMessage)} target="_blank" rel="noopener noreferrer" className="btn-whatsapp text-sm">
             Consultar por WhatsApp
           </a>
         </PageHero>
@@ -136,7 +136,7 @@ export default function PreguntasFrecuentes() {
               Escríbenos por WhatsApp y te respondemos en minutos, o revisa el menú para armar tu pedido.
             </p>
             <div className="flex flex-wrap gap-3 justify-center">
-              <a href={getWhatsAppLink(WHATSAPP.defaultMessage)} target="_blank" rel="noopener noreferrer" className="btn-whatsapp">
+              <a href={getWhatsAppLink(WHATSAPP.faqMessage)} target="_blank" rel="noopener noreferrer" className="btn-whatsapp">
                 Consultar por WhatsApp
               </a>
               <Link to="/menu" className="btn-outline">Ver el menú</Link>

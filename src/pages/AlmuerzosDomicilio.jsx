@@ -224,7 +224,7 @@ export default function AlmuerzosDomicilio() {
             </p>
             <div className="flex flex-wrap gap-3 justify-center">
               <button onClick={openChatBot} className="btn-primary">Pedir ahora</button>
-              <a href={getWhatsAppLink(WHATSAPP.defaultMessage)} target="_blank" rel="noopener noreferrer" className="btn-whatsapp">
+              <a href={getWhatsAppLink(WHATSAPP.almuerzosMessage)} target="_blank" rel="noopener noreferrer" className="btn-whatsapp">
                 Consultar por WhatsApp
               </a>
             </div>

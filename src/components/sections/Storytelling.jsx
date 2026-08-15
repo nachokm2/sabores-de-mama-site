@@ -187,7 +187,11 @@ export default function Storytelling() {
             <StatCard number="2.000+" label="Pedidos felices"    delay={0} />
             <StatCard number="8+"     label="Años de experiencia" delay={0.1} />
             <StatCard number="4.9/5"  label="Calificación"       delay={0.2} />
-            <StatCard number="15+"    label="Platos en el menú"  delay={0.3} />
+            {/* 60+ y no 15+: el catálogo tiene 67 platos activos, y la sección de
+                menú de esta misma página ya decía "más de 60 preparaciones". Dos
+                cifras distintas en una pantalla ponen en duda también al 2.000+ y
+                al 4.9, que son los argumentos de confianza que sí importan. */}
+            <StatCard number="60+"    label="Platos en el menú"  delay={0.3} />
           </div>
         </div>
       </div>

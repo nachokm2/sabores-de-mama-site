@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion'
 import { Link } from 'react-router-dom'
-import { SITE, getWhatsAppLink } from '../../data/siteConfig'
+import { SITE, WHATSAPP, getWhatsAppLink } from '../../data/siteConfig'
 
 const FOOTER_LINKS = [
   { label: 'Inicio',    to: '/' },
@@ -126,7 +126,7 @@ export default function Footer() {
             <ul className="flex flex-col gap-3 text-warm-gray text-sm" role="list">
               <li>
                 <a
-                  href={getWhatsAppLink()}
+                  href={getWhatsAppLink(WHATSAPP.flotanteMessage)}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="hover:text-[#15803D] transition-colors duration-200 flex items-center gap-2"

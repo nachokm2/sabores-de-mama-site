@@ -65,6 +65,7 @@ function TeamCard({ member, index }) {
           <img
             src={member.image}
             alt={member.name}
+            loading="lazy"
             className="absolute inset-0 w-full h-full object-cover object-top"
           />
         ) : (
@@ -167,6 +168,7 @@ export default function Nosotros() {
                   <img
                     src="/assets/images/mama.jpg"
                     alt="Estela Zavalla — La mamá de Sabores de Mamá"
+                    loading="lazy"
                     className="w-full h-full object-cover object-top"
                     style={{ aspectRatio: '3/4' }}
                   />
