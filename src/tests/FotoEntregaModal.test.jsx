@@ -61,13 +61,27 @@ describe('FotoEntregaModal', () => {
     expect(screen.getByText(/2 elegidas/i)).toBeInTheDocument()
   })
 
+  it('el botón de elegir cambia a "Agregar más" cuando ya hay fotos', () => {
+    // El input nativo va oculto y se abre desde este botón: al limpiar su valor
+    // (para poder re-elegir un archivo quitado) el navegador escribía "No file
+    // chosen" al lado del control, contradiciendo al contador.
+    render(<FotoEntregaModal pedido={{ id: 7 }} onConfirm={vi.fn()} onClose={vi.fn()} />)
+    expect(screen.getByRole('button', { name: /Elegir fotos/i })).toBeInTheDocument()
+
+    fireEvent.change(inputFile(), { target: { files: [file('a.jpg')] } })
+
+    expect(screen.getByRole('button', { name: /Agregar más fotos/i })).toBeInTheDocument()
+    expect(screen.getByText(/1 elegida/i)).toBeInTheDocument()
+  })
+
   it('permite quitar una foto antes de subir', () => {
     render(<FotoEntregaModal pedido={{ id: 7 }} onConfirm={vi.fn()} onClose={vi.fn()} />)
 
     fireEvent.change(inputFile(), { target: { files: [file('a.jpg'), file('b.jpg')] } })
     fireEvent.click(screen.getByRole('button', { name: /Quitar foto 1/i }))
 
-    expect(screen.getByText(/1 elegidas/i)).toBeInTheDocument()
+    // Singular: queda una sola.
+    expect(screen.getByText(/1 elegida/i)).toBeInTheDocument()
   })
 
   it('con una sola foto confirma con un array de un elemento', async () => {

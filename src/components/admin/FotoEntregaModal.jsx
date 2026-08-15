@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { subirImagen, ApiError } from '../../lib/adminApi'
 
 /**
@@ -11,6 +11,7 @@ import { subirImagen, ApiError } from '../../lib/adminApi'
  * antes de subir.
  */
 export default function FotoEntregaModal({ pedido, onConfirm, onClose }) {
+  const inputRef = useRef(null)
   const [files, setFiles] = useState([])
   const [previews, setPreviews] = useState([])
   const [subiendo, setSubiendo] = useState(false)
@@ -89,28 +90,57 @@ export default function FotoEntregaModal({ pedido, onConfirm, onClose }) {
           fotografía del pedido listo para salir. Puedes agregar varias.
         </p>
 
-        <label className="block text-sm mb-3">
+        <div className="text-sm mb-3">
           <span className="block text-espresso font-medium mb-1.5">
-            Fotografías * {files.length > 0 && <span className="text-warm-gray font-normal">({files.length} elegidas)</span>}
+            Fotografías *{' '}
+            {files.length > 0 && (
+              <span className="text-warm-gray font-normal">
+                ({files.length} {files.length === 1 ? 'elegida' : 'elegidas'})
+              </span>
+            )}
           </span>
+          {/*
+            El input va OCULTO y se abre desde el botón. Es necesario porque
+            `onElegir` limpia su valor para poder volver a elegir un archivo que
+            se quitó de la lista, y el navegador entonces escribe "No file
+            chosen" junto al control: contradecía al contador de al lado y
+            parecía que no se había seleccionado nada.
+          */}
           <input
+            ref={inputRef}
             type="file"
             accept="image/*"
             multiple
             onChange={onElegir}
             disabled={subiendo}
-            className="block w-full text-sm text-warm-gray file:mr-3 file:rounded-full file:border-0 file:bg-terracotta file:text-ivory file:font-semibold file:px-4 file:py-2 file:text-sm hover:file:bg-ember disabled:opacity-50"
+            className="sr-only"
           />
-        </label>
+          <button
+            type="button"
+            onClick={() => inputRef.current?.click()}
+            disabled={subiendo}
+            className="rounded-full bg-terracotta text-ivory font-semibold px-4 py-2 text-sm hover:bg-ember transition-colors disabled:opacity-50"
+          >
+            {files.length ? 'Agregar más fotos' : 'Elegir fotos'}
+          </button>
+        </div>
 
+        {/*
+          `object-contain` y no `object-cover`: con recorte, una foto vertical o
+          panorámica mostraba solo una franja del centro y no se reconocía lo que
+          se había elegido, que es justo para lo que sirve la previsualización.
+          Con una sola foto se muestra grande, como antes de admitir varias.
+        */}
         {previews.length > 0 && (
-          <ul className="grid grid-cols-3 gap-2 mb-3">
+          <ul className={previews.length === 1 ? 'mb-3' : 'grid grid-cols-3 gap-2 mb-3'}>
             {previews.map((url, i) => (
               <li key={url} className="relative">
                 <img
                   src={url}
                   alt={`Previsualización ${i + 1}`}
-                  className="w-full h-24 object-cover rounded-lg border border-espresso/10 bg-background"
+                  className={`w-full object-contain rounded-lg border border-espresso/10 bg-background ${
+                    previews.length === 1 ? 'max-h-64' : 'h-28'
+                  }`}
                 />
                 {!subiendo && (
                   <button
