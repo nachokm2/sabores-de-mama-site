@@ -29,13 +29,17 @@ export function authJWT(req, res, next) {
 }
 
 /**
- * Exige un usuario autenticado CON rol de administrador. Los tokens antiguos
- * sin `rol` se tratan como admin (compatibilidad). Los clientes (rol 'cliente')
- * reciben 403.
+ * Exige un usuario autenticado CON rol de administrador.
+ *
+ * Allowlist, no denylist: solo pasa `rol === 'admin'`. Antes la condición era
+ * `if (req.admin?.rol && req.admin.rol !== 'admin')`, que fallaba ABIERTO — un
+ * token sin el claim `rol` entraba como administrador. Los únicos tokens sin
+ * `rol` serían anteriores a que existiera la columna, y caducaron hace mucho
+ * (viven 8h), así que exigirlo no deja a nadie fuera.
  */
 export function requireAdmin(req, res, next) {
   authJWT(req, res, () => {
-    if (req.admin?.rol && req.admin.rol !== 'admin') {
+    if (req.admin?.rol !== 'admin') {
       return res.status(403).json({ error: 'Acceso restringido a administradores.' })
     }
     next()
@@ -51,7 +55,9 @@ export function isAdminToken(req) {
   if (scheme !== 'Bearer' || !token) return false
   try {
     const payload = jwt.verify(token, process.env.JWT_SECRET)
-    return payload.rol !== 'cliente' // admin o token legado sin rol
+    // Allowlist: antes era `payload.rol !== 'cliente'`, que daba por admin a
+    // cualquier valor distinto de 'cliente' (incluido ninguno).
+    return payload.rol === 'admin'
   } catch {
     return false
   }

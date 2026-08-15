@@ -55,6 +55,12 @@ afterAll(async () => {
 
 beforeEach(async () => {
   await pool.query('TRUNCATE pedidos, cupos, ingredientes, platos, productos_hornear RESTART IDENTITY CASCADE')
+  // Las cuentas de cliente que crean los tests también se limpian: usan emails
+  // fijos y `admin_users` no se trunca, así que sin esto la suite pasa la primera
+  // vez contra una base y falla con 409 en la segunda (en CI no se notaba porque
+  // cada corrida levanta un Postgres nuevo). Se conserva el admin del seed, que
+  // es de donde sale el login de los tests.
+  await pool.query("DELETE FROM admin_users WHERE rol <> 'admin'")
   pedidosRateLimiter.reset()
   sendEstadoEmail.mockClear()
 })
@@ -179,6 +185,149 @@ describe('POST /api/pedidos', () => {
     )
     expect(rows[0].confirmados_meal_prep).toBe(1)
     expect(rows[0].confirmados_cocinera).toBe(1)
+  })
+})
+
+describe('El total del pedido lo calcula el servidor (A1)', () => {
+  const COMUNA = 'Las Condes'
+
+  beforeEach(async () => {
+    // Comunas y servicios_config NO se truncan (los siembran las migraciones),
+    // así que se fijan valores explícitos para que el test sea determinista.
+    await pool.query(
+      `UPDATE comunas SET costo_meal_prep = 5000, activo_meal_prep = true WHERE nombre = $1`,
+      [COMUNA]
+    )
+    await pool.query(
+      `UPDATE servicios_config SET precio_base = 60000, costo_ingredientes = 1000, costo_porcionado = 3000
+        WHERE servicio = 'meal_prep'`
+    )
+    await seedCupo('2026-12-20', 5)
+  })
+
+  const pedidoConDespacho = (over = {}) =>
+    pedidoValido({
+      fecha_entrega: '2026-12-20',
+      tipo_entrega: 'delivery',
+      comuna: COMUNA,
+      ...over,
+    })
+
+  it('ignora un total manipulado y cobra base + despacho', async () => {
+    // El ataque: pedido CON despacho enviado con el total del precio base pelado.
+    // Antes pasaba el piso (60000 >= 60000) y se guardaba tal cual.
+    const res = await request(app)
+      .post('/api/pedidos')
+      .send(pedidoConDespacho({ total: 60000, costo_despacho: 0 }))
+
+    expect(res.status).toBe(201)
+    expect(Number(res.body.pedido.total)).toBe(65000)
+    expect(Number(res.body.pedido.costo_despacho)).toBe(5000)
+  })
+
+  it('ignora un total absurdo (total: 1)', async () => {
+    const res = await request(app).post('/api/pedidos').send(pedidoConDespacho({ total: 1 }))
+    expect(res.status).toBe(201)
+    expect(Number(res.body.pedido.total)).toBe(65000)
+  })
+
+  it('cobra los productos para hornear al precio de la tabla, no al del body', async () => {
+    const { rows } = await pool.query(
+      `INSERT INTO productos_hornear (nombre, precio, activo) VALUES ('Kuchen', 8000, true) RETURNING id`
+    )
+    const res = await request(app)
+      .post('/api/pedidos')
+      .send(
+        pedidoConDespacho({
+          total: 60000,
+          productos_hornear: [{ id: rows[0].id, nombre: 'Kuchen', precio: 1 }],
+        })
+      )
+
+    expect(res.status).toBe(201)
+    expect(Number(res.body.pedido.total)).toBe(73000) // 60000 + 5000 + 8000
+  })
+
+  it('cobra los adicionales al precio de servicios_config, no al del body', async () => {
+    const res = await request(app)
+      .post('/api/pedidos')
+      .send(
+        pedidoConDespacho({
+          total: 60000,
+          adicionales: [
+            { clave: 'ingredientes', nombre: 'Ingredientes', precio: 0 },
+            { clave: 'porcionado', nombre: 'Porcionado', precio: 0 },
+          ],
+        })
+      )
+
+    expect(res.status).toBe(201)
+    expect(Number(res.body.pedido.total)).toBe(69000) // 60000 + 5000 + 1000 + 3000
+  })
+
+  it('no permite evadir el despacho omitiendo tipo_entrega', async () => {
+    const res = await request(app)
+      .post('/api/pedidos')
+      .send(pedidoConDespacho({ tipo_entrega: undefined, total: 60000 }))
+
+    expect(res.status).toBe(201)
+    expect(Number(res.body.pedido.costo_despacho)).toBe(5000)
+  })
+
+  it('rechaza (400) un delivery a una comuna sin cobertura y no consume cupo', async () => {
+    const res = await request(app)
+      .post('/api/pedidos')
+      .send(pedidoConDespacho({ comuna: 'Isla de Pascua' }))
+
+    expect(res.status).toBe(400)
+    expect(res.body.error).toMatch(/despacho/i)
+
+    const { rows } = await pool.query('SELECT confirmados_meal_prep FROM cupos WHERE fecha = $1', ['2026-12-20'])
+    expect(rows[0].confirmados_meal_prep).toBe(0)
+  })
+
+  it('un retiro no paga despacho aunque venga la comuna', async () => {
+    const res = await request(app)
+      .post('/api/pedidos')
+      .send(pedidoConDespacho({ tipo_entrega: 'retiro', total: 99999 }))
+
+    expect(res.status).toBe(201)
+    expect(Number(res.body.pedido.total)).toBe(60000)
+    expect(Number(res.body.pedido.costo_despacho)).toBe(0)
+  })
+})
+
+describe('Separación de roles admin/cliente (A2)', () => {
+  it('el token de un cliente NO abre los endpoints de admin (403)', async () => {
+    const registro = await request(app).post('/api/auth/registro').send({
+      nombre: 'Cliente Test',
+      email: `cliente.rol.${Date.now()}@example.com`,
+      password: 'contraseña-larga-12',
+    })
+    expect(registro.status).toBe(201)
+    expect(registro.body.user.rol).toBe('cliente')
+
+    const res = await request(app)
+      .get('/api/pedidos')
+      .set('Authorization', `Bearer ${registro.body.token}`)
+    expect(res.status).toBe(403)
+  })
+
+  it('el rol por defecto de la columna es cliente, no admin', async () => {
+    const { rows } = await pool.query(
+      `SELECT column_default FROM information_schema.columns
+        WHERE table_name = 'admin_users' AND column_name = 'rol'`
+    )
+    expect(rows[0].column_default).toMatch(/cliente/)
+  })
+
+  it('la columna rol solo acepta admin o cliente', async () => {
+    await expect(
+      pool.query(
+        `INSERT INTO admin_users (email, password_hash, nombre, rol)
+         VALUES ('rol.invalido@example.com', 'x', 'X', 'superadmin')`
+      )
+    ).rejects.toThrow()
   })
 })
 

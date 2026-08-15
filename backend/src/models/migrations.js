@@ -142,7 +142,30 @@ ALTER TABLE productos_hornear ADD COLUMN IF NOT EXISTS porciones VARCHAR(80);
 -- Foto del plato.
 ALTER TABLE platos ADD COLUMN IF NOT EXISTS imagen TEXT;
 -- Usuarios: rol (admin|cliente), teléfono, dirección y recuperación de contraseña.
-ALTER TABLE admin_users ADD COLUMN IF NOT EXISTS rol VARCHAR(20) NOT NULL DEFAULT 'admin';
+-- El DEFAULT es 'cliente', el rol SIN privilegios: cualquier INSERT que olvide la
+-- columna debe crear la cuenta menos poderosa, no la más. (Antes el default era
+-- 'admin', así que un solo INSERT descuidado creaba un administrador.) El seed del
+-- admin fija su rol de forma explícita, ver seedAdmin().
+ALTER TABLE admin_users ADD COLUMN IF NOT EXISTS rol VARCHAR(20) NOT NULL DEFAULT 'cliente';
+ALTER TABLE admin_users ALTER COLUMN rol SET DEFAULT 'cliente';
+-- Solo dos roles posibles: sin esto la columna acepta cualquier texto, y los
+-- chequeos que comparan contra 'cliente' tratarían 'Cliente' o 'clientes' como
+-- administrador.
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint WHERE conname = 'admin_users_rol_check'
+  ) THEN
+    -- Normaliza antes de restringir. En la práctica no toca ninguna fila (los
+    -- únicos valores que se han escrito son 'admin' y 'cliente'), pero sin esto
+    -- una fila inesperada haría fallar el ALTER, y como todo el SQL corre en una
+    -- transacción implícita, se caería la migración COMPLETA. Ante la duda, al
+    -- rol sin privilegios.
+    UPDATE admin_users SET rol = 'cliente' WHERE rol NOT IN ('admin', 'cliente');
+    ALTER TABLE admin_users
+      ADD CONSTRAINT admin_users_rol_check CHECK (rol IN ('admin', 'cliente'));
+  END IF;
+END $$;
 ALTER TABLE admin_users ADD COLUMN IF NOT EXISTS telefono VARCHAR(50);
 ALTER TABLE admin_users ADD COLUMN IF NOT EXISTS direccion VARCHAR(255);
 ALTER TABLE admin_users ADD COLUMN IF NOT EXISTS reset_token VARCHAR(255);
@@ -268,8 +291,11 @@ async function seedAdmin(client) {
   const hash = await bcrypt.hash(password, 10)
   const nombre = process.env.ADMIN_NOMBRE || 'Administradora'
   await client.query(
-    `INSERT INTO admin_users (email, password_hash, nombre)
-     VALUES ($1, $2, $3)
+    // `rol` explícito: el DEFAULT de la columna es 'cliente', así que sin esto
+    // el seed crearía una cuenta sin privilegios y nadie podría entrar al panel
+    // en una base nueva.
+    `INSERT INTO admin_users (email, password_hash, nombre, rol)
+     VALUES ($1, $2, $3, 'admin')
      ON CONFLICT (email) DO NOTHING`,
     [email.toLowerCase().trim(), hash, nombre]
   )
