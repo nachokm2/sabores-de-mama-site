@@ -143,8 +143,56 @@ function fechaCommit(rel) {
   }
 }
 
+
+/**
+ * Segundo camino para fechar: la API pública de GitHub.
+ *
+ * Hace falta porque el builder de Railway NO clona el repositorio, sube un
+ * snapshot de archivos: no hay .git, así que git no puede decir nada (verificado
+ * en el log del deploy). Red sí hay —el npm install descarga paquetes—, y la API
+ * de commits acepta un `path` y devuelve el último commit que lo tocó.
+ *
+ * Sin autenticación son 60 peticiones por hora y este build usa ~20, con caché
+ * por ruta. Si se define GITHUB_TOKEN el límite sube a 5000; es opcional.
+ */
+const REPO = process.env.SITEMAP_GITHUB_REPO || 'nachokm2/sabores-de-mama-site'
+const cacheApi = new Map()
+let apiAgotada = false
+let usoApi = false
+
+async function fechaGitHub(rel) {
+  if (apiAgotada) return null
+  if (cacheApi.has(rel)) return cacheApi.get(rel)
+
+  const url = `https://api.github.com/repos/${REPO}/commits?path=${encodeURIComponent(rel)}&per_page=1`
+  const cabeceras = { 'User-Agent': 'sabores-de-mama-sitemap', Accept: 'application/vnd.github+json' }
+  if (process.env.GITHUB_TOKEN) cabeceras.Authorization = `Bearer ${process.env.GITHUB_TOKEN}`
+
+  try {
+    const res = await fetch(url, { headers: cabeceras, signal: AbortSignal.timeout(15_000) })
+    if (res.status === 403 || res.status === 429) {
+      apiAgotada = true
+      console.warn(`[sitemap] La API de GitHub respondió ${res.status} (cuota). Se omiten las fechas restantes.`)
+      return null
+    }
+    if (!res.ok) {
+      cacheApi.set(rel, null)
+      return null
+    }
+    const commits = await res.json()
+    const fecha = commits?.[0]?.commit?.committer?.date || null
+    if (fecha) usoApi = true
+    cacheApi.set(rel, fecha)
+    return fecha
+  } catch (err) {
+    apiAgotada = true
+    console.warn(`[sitemap] No se pudo consultar la API de GitHub (${err?.message || err}).`)
+    return null
+  }
+}
+
 /** lastmod de una ruta: la más reciente entre sus fuentes. */
-function lastmodDe(ruta) {
+async function lastmodDe(ruta) {
   let fuentes = FUENTES[ruta]
   if (!fuentes) {
     for (const [re, f] of FUENTES_PATRON) {
@@ -157,9 +205,20 @@ function lastmodDe(ruta) {
   }
   if (!fuentes?.length) return null
 
-  // Solo git. El respaldo por mtime se descartó a propósito: ver historialConfiable().
-  const fechas = fuentes.map(fechaCommit).filter(Boolean).sort()
-  return fechas.length ? fechas[fechas.length - 1].slice(0, 10) : null
+  // Primero git (local y CI); si no hay repositorio, la API de GitHub. Nunca el
+  // sistema de archivos: en un snapshot o un clon reciente su fecha es la del
+  // deploy, y una fecha falsa es peor que ninguna.
+  const fechas = []
+  for (const fuente of fuentes) {
+    const f = fechaCommit(fuente) || (await fechaGitHub(fuente))
+    if (f) fechas.push(f)
+  }
+  if (!fechas.length) return null
+  // A UTC antes de recortar el día. git devuelve la fecha con el desfase local
+  // (-04:00) y la API de GitHub en Z: sin normalizar, el MISMO commit daba 07-26
+  // por un camino y 07-27 por el otro.
+  const masReciente = fechas.map((f) => new Date(f)).sort((a, b) => a - b).pop()
+  return masReciente.toISOString().slice(0, 10)
 }
 
 if (!fs.existsSync(DIST)) {
@@ -175,22 +234,25 @@ const rutas = htmlsDe(DIST)
   .sort((a, b) => (a === '/' ? -1 : b === '/' ? 1 : a.localeCompare(b)))
 
 const sinFecha = []
-const urls = rutas.map((ruta) => {
+const urls = []
+for (const ruta of rutas) {
   const [changefreq, priority] = ajustesDe(ruta)
-  const lastmod = lastmodDe(ruta)
+  const lastmod = await lastmodDe(ruta)
   if (!lastmod) sinFecha.push(ruta)
-  return [
-    '  <url>',
-    `    <loc>${BASE}${ruta === '/' ? '/' : ruta}</loc>`,
-    // Se OMITE si no se pudo determinar: una fecha inventada es peor que ninguna.
-    lastmod ? `    <lastmod>${lastmod}</lastmod>` : null,
-    `    <changefreq>${changefreq}</changefreq>`,
-    `    <priority>${priority}</priority>`,
-    '  </url>',
-  ]
-    .filter(Boolean)
-    .join('\n')
-})
+  urls.push(
+    [
+      '  <url>',
+      `    <loc>${BASE}${ruta === '/' ? '/' : ruta}</loc>`,
+      // Se OMITE si no se pudo determinar: una fecha inventada es peor que ninguna.
+      lastmod ? `    <lastmod>${lastmod}</lastmod>` : null,
+      `    <changefreq>${changefreq}</changefreq>`,
+      `    <priority>${priority}</priority>`,
+      '  </url>',
+    ]
+      .filter(Boolean)
+      .join('\n')
+  )
+}
 
 const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
@@ -201,15 +263,16 @@ ${urls.join('\n')}
 fs.writeFileSync(path.join(DIST, 'sitemap.xml'), xml)
 
 const distintas = new Set(xml.match(/<lastmod>[^<]+/g) || [])
+const fuenteUsada = hayGit ? 'git' : usoApi ? 'API de GitHub' : 'ninguna'
 console.log(
   `[sitemap] ${rutas.length} URLs → dist/sitemap.xml ` +
-    `(${distintas.size} fechas distintas, fuente: ${hayGit ? 'git' : 'sistema de archivos'})`
+    `(${distintas.size} fechas distintas, fuente: ${fuenteUsada})`
 )
-if (!hayGit) {
+if (!hayGit && !usoApi) {
   console.warn(
-    '[sitemap] ADVERTENCIA: sin historial de git completo (clon shallow o sin git), ' +
-      'el sitemap va SIN lastmod. Para tener fechas reales por página, el build ' +
-      'necesita el historial: en GitHub Actions, actions/checkout con fetch-depth: 0.'
+    '[sitemap] ADVERTENCIA: el sitemap va SIN lastmod. No hubo historial de git ' +
+      '(el builder de Railway sube un snapshot, no clona) ni respuesta de la API de ' +
+      'GitHub. Revisa la red del build o define GITHUB_TOKEN para más cuota.'
   )
 }
 // Solo con historial disponible la falta de fecha significa "fuentes sin declarar";
