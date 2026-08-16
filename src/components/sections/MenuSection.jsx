@@ -34,6 +34,7 @@ function mapDulce(p, i) {
 const DULCES_FALLBACK = [...DULCES_FAMILIAR, ...DULCES_SNACKS]
 import { useScrollReveal } from '../../hooks/useScrollAnimation'
 import { WHATSAPP, getWhatsAppLink } from '../../data/siteConfig'
+import { metaContactoWhatsApp } from '../../lib/metaPixel'
 
 // Cada servicio inicia su propio flujo de pedido.
 const SERVICE_ROUTES = {
@@ -151,11 +152,13 @@ function ServiceCard({ service, index }) {
     // ninguna disponible. Se deriva a WhatsApp, que es donde se puede quedar en
     // lista de espera.
     if (hayCupos === false) {
+      metaContactoWhatsApp()
       window.open(getWhatsAppLink(WHATSAPP.sinCuposMessage), '_blank', 'noopener')
       return
     }
     // Cocinera a Domicilio se coordina por WhatsApp; el resto usa su flujo.
     if (service.id === 'cocinera') {
+      metaContactoWhatsApp()
       window.open(getWhatsAppLink(WHATSAPP.cocineraMessage), '_blank', 'noopener')
       return
     }
@@ -370,6 +373,7 @@ function DulceCard({ item, index }) {
       onClick={() => {
         const msg = `¡Hola! Me interesa pedir ${item.name}. ¿Está disponible?`
         const url = `https://wa.me/${import.meta.env.VITE_WHATSAPP_NUMBER }?text=${encodeURIComponent(msg)}`
+        metaContactoWhatsApp()
         window.open(url, '_blank', 'noopener,noreferrer')
       }}
       aria-label={`Pedir ${item.name}`}
