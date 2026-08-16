@@ -6,6 +6,7 @@ import Footer from '../components/layout/Footer'
 import PageHero from '../components/ui/PageHero'
 import SectionLabel from '../components/ui/SectionLabel'
 import { WHATSAPP, getWhatsAppLink } from '../data/siteConfig'
+import { openChatBot } from '../lib/openChatBot'
 
 // Preguntas y respuestas factuales y citables (comunas, precios, duración, cómo
 // pedir/pagar). Este mismo contenido alimenta el FAQPage schema de abajo, para
@@ -113,6 +114,11 @@ export default function PreguntasFrecuentes() {
           subtitle="Comunas de entrega, precios, cómo pedir y pagar, y cuánto dura la comida. Si te queda una duda, escríbenos por WhatsApp."
           breadcrumb={[{ label: 'Inicio', href: '/' }, { label: 'Preguntas frecuentes', href: '/preguntas-frecuentes' }]}
         >
+          {/* Esta página la encuentra gente buscando en Google con intención de
+              comprar: el primer botón debe ser el pedido, no la consulta. */}
+          <button onClick={openChatBot} className="btn-primary text-sm">
+            Comenzar mi pedido
+          </button>
           <a href={getWhatsAppLink(WHATSAPP.faqMessage)} target="_blank" rel="noopener noreferrer" className="btn-whatsapp text-sm">
             Consultar por WhatsApp
           </a>
@@ -139,9 +145,12 @@ export default function PreguntasFrecuentes() {
               ¿Te queda otra duda?
             </h2>
             <p className="font-body text-warm-gray text-base mb-8">
-              Escríbenos por WhatsApp y te respondemos en minutos, o revisa el menú para armar tu pedido.
+              Arma tu pedido en el sitio en unos minutos, o escríbenos por WhatsApp si te quedó una duda.
             </p>
             <div className="flex flex-wrap gap-3 justify-center">
+              <button onClick={openChatBot} className="btn-primary">
+                Comenzar mi pedido
+              </button>
               <a href={getWhatsAppLink(WHATSAPP.faqMessage)} target="_blank" rel="noopener noreferrer" className="btn-whatsapp">
                 Consultar por WhatsApp
               </a>
