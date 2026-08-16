@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import SectionLabel from '../ui/SectionLabel'
 import { WHATSAPP, getWhatsAppLink } from '../../data/siteConfig'
+import { openChatBot } from '../../lib/openChatBot'
 
 const FAQ_ITEMS = [
   {
@@ -101,20 +102,37 @@ export default function FAQ() {
               <em className="not-italic text-terracotta">necesitas saber.</em>
             </h2>
             <p className="font-body text-warm-gray text-base leading-relaxed mb-8">
-              ¿Tienes más dudas? Escríbenos directamente por WhatsApp y
-              te respondemos en minutos.
+              ¿Ya te decidiste? Arma tu pedido acá mismo en unos minutos. Y si te
+              quedó una duda, escríbenos por WhatsApp y te respondemos al tiro.
             </p>
-            <motion.a
-              href={getWhatsAppLink(WHATSAPP.faqMessage)}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="btn-whatsapp text-sm"
-              whileHover={{ scale: 1.04 }}
-              whileTap={{ scale: 0.96 }}
-            >
-              <WaIcon />
-              Consultar por WhatsApp
-            </motion.a>
+            {/*
+              Quien terminó de leer las preguntas ya está convencido: acá el
+              llamado principal es empezar el pedido, y WhatsApp queda como
+              alternativa para la duda que no estaba en la lista. Antes esta
+              sección solo ofrecía WhatsApp, así que el camino corto —el checkout—
+              no existía justo donde la intención es más alta.
+            */}
+            <div className="flex flex-wrap gap-3 justify-center items-center">
+              <motion.button
+                onClick={openChatBot}
+                className="btn-primary text-sm"
+                whileHover={{ scale: 1.04 }}
+                whileTap={{ scale: 0.96 }}
+              >
+                Comenzar mi pedido
+              </motion.button>
+              <motion.a
+                href={getWhatsAppLink(WHATSAPP.faqMessage)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="btn-whatsapp text-sm"
+                whileHover={{ scale: 1.04 }}
+                whileTap={{ scale: 0.96 }}
+              >
+                <WaIcon />
+                Consultar por WhatsApp
+              </motion.a>
+            </div>
           </motion.div>
 
           {/* Right: accordion */}
