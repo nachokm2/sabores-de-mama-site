@@ -8,6 +8,7 @@ import SectionLabel from '../components/ui/SectionLabel'
 import { getComunas } from '../lib/publicApi'
 import { fmtCLP } from '../lib/flowConfig'
 import { WHATSAPP, getWhatsAppLink } from '../data/siteConfig'
+import { metaContactoWhatsApp } from '../lib/metaPixel'
 
 /* ── Cómo funciona ───────────────────────────────────────────────────────── */
 const PASOS = [
@@ -87,7 +88,10 @@ export default function Cocinera() {
   }, [])
 
   // La Cocinera a Domicilio se coordina por WhatsApp (horario, visita, detalles).
-  const agendar = () => window.open(getWhatsAppLink(WHATSAPP.cocineraMessage), '_blank', 'noopener')
+  const agendar = () => {
+    metaContactoWhatsApp()
+    window.open(getWhatsAppLink(WHATSAPP.cocineraMessage), '_blank', 'noopener')
+  }
 
   return (
     <>

@@ -11,6 +11,14 @@ test.describe('Flujo Meal Prep', () => {
     const fecha = fechaFutura(20)
     await ensureCupo(request, { fecha, capacidad: 20 })
 
+    // Graba el píxel de Meta en vez de cargarlo: el snippet de index.html hace
+    // `if (f.fbq) return`, así que definirlo antes evita que pida fbevents.js y
+    // que esta corrida registre una compra falsa en la cuenta real de Meta.
+    await page.addInitScript(() => {
+      window.__meta = []
+      window.fbq = (...args) => window.__meta.push(args)
+    })
+
     await page.goto('/meal-prep')
     await llenarDireccion(page)
     await elegirFecha(page, etiquetaFecha(fecha))
@@ -42,6 +50,16 @@ test.describe('Flujo Meal Prep', () => {
     const pedido = await getPedido(request, id)
     expect(pedido.servicio).toBe('meal_prep')
     expect(pedido.estado).toBe('solicitud_recibida')
+
+    // La conversión llega a Meta con el monto real del pedido. Es la única
+    // señal que tiene la campaña para optimizar, y en GTM nunca existió: se
+    // implementó en el código el 16/08/2026 (src/lib/analytics.js).
+    // Number(): la API puede devolver el total como string (pg entrega NUMERIC
+    // así), y el código lo convierte antes de enviarlo. Comparar sin convertir
+    // haría fallar el test por el tipo, no por la medición.
+    expect(await page.evaluate(() => window.__meta)).toContainEqual([
+      'track', 'Purchase', { value: Number(pedido.total), currency: 'CLP' },
+    ])
   })
 
   // NOTA: se eliminó el test "flujo completo meal prep retiro". El flujo Meal Prep

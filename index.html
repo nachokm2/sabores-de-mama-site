@@ -43,15 +43,8 @@
       fbq('init', '1524660162308441')
       fbq('track', 'PageView')
     </script>
-    <noscript>
-      <img
-        height="1"
-        width="1"
-        style="display: none"
-        alt=""
-        src="https://www.facebook.com/tr?id=1524660162308441&ev=PageView&noscript=1"
-      />
-    </noscript>
+    <!-- El <noscript> del píxel va en el <body>, no aquí: dentro del <head>
+         solo se admiten link, style y meta. Ver más abajo. -->
 
     <!-- Favicon: usa el logo de Sabores de Mamá -->
     <link rel="icon" type="image/jpeg" href="/assets/images/logo.jpg" />
@@ -219,6 +212,20 @@
     <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-PN56NXLC"
       height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     <!-- End Google Tag Manager (noscript) -->
+
+    <!-- Píxel de Meta sin JavaScript. Estaba en el <head>, que solo admite link,
+         style y meta: el parser cerraba el head antes de tiempo y Vite avisaba
+         "disallowed-content-in-noscript-in-head" en cada build. -->
+    <noscript>
+      <img
+        height="1"
+        width="1"
+        style="display: none"
+        alt=""
+        src="https://www.facebook.com/tr?id=1524660162308441&ev=PageView&noscript=1"
+      />
+    </noscript>
+
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
   </body>

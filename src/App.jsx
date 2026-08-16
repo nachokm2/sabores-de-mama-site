@@ -2,6 +2,7 @@ import { Outlet, Navigate, useLocation, useNavigate } from 'react-router-dom'
 import { Suspense, useEffect, useRef } from 'react'
 import Lenis from 'lenis'
 import Home from './pages/Home' // landing (LCP) → eager para no diferir el primer render
+import { escucharClicsWhatsApp, metaTrack, primeraVezEnLaSesion } from './lib/metaPixel'
 
 // Helper para rutas con carga diferida (React Router data-router / vite-react-ssg).
 // Nuestras páginas exportan el componente por defecto; lo mapeamos a `Component`.
@@ -111,6 +112,26 @@ function ScrollManager({ lenisRef }) {
 }
 
 /**
+ * ViewContent (Meta) al llegar al menú.
+ *
+ * Se observa el cambio de ruta en vez de montarlo dentro de Menu.jsx porque en
+ * una SPA hay dos formas de llegar: carga directa de /menu y navegación interna.
+ * Aquí las dos pasan por el mismo sitio.
+ *
+ * Una sola vez por pestaña: sin eso, ir y volver al menú tres veces cuenta como
+ * tres visualizaciones y el evento deja de significar "vio el menú".
+ */
+function MetaViewContentMenu() {
+  const { pathname } = useLocation()
+  useEffect(() => {
+    if (pathname !== '/menu') return
+    if (!primeraVezEnLaSesion('sdm:meta-viewcontent-menu')) return
+    metaTrack('ViewContent', { content_name: 'Menu' })
+  }, [pathname])
+  return null
+}
+
+/**
  * Layout raíz de toda la app: inicializa el smooth scroll (Lenis), gestiona el
  * scroll por ruta y escucha el evento de los CTA para iniciar el flujo de pedido.
  * Los efectos solo corren en el navegador → seguro para el pre-render (SSG).
@@ -148,9 +169,13 @@ function RootLayout() {
     return () => window.removeEventListener('sabores:start-flow', handler)
   }, [navigate])
 
+  // Contact (Meta) en cualquier clic a WhatsApp del sitio. Ver metaPixel.js.
+  useEffect(() => escucharClicsWhatsApp(), [])
+
   return (
     <>
       <ScrollManager lenisRef={lenisRef} />
+      <MetaViewContentMenu />
       <Suspense fallback={<div className="min-h-screen bg-background" aria-busy="true" />}>
         <Outlet />
       </Suspense>
