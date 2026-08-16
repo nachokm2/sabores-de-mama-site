@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeAll, afterAll, beforeEach, vi } from 'vitest'
 import request from 'supertest'
+import bcrypt from 'bcryptjs'
 
 // El envío de correos se mockea (los tests de plantillas viven en mailService.test.js).
 vi.mock('../services/mailService.js', () => ({
@@ -57,8 +58,11 @@ async function seedCupo(fecha, capacidad = 5, activo = true) {
   )
 }
 
+// Hash del admin de test, calculado UNA vez (bcrypt es lento a propósito).
+let hashAdmin
 beforeAll(async () => {
   await runMigrations() // crea tablas en sabores_test + seedea el admin de test
+  hashAdmin = await bcrypt.hash(ADMIN.password, 10)
 })
 
 afterAll(async () => {
@@ -67,12 +71,23 @@ afterAll(async () => {
 
 beforeEach(async () => {
   await pool.query('TRUNCATE pedidos, cupos, ingredientes, platos, productos_hornear RESTART IDENTITY CASCADE')
-  // Las cuentas de cliente que crean los tests también se limpian: usan emails
-  // fijos y `admin_users` no se trunca, así que sin esto la suite pasa la primera
-  // vez contra una base y falla con 409 en la segunda (en CI no se notaba porque
-  // cada corrida levanta un Postgres nuevo). Se conserva el admin del seed, que
-  // es de donde sale el login de los tests.
-  await pool.query("DELETE FROM admin_users WHERE rol <> 'admin'")
+  // Se limpian TODAS las cuentas que crean los tests, conservando solo el admin
+  // del seed (de donde sale login()). Antes se filtraba por `rol <> 'admin'`, y
+  // eso dejaba acumularse los administradores que crean los tests de gestión de
+  // usuarios: los que comprueban "es el único administrador" veían tres y fallaban.
+  // Filtrar por el email del seed es lo único estable.
+  await pool.query('DELETE FROM admin_users WHERE email <> $1', [ADMIN.email])
+  // El admin del seed se RECREA si falta, en vez de darlo por existente: el test
+  // de rotación de administrador lo elimina a propósito (es el punto de rotar), y
+  // sin esto los tests siguientes se quedaban sin cuenta con la que iniciar sesión
+  // y fallaban por una causa que no era la suya.
+  await pool.query(
+    `INSERT INTO admin_users (email, password_hash, nombre, rol)
+     VALUES ($1, $2, 'Admin Test', 'admin')
+     ON CONFLICT (email) DO UPDATE
+        SET rol = 'admin', password_hash = EXCLUDED.password_hash, token_version = 0`,
+    [ADMIN.email, hashAdmin]
+  )
   pedidosRateLimiter.reset()
   sendEstadoEmail.mockClear()
 })
@@ -696,5 +711,167 @@ describe('POST /api/pedidos servicio=cocinera + lista_compras', () => {
     expect(rows[0].servicio).toBe('cocinera')
     expect(rows[0].lista_compras).toEqual(listaEditada)
     expect(rows[0].personas).toBe(4)
+  })
+})
+
+describe('Gestión de usuarios desde el panel', () => {
+  const nuevoEmail = () => `usuario.${Date.now()}.${Math.round(performance.now() * 1000)}@example.com`
+
+  it('sin token no se puede listar (401)', async () => {
+    const res = await request(app).get('/api/usuarios')
+    expect(res.status).toBe(401)
+  })
+
+  it('un cliente no puede listar usuarios (403)', async () => {
+    const reg = await request(app)
+      .post('/api/auth/registro')
+      .send({ nombre: 'Cliente', email: nuevoEmail(), password: CLAVE_VALIDA })
+    const res = await request(app).get('/api/usuarios').set('Authorization', `Bearer ${reg.body.token}`)
+    expect(res.status).toBe(403)
+  })
+
+  it('lista las cuentas sin exponer el hash ni los tokens de recuperación', async () => {
+    const token = await login()
+    const res = await request(app).get('/api/usuarios').set('Authorization', `Bearer ${token}`)
+
+    expect(res.status).toBe(200)
+    expect(res.body.usuarios.length).toBeGreaterThan(0)
+    const campos = Object.keys(res.body.usuarios[0])
+    expect(campos).toContain('email')
+    expect(campos).toContain('rol')
+    expect(campos).not.toContain('password_hash')
+    expect(campos).not.toContain('reset_token')
+  })
+
+  it('crea un administrador nuevo y puede iniciar sesión con él', async () => {
+    const token = await login()
+    const email = nuevoEmail()
+    const crear = await request(app)
+      .post('/api/usuarios')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ email, password: CLAVE_NUEVA, nombre: 'Admin Dos', rol: 'admin' })
+
+    expect(crear.status).toBe(201)
+    expect(crear.body.usuario.rol).toBe('admin')
+
+    // La cuenta nueva sirve de verdad: es lo que permite rotar el administrador.
+    const sesion = await request(app).post('/api/auth/login').send({ email, password: CLAVE_NUEVA })
+    expect(sesion.status).toBe(200)
+    const suyo = await request(app).get('/api/usuarios').set('Authorization', `Bearer ${sesion.body.token}`)
+    expect(suyo.status).toBe(200)
+  })
+
+  it('rechaza una contraseña corta (400) y un email repetido (409)', async () => {
+    const token = await login()
+    const email = nuevoEmail()
+    const corta = await request(app)
+      .post('/api/usuarios')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ email, password: 'corta', rol: 'admin' })
+    expect(corta.status).toBe(400)
+
+    await request(app)
+      .post('/api/usuarios')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ email, password: CLAVE_NUEVA, rol: 'cliente' })
+    const repetido = await request(app)
+      .post('/api/usuarios')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ email, password: CLAVE_NUEVA, rol: 'cliente' })
+    expect(repetido.status).toBe(409)
+  })
+
+  it('NO permite eliminar al único administrador (409)', async () => {
+    const token = await login()
+    const { rows } = await pool.query("SELECT id FROM admin_users WHERE rol = 'admin'")
+    expect(rows).toHaveLength(1) // el del seed
+
+    const res = await request(app)
+      .delete(`/api/usuarios/${rows[0].id}`)
+      .set('Authorization', `Bearer ${token}`)
+
+    expect(res.status).toBe(409)
+    expect(res.body.error).toMatch(/único administrador/i)
+    // Y sigue ahí: fallar acá dejaría el panel inaccesible para siempre.
+    const despues = await pool.query("SELECT count(*)::int AS n FROM admin_users WHERE rol = 'admin'")
+    expect(despues.rows[0].n).toBe(1)
+  })
+
+  it('NO permite degradar al único administrador (409)', async () => {
+    const token = await login()
+    const { rows } = await pool.query("SELECT id FROM admin_users WHERE rol = 'admin'")
+    const res = await request(app)
+      .patch(`/api/usuarios/${rows[0].id}`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({ rol: 'cliente' })
+
+    expect(res.status).toBe(409)
+    const despues = await pool.query('SELECT rol FROM admin_users WHERE id = $1', [rows[0].id])
+    expect(despues.rows[0].rol).toBe('admin')
+  })
+
+  it('con DOS administradores sí se puede eliminar uno (la rotación completa)', async () => {
+    const token = await login()
+    const email = nuevoEmail()
+    const crear = await request(app)
+      .post('/api/usuarios')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ email, password: CLAVE_NUEVA, rol: 'admin' })
+    const nuevoId = crear.body.usuario.id
+
+    // Se entra con el nuevo y se elimina el viejo: así se rota la cuenta.
+    const sesion = await request(app).post('/api/auth/login').send({ email, password: CLAVE_NUEVA })
+    const viejo = await pool.query("SELECT id FROM admin_users WHERE rol = 'admin' AND id <> $1", [nuevoId])
+    const res = await request(app)
+      .delete(`/api/usuarios/${viejo.rows[0].id}`)
+      .set('Authorization', `Bearer ${sesion.body.token}`)
+
+    expect(res.status).toBe(200)
+    const quedan = await pool.query("SELECT email FROM admin_users WHERE rol = 'admin'")
+    expect(quedan.rows).toHaveLength(1)
+    expect(quedan.rows[0].email).toBe(email)
+  })
+
+  it('cambiar la contraseña de una cuenta cierra sus sesiones abiertas', async () => {
+    const token = await login()
+    const email = nuevoEmail()
+    const crear = await request(app)
+      .post('/api/usuarios')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ email, password: CLAVE_NUEVA, rol: 'cliente' })
+    const sesion = await request(app).post('/api/auth/login').send({ email, password: CLAVE_NUEVA })
+    const antes = await request(app).get('/api/auth/perfil').set('Authorization', `Bearer ${sesion.body.token}`)
+    expect(antes.status).toBe(200)
+
+    await request(app)
+      .patch(`/api/usuarios/${crear.body.usuario.id}`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({ password: CLAVE_RESET })
+
+    // El token anterior deja de valer: es el punto de rotar una contraseña.
+    const despues = await request(app).get('/api/auth/perfil').set('Authorization', `Bearer ${sesion.body.token}`)
+    expect(despues.status).toBe(401)
+  })
+
+  it('al eliminar una cuenta, sus pedidos NO se borran', async () => {
+    const token = await login()
+    const email = nuevoEmail()
+    const crear = await request(app)
+      .post('/api/usuarios')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ email, password: CLAVE_NUEVA, rol: 'cliente' })
+    const id = crear.body.usuario.id
+
+    const { rows } = await pool.query(
+      `INSERT INTO pedidos (nombre, email, fecha_entrega, servicio, total, usuario_id)
+       VALUES ('X', $1, '2026-12-28', 'meal_prep', 60000, $2) RETURNING id`,
+      [email, id]
+    )
+
+    await request(app).delete(`/api/usuarios/${id}`).set('Authorization', `Bearer ${token}`)
+
+    const pedido = await pool.query('SELECT usuario_id FROM pedidos WHERE id = $1', [rows[0].id])
+    expect(pedido.rows).toHaveLength(1)
+    expect(pedido.rows[0].usuario_id).toBeNull()
   })
 })

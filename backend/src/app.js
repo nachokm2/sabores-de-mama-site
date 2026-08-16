@@ -8,6 +8,7 @@ import { pool } from './models/index.js'
 import { pedidosRateLimiter } from './middleware/rateLimiter.js'
 
 import authRouter from './routes/auth.js'
+import usuariosRouter from './routes/usuarios.js'
 import pedidosRouter from './routes/pedidos.js'
 import platosRouter from './routes/platos.js'
 import cuposRouter from './routes/cupos.js'
@@ -114,6 +115,8 @@ app.get('/api/health', async (req, res) => {
 
 // ── Rutas ──
 app.use('/api/auth', authRouter)
+// Gestión de cuentas desde el panel (solo administradores).
+app.use('/api/usuarios', usuariosRouter)
 // El rate limiter (10 req/min por IP) aplica a TODAS las rutas de pedidos.
 app.use('/api/pedidos', pedidosRateLimiter, pedidosRouter)
 app.use('/api/platos', platosRouter)

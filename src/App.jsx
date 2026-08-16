@@ -168,6 +168,7 @@ export const routes = [
           { path: 'admin/:servicio/comunas', lazy: lazyRoute(() => import('./pages/Admin/AdminComunas')) },
           { path: 'admin/:servicio/productos', lazy: lazyRoute(() => import('./pages/Admin/AdminProductos')) },
           { path: 'admin/:servicio/ajustes', lazy: lazyRoute(() => import('./pages/Admin/AdminAjustes')) },
+          { path: 'admin/:servicio/usuarios', lazy: lazyRoute(() => import('./pages/Admin/AdminUsuarios')) },
           { path: 'admin/:servicio/satisfaccion', lazy: lazyRoute(() => import('./pages/Admin/AdminSatisfaccion')) },
         ],
       },

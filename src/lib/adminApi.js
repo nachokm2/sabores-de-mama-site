@@ -314,3 +314,29 @@ export const SERVICIOS = {
   meal_prep: 'Meal Prep',
   cocinera: 'Cocinera a Domicilio',
 }
+
+// ── Usuarios (solo administradores) ─────────────────────────────────────────
+export function getUsuarios() {
+  return apiFetch('/usuarios')
+}
+export function crearUsuario(data) {
+  return apiFetch('/usuarios', { method: 'POST', body: data })
+}
+export function editarUsuario(id, data) {
+  return apiFetch(`/usuarios/${id}`, { method: 'PATCH', body: data })
+}
+export function eliminarUsuario(id) {
+  return apiFetch(`/usuarios/${id}`, { method: 'DELETE' })
+}
+
+/**
+ * Cambia la contraseña de la cuenta con la que se está trabajando. Exige la
+ * actual: así un token robado no alcanza para apropiarse de la cuenta.
+ * Guarda el token nuevo que devuelve el backend, porque el cambio cierra las
+ * sesiones anteriores (incluida esta si no se renovara).
+ */
+export async function cambiarMiPassword({ password_actual, password }) {
+  const res = await apiFetch('/auth/perfil', { method: 'PATCH', body: { password_actual, password } })
+  if (res?.token) setToken(res.token)
+  return res
+}
