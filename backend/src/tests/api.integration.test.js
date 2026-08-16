@@ -875,3 +875,95 @@ describe('Gestión de usuarios desde el panel', () => {
     expect(pedido.rows[0].usuario_id).toBeNull()
   })
 })
+
+describe('Bajas de la auditoria (B1, B2, B6)', () => {
+  // Helper propio: el de mas arriba vive dentro de otro describe.
+  async function nuevoPedido() {
+    const { rows } = await pool.query(
+      `INSERT INTO pedidos (nombre, email, fecha_entrega, servicio, platos, total)
+       VALUES ('Cliente', 'c@example.com', '2026-12-03', 'meal_prep', '[]'::jsonb, 60000) RETURNING id`
+    )
+    return rows[0].id
+  }
+
+  it('B1 · un id no numérico responde 400, no 500', async () => {
+    const token = await login()
+    // Antes el id llegaba tal cual a PostgreSQL, que fallaba con el error 22P02,
+    // y el manejador lo convertía en un 500: un error del cliente presentado como
+    // una falla del servidor, que además esconde los 500 de verdad en los logs.
+    // El id vacío no entra en la lista a propósito: `/api/pedidos/` es la ruta
+    // del listado, no un id inválido, y responder 200 ahí es lo correcto.
+    for (const malo of ['abc', '1;DROP', '../../etc', '1.5.2', 'null', '-1']) {
+      const res = await request(app)
+        .get(`/api/pedidos/${encodeURIComponent(malo)}`)
+        .set('Authorization', `Bearer ${token}`)
+      expect([400, 404], `id "${malo}" no debe dar 500`).toContain(res.status)
+    }
+  })
+
+  it('B1 · el cambio de estado con un id inválido también responde 400', async () => {
+    const token = await login()
+    const res = await request(app)
+      .patch('/api/pedidos/abc/estado')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ estado: 'pagado' })
+    expect(res.status).toBe(400)
+  })
+
+  it('B1 · un id válido sigue funcionando', async () => {
+    const id = await nuevoPedido()
+    const token = await login()
+    const res = await request(app).get(`/api/pedidos/${id}`).set('Authorization', `Bearer ${token}`)
+    expect(res.status).toBe(200)
+    expect(res.body.pedido.id).toBe(id)
+  })
+
+  it('B2 · la IP de la encuesta no se toma de la cabecera que manda el cliente', async () => {
+    const id = await nuevoPedido()
+    const { surveyToken } = await import('../utils/tokens.js')
+
+    const res = await request(app)
+      .post(`/api/encuestas/${id}`)
+      // Un cliente puede escribir lo que quiera acá. Antes se guardaba el PRIMER
+      // valor de la lista, o sea el inventado por él.
+      .set('X-Forwarded-For', '1.2.3.4, 10.0.0.1')
+      .send({ token: surveyToken(id), satisfaction_rating: 5, would_recommend: true })
+
+    expect(res.status).toBe(201)
+    const { rows } = await pool.query('SELECT ip_address FROM encuestas_satisfaccion WHERE order_id = $1', [id])
+    expect(rows[0].ip_address).not.toBe('1.2.3.4')
+  })
+
+  it('B6 · las contraseñas nuevas se guardan con coste 12', async () => {
+    const token = await login()
+    const email = `coste.${Date.now()}@example.com`
+    await request(app)
+      .post('/api/usuarios')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ email, password: CLAVE_NUEVA, rol: 'cliente' })
+
+    const { rows } = await pool.query('SELECT password_hash FROM admin_users WHERE email = $1', [email])
+    // El hash de bcrypt lleva su propio coste: $2a$12$...
+    expect(rows[0].password_hash).toMatch(/^\$2[aby]?\$12\$/)
+
+    // Y la cuenta sigue pudiendo iniciar sesión (compare respeta el coste guardado).
+    const sesion = await request(app).post('/api/auth/login').send({ email, password: CLAVE_NUEVA })
+    expect(sesion.status).toBe(200)
+  })
+
+  it('B6 · un hash antiguo con coste 10 sigue sirviendo para iniciar sesión', async () => {
+    // Las cuentas existentes no se migran: bcrypt guarda el coste en el hash, así
+    // que las viejas siguen validando hasta que cambien su contraseña.
+    const bcryptMod = (await import('bcryptjs')).default
+    const email = `viejo.${Date.now()}@example.com`
+    const hash10 = await bcryptMod.hash(CLAVE_VALIDA, 10)
+    await pool.query(
+      `INSERT INTO admin_users (email, password_hash, nombre, rol) VALUES ($1, $2, 'Viejo', 'cliente')`,
+      [email, hash10]
+    )
+    expect(hash10).toMatch(/^\$2[aby]?\$10\$/)
+
+    const sesion = await request(app).post('/api/auth/login').send({ email, password: CLAVE_VALIDA })
+    expect(sesion.status).toBe(200)
+  })
+})

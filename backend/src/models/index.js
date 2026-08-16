@@ -16,6 +16,19 @@ if (!process.env.DATABASE_URL) {
   )
 }
 
+// B4 de la auditoría: en producción se avisa si el certificado de la BD no se
+// valida. NO se cambia el valor por defecto: activarlo a ciegas puede dejar la
+// aplicación sin base de datos si el proveedor usa un certificado interno, y eso
+// es un riesgo mucho mayor que el que cierra. El aviso deja el pendiente a la
+// vista para probarlo de forma controlada (definir DB_SSL_STRICT=true y verificar
+// que /api/health siga con db:true).
+if (useSSL && process.env.DB_SSL_STRICT !== 'true' && process.env.NODE_ENV === 'production') {
+  console.warn(
+    '[db] TLS activo pero SIN validar el certificado (DB_SSL_STRICT no está en true). ' +
+      'Mitigado por la red privada de Railway; para cerrarlo, probar DB_SSL_STRICT=true.'
+  )
+}
+
 export const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   // Validación del certificado TLS: opt-in con DB_SSL_STRICT=true (requiere que

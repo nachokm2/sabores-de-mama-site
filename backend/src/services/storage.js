@@ -44,10 +44,20 @@ export function ensureBucketCors() {
   corsPromise = (async () => {
     const s3 = getClient()
     if (!s3) return
-    const origins = (process.env.CORS_ORIGIN || process.env.CLIENT_URL || '*')
+    // Sin comodín: antes, si faltaban CORS_ORIGIN y CLIENT_URL, se configuraba
+    // el bucket con '*' y quedaba abierto a cualquier sitio. Si no hay orígenes
+    // declarados es mejor NO tocar el CORS del bucket que abrirlo.
+    const origins = (process.env.CORS_ORIGIN || process.env.CLIENT_URL || '')
       .split(',')
       .map((o) => o.trim())
-      .filter(Boolean)
+      .filter((o) => o && o !== '*')
+    if (!origins.length) {
+      console.warn(
+        '[storage] Sin CORS_ORIGIN ni CLIENT_URL: no se configura el CORS del bucket ' +
+          '(antes se abría a todos los orígenes). Defínelos si las subidas fallan.'
+      )
+      return
+    }
     try {
       await s3.send(
         new PutBucketCorsCommand({

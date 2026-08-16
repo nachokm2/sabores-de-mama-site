@@ -1,6 +1,6 @@
-import bcrypt from 'bcryptjs'
 import dotenv from 'dotenv'
 import { pool } from './index.js'
+import { hashPassword } from '../utils/password.js'
 
 dotenv.config()
 
@@ -307,7 +307,7 @@ async function seedAdmin(client) {
     console.log('[migrate] ADMIN_EMAIL/ADMIN_PASSWORD no definidos: se omite el seed de admin.')
     return
   }
-  const hash = await bcrypt.hash(password, 10)
+  const hash = await hashPassword(password)
   const nombre = process.env.ADMIN_NOMBRE || 'Administradora'
   await client.query(
     // `rol` explícito: el DEFAULT de la columna es 'cliente', así que sin esto

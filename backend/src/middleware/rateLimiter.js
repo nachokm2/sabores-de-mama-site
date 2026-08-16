@@ -5,9 +5,16 @@
  * pedidos. La ventana es fija: se cuentan las peticiones dentro de cada bloque
  * de `windowMs` y se reinicia al expirar.
  *
- * Nota: el almacenamiento es por proceso. Para múltiples instancias detrás de un
- * balanceador conviene un store compartido (Redis). Para un único servicio en
- * Railway esto es suficiente.
+ * B7 de la auditoría · el contador es POR PROCESO, y se deja así a propósito.
+ *
+ * Con N instancias detrás de un balanceador el límite efectivo se multiplica por
+ * N: 10 req/min por instancia son 30 si hay tres. El arreglo correcto es un store
+ * compartido (Redis), pero eso significa una dependencia de infraestructura nueva
+ * —otro servicio que puede caerse y que, si se cae, tumbaría los endpoints que
+ * protege— para un despliegue que hoy corre en una sola instancia.
+ *
+ * Cuándo revisarlo: al escalar el servicio a más de una instancia. Ahí el límite
+ * deja de significar lo que dice.
  */
 export function createRateLimiter({ windowMs = 60_000, max = 10 } = {}) {
   /** @type {Map<string, { count: number, resetAt: number }>} */

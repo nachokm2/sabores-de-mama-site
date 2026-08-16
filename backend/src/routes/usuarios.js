@@ -1,6 +1,6 @@
 import { Router } from 'express'
-import bcrypt from 'bcryptjs'
 import { query } from '../models/index.js'
+import { hashPassword } from '../utils/password.js'
 import { requireAdmin } from '../middleware/authJWT.js'
 
 const router = Router()
@@ -67,7 +67,7 @@ router.post('/', requireAdmin, async (req, res, next) => {
     const existe = await query('SELECT 1 FROM admin_users WHERE email = $1', [correo])
     if (existe.rows.length) return res.status(409).json({ error: 'Ya existe una cuenta con ese email.' })
 
-    const hash = await bcrypt.hash(String(password), 10)
+    const hash = await hashPassword(password)
     const { rows } = await query(
       `INSERT INTO admin_users (email, password_hash, nombre, telefono, rol)
        VALUES ($1, $2, $3, $4, $5) RETURNING ${COLS}`,
@@ -119,7 +119,7 @@ router.patch('/:id', requireAdmin, async (req, res, next) => {
       if (String(b.password).length < PASSWORD_MIN) {
         return res.status(400).json({ error: `La contraseña debe tener al menos ${PASSWORD_MIN} caracteres.` })
       }
-      add('password_hash', await bcrypt.hash(String(b.password), 10))
+      add('password_hash', await hashPassword(b.password))
       // Cierra las sesiones abiertas de esa cuenta.
       sets.push('token_version = token_version + 1')
     }

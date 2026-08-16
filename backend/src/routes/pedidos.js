@@ -22,6 +22,21 @@ function cuposCols(servicio) {
 }
 
 /**
+ * Id de pedido validado. Sin esto, un id no numérico llegaba tal cual a
+ * PostgreSQL, que respondía con el error 22P02 y el servidor lo convertía en un
+ * 500: un error de cliente presentado como una falla del servidor, que además
+ * ensucia los logs y esconde los 500 de verdad.
+ */
+function pedidoId(req, res) {
+  const id = parseInt(req.params.id, 10)
+  if (!Number.isInteger(id) || id <= 0) {
+    res.status(400).json({ error: 'Número de pedido inválido.' })
+    return null
+  }
+  return id
+}
+
+/**
  * POST /api/pedidos  (público)
  * Crea un pedido. REGLA CRÍTICA: verifica y reserva el cupo de la fecha de
  * entrega ANTES de guardar, mediante un UPDATE condicional atómico que actúa
@@ -367,7 +382,9 @@ router.get('/:id/resumen', async (req, res, next) => {
  */
 router.get('/:id', requireAdmin, async (req, res, next) => {
   try {
-    const { rows } = await query('SELECT * FROM pedidos WHERE id = $1', [req.params.id])
+    const id = pedidoId(req, res)
+    if (id === null) return
+    const { rows } = await query('SELECT * FROM pedidos WHERE id = $1', [id])
     if (!rows[0]) return res.status(404).json({ error: 'Pedido no encontrado.' })
     return res.json({ pedido: rows[0] })
   } catch (err) {
@@ -390,10 +407,9 @@ router.patch('/:id/estado', requireAdmin, async (req, res, next) => {
     }
 
     // Estado actual + fotos ya cargadas (para el enforcement de "en_delivery").
-    const actual = await query(
-      'SELECT foto_entrega, fotos_entrega FROM pedidos WHERE id = $1',
-      [req.params.id]
-    )
+    const id = pedidoId(req, res)
+    if (id === null) return
+    const actual = await query('SELECT foto_entrega, fotos_entrega FROM pedidos WHERE id = $1', [id])
     if (!actual.rows[0]) return res.status(404).json({ error: 'Pedido no encontrado.' })
 
     // Fotos de la entrega. Se aceptan las dos formas: `fotos_entrega` (array, lo
@@ -432,7 +448,7 @@ router.patch('/:id/estado', requireAdmin, async (req, res, next) => {
           SET estado = $1, foto_entrega = $2, fotos_entrega = $3::jsonb,
               plazo_ingredientes = COALESCE($4, plazo_ingredientes)
         WHERE id = $5 RETURNING *`,
-      [estado, finalFoto, JSON.stringify(finalFotos), plazoBody, req.params.id]
+      [estado, finalFoto, JSON.stringify(finalFotos), plazoBody, id]
     )
     if (!rows[0]) return res.status(404).json({ error: 'Pedido no encontrado.' })
 
@@ -489,7 +505,9 @@ router.patch('/:id', requireAdmin, async (req, res, next) => {
 
     if (!sets.length) return res.status(400).json({ error: 'No hay campos para actualizar.' })
 
-    params.push(req.params.id)
+    const id = pedidoId(req, res)
+    if (id === null) return
+    params.push(id)
     const { rows } = await query(
       `UPDATE pedidos SET ${sets.join(', ')} WHERE id = $${params.length} RETURNING *`,
       params
