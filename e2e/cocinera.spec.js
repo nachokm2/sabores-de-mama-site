@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test'
+import { test, expect } from './fixtures'
 import { ensureCupo, getPedido, fechaFutura, etiquetaFecha } from './helpers/api'
 import { llenarDireccion, elegirFecha, seleccionar5Platos, completarDatosYConfirmar } from './helpers/flow'
 
@@ -49,5 +49,15 @@ test.describe('Flujo Cocinera a Domicilio', () => {
     const pedido = await getPedido(request, id)
     expect(pedido.servicio).toBe('cocinera')
     expect(pedido.lista_compras.some((i) => String(i.cantidad) === '999')).toBe(true)
+
+    // La conversión de Meta también sale por este flujo. Se comprueba acá porque
+    // este es el camino que se escapó: el grabador de fbq estaba puesto a mano en
+    // mealprep.spec.js y no acá, así que dos corridas de CI registraron un
+    // Purchase real de $60.000 en la cuenta de Meta el 16/08/2026. Ahora el
+    // grabador es global (e2e/fixtures.js) y esta aserción documenta el segundo
+    // camino para que no vuelva a quedar sin cubrir.
+    expect(await page.evaluate(() => window.__meta)).toContainEqual([
+      'track', 'Purchase', { value: Number(pedido.total), currency: 'CLP' },
+    ])
   })
 })

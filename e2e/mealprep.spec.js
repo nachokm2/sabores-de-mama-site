@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test'
+import { test, expect } from './fixtures'
 import { ensureCupo, getPedido, fechaFutura, etiquetaFecha } from './helpers/api'
 import { llenarDireccion, elegirFecha, seleccionar5Platos, completarDatosYConfirmar, expandirCategorias } from './helpers/flow'
 
