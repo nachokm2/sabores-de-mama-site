@@ -15,6 +15,7 @@ function buildNav(servicio) {
     { to: `${base}/cupos`, label: 'Cupos', icon: '📅' },
     { to: `${base}/comunas`, label: 'Comunas', icon: '📍' },
     { to: `${base}/satisfaccion`, label: 'Satisfacción', icon: '⭐' },
+    { to: `${base}/usuarios`, label: 'Usuarios', icon: '👤' },
     { to: `${base}/ajustes`, label: 'Ajustes', icon: '⚙️' },
   ]
 }
