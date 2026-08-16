@@ -7,7 +7,66 @@ import Home from './pages/Home' // landing (LCP) → eager para no diferir el pr
 // Nuestras páginas exportan el componente por defecto; lo mapeamos a `Component`.
 // Usar el campo `lazy` (en lugar de React.lazy) permite además que vite-react-ssg
 // detecte los CSS de cada chunk al pre-renderizar (evita el "flash" sin estilos).
-const lazyRoute = (importer) => async () => ({ Component: (await importer()).default })
+/**
+ * Clave de sesión que marca que ya se recargó por un chunk que no cargó. Evita
+ * el bucle infinito si el fallo es real y no un despliegue.
+ */
+const YA_RECARGO = 'sdm:recarga-por-chunk'
+
+/**
+ * Recarga UNA vez cuando un chunk no se puede cargar.
+ *
+ * Cada build renombra los archivos con un hash nuevo. Si alguien tiene el sitio
+ * abierto y se despliega, su pestaña sigue pidiendo los nombres viejos, que ya no
+ * existen: la navegación muere con "Failed to fetch dynamically imported module"
+ * y —peor— como toda ruta del panel se sirve con index.html (el home
+ * pre-renderizado), lo que queda en pantalla es el home estático y muerto.
+ *
+ * Recargar toma el index nuevo con los nombres nuevos y todo sigue. La marca en
+ * sessionStorage garantiza que se intente una sola vez por pestaña: si tras
+ * recargar el módulo TAMPOCO carga, el error se propaga y se ve, en vez de dejar
+ * la pestaña recargándose para siempre.
+ */
+function esErrorDeChunk(err) {
+  const msg = String(err?.message || err)
+  return (
+    /dynamically imported module|Importing a module script failed|error loading dynamically imported module/i.test(msg) ||
+    err?.name === 'ChunkLoadError'
+  )
+}
+
+const lazyRoute = (importer) => async () => {
+  try {
+    const mod = { Component: (await importer()).default }
+    // Cargó bien: se limpia la marca para que un despliegue POSTERIOR en esta
+    // misma pestaña también tenga su recarga. Sin esto, la primera recarga
+    // gastaría el único intento de toda la sesión.
+    try {
+      sessionStorage.removeItem(YA_RECARGO)
+    } catch {
+      /* sin sessionStorage no hay nada que limpiar */
+    }
+    return mod
+  } catch (err) {
+    if (typeof window !== 'undefined' && esErrorDeChunk(err)) {
+      let recargado = false
+      try {
+        recargado = sessionStorage.getItem(YA_RECARGO) === '1'
+        if (!recargado) sessionStorage.setItem(YA_RECARGO, '1')
+      } catch {
+        /* sessionStorage bloqueado (modo privado estricto): se recarga igual una vez */
+      }
+      if (!recargado) {
+        console.warn('[app] Un módulo no cargó (probablemente un despliegue nuevo). Recargando…')
+        window.location.reload()
+        // Promesa que nunca resuelve: evita que React Router pinte un error
+        // mientras el navegador ya está recargando.
+        return new Promise(() => {})
+      }
+    }
+    throw err
+  }
+}
 
 // ── Portal de clientes y admin: wrappers de sesión (eager, ligeros) ──
 import ClientePrivateRoute from './components/cuenta/ClientePrivateRoute'

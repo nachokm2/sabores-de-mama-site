@@ -146,3 +146,37 @@ test.describe('Sitemap generado en el build', () => {
     expect(new Set(fechas).size).toBeGreaterThan(1)
   })
 })
+
+/**
+ * Un asset que no existe debe responder 404 y no el home.
+ *
+ * Es el modo de fallo que aparece cada vez que se despliega con el sitio abierto:
+ * los chunks cambian de nombre y la pestaña pide los viejos. Devolver "200 con el
+ * HTML del home" convertía eso en un misterio —el navegador intentaba ejecutar
+ * HTML como módulo— y dejaba en pantalla el home estático, sin React.
+ */
+test.describe('Assets inexistentes', () => {
+  test('un chunk que no existe responde 404, no el home', async ({ request }) => {
+    const res = await request.get(`${PREVIEW}/assets/PaginaQueNoExiste-ABC123.js`)
+    expect(res.status()).toBe(404)
+    expect(res.headers()['content-type']).not.toContain('text/html')
+  })
+
+  test('un asset real se sigue sirviendo con su tipo correcto', async ({ request }) => {
+    const html = await (await request.get(`${PREVIEW}/`)).text()
+    const asset = html.match(/assets\/[A-Za-z0-9._-]+\.js/)?.[0]
+    expect(asset).toBeTruthy()
+
+    const res = await request.get(`${PREVIEW}/${asset}`)
+    expect(res.status()).toBe(200)
+    expect(res.headers()['content-type']).toContain('javascript')
+  })
+
+  test('las rutas del SPA siguen cayendo al index', async ({ request }) => {
+    // El fallback debe seguir vivo para las rutas de la aplicación: la regla
+    // nueva aplica solo a /assets/.
+    const res = await request.get(`${PREVIEW}/admin/meal_prep/usuarios`)
+    expect(res.status()).toBe(200)
+    expect(res.headers()['content-type']).toContain('text/html')
+  })
+})
