@@ -3,6 +3,7 @@ import crypto from 'node:crypto'
 import jwt from 'jsonwebtoken'
 import bcrypt from 'bcryptjs'
 import { query } from '../models/index.js'
+import { hashPassword } from '../utils/password.js'
 import { authJWT } from '../middleware/authJWT.js'
 import { authRateLimiter } from '../middleware/rateLimiter.js'
 import { sendPasswordReset } from '../services/mailService.js'
@@ -87,7 +88,7 @@ router.post('/registro', authRateLimiter, async (req, res, next) => {
     if (existe.rows.length) {
       return res.status(409).json({ error: 'Ya existe una cuenta con ese email.' })
     }
-    const hash = await bcrypt.hash(password, 10)
+    const hash = await hashPassword(password)
     const { rows } = await query(
       `INSERT INTO admin_users (email, password_hash, nombre, telefono, direccion, rol)
        VALUES ($1, $2, $3, $4, $5, 'cliente')
@@ -145,7 +146,7 @@ router.post('/reset', authRateLimiter, async (req, res, next) => {
     if (!rows[0]) {
       return res.status(400).json({ error: 'El enlace es inválido o expiró. Solicita uno nuevo.' })
     }
-    const newHash = await bcrypt.hash(password, 10)
+    const newHash = await hashPassword(password)
     // `token_version + 1` cierra TODAS las sesiones abiertas. Es el punto del
     // arreglo: quien recupera su contraseña normalmente lo hace porque sospecha
     // que alguien más entró, y hasta ahora el token del intruso seguía válido.
@@ -213,7 +214,7 @@ router.patch('/perfil', authJWT, async (req, res, next) => {
       if (!(await bcrypt.compare(String(password_actual), actual.rows[0].password_hash))) {
         return res.status(401).json({ error: 'La contraseña actual no es correcta.' })
       }
-      params.push(await bcrypt.hash(password, 10))
+      params.push(await hashPassword(password))
       sets.push(`password_hash = $${params.length}`)
       // Cambiar la contraseña cierra las demás sesiones (mismo motivo que en
       // /reset). Como esta petición viene de una sesión legítima, más abajo se

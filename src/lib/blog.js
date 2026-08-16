@@ -2,6 +2,19 @@ import { marked } from 'marked'
 
 // Carga TODOS los artículos .md en el build (import.meta.glob, eager + raw).
 // El contenido queda pre-renderizado; no hay CMS ni fetch en runtime.
+//
+// B8 de la auditoría · el Markdown se convierte SIN sanitizador, y se deja así.
+//
+// `marked` permite HTML crudo, y el resultado se inyecta con
+// dangerouslySetInnerHTML (BlogPost.jsx). Eso sería un XSS si el contenido
+// viniera de fuera, pero los .md están EN ESTE REPOSITORIO: quien puede editarlos
+// puede editar también el JavaScript de la aplicación, así que un sanitizador no
+// añade ninguna barrera real — la frontera de confianza es el repositorio, no el
+// parser. Agregarlo sumaría una dependencia y podría romper el HTML legítimo que
+// los artículos usan.
+//
+// Cuándo revisarlo: el día que los artículos se carguen desde la base de datos, un
+// CMS o cualquier entrada que no pase por una revisión de código.
 const files = import.meta.glob('../content/blog/*.md', {
   query: '?raw',
   import: 'default',

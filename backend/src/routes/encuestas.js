@@ -192,7 +192,11 @@ router.post('/:orderId', async (req, res, next) => {
     const ped = await query('SELECT id, usuario_id FROM pedidos WHERE id = $1', [orderId])
     if (!ped.rows[0]) return res.status(404).json({ error: 'Pedido no encontrado.' })
 
-    const ip = String(req.headers['x-forwarded-for'] || '').split(',')[0].trim() || req.ip || null
+    // `req.ip`, no la cabecera cruda: con `trust proxy: 1` Express toma el
+    // último salto de X-Forwarded-For, el que agrega el proxy de Railway.
+    // Leyendo la cabecera a mano se tomaba el PRIMER valor, que lo escribe el
+    // cliente y por lo tanto puede inventarse.
+    const ip = req.ip || null
     const ua = req.headers['user-agent'] || null
 
     try {
