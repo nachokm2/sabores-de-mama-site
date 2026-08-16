@@ -102,6 +102,40 @@ function securityHeaders() {
   }
 }
 
+/**
+ * Un asset que no existe debe responder 404, no el home.
+ *
+ * `vite preview` manda cualquier ruta desconocida al fallback del SPA, incluidos
+ * los /assets/*. Así, un chunk que ya no existe —lo normal cuando se despliega
+ * mientras alguien tiene el sitio abierto, porque cada build renombra los
+ * archivos— devolvía "200 text/html" con la portada. El navegador intentaba
+ * ejecutar HTML como módulo y el error resultante no decía nada útil.
+ *
+ * Con un 404 el fallo es honesto y explícito, y la recarga automática de
+ * lazyRoute (ver src/App.jsx) puede reaccionar con certeza.
+ */
+function assetsSinFallback() {
+  const dist = path.resolve(__dirname, 'dist')
+  return {
+    name: 'assets-sin-fallback',
+    configurePreviewServer(server) {
+      server.middlewares.use((req, res, next) => {
+        const ruta = (req.url || '').split('?')[0]
+        if (!ruta.startsWith('/assets/')) return next()
+
+        // `decodeURIComponent` + normalize evitan que un `..` se escape de dist.
+        const rel = path.normalize(decodeURIComponent(ruta)).replace(/^[/\\]+/, '')
+        const archivo = path.join(dist, rel)
+        if (archivo.startsWith(dist) && fs.existsSync(archivo)) return next()
+
+        res.statusCode = 404
+        res.setHeader('Content-Type', 'text/plain; charset=utf-8')
+        res.end('404: el archivo no existe. Si el sitio se acaba de desplegar, recarga la página.')
+      })
+    },
+  }
+}
+
 // Config como función para distinguir el build de cliente del de servidor (SSR)
 // que hace vite-react-ssg: en el build SSR react/react-dom/etc. son externos y no
 // pueden ir en `manualChunks`, así que ese chunking solo se aplica al cliente.
@@ -115,6 +149,7 @@ const blogSlugs = fs
 export default defineConfig(({ isSsrBuild }) => ({
   plugins: [
     wwwRedirect(),
+    assetsSinFallback(),
     securityHeaders(),
     react(),
     compression({ algorithm: 'gzip', exclude: [/\.(png|jpg|jpeg|gif|svg|webp|avif)$/] }),
