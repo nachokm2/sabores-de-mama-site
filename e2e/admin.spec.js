@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test'
+import { test, expect } from './fixtures'
 import { API_URL, ensureCupo, fechaFutura } from './helpers/api'
 
 // Sin valores por defecto: este repositorio es público (ver e2e/helpers/api.js).

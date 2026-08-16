@@ -5,12 +5,36 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
 
+    <!--
+      La analítica (GTM/GA4 y el píxel de Meta) SOLO se carga en el dominio real.
+
+      Sin esta guarda cargaba en cualquier host, y cada `npm run dev`, cada
+      `vite preview` y cada corrida de tests mandaba datos a las cuentas de
+      producción. Medido el 16/08/2026, en los 28 días previos:
+        · Píxel de Meta: 1.700 eventos desde localhost contra 131 del sitio.
+        · GA4: 1.836 sesiones de localhost (78%) contra 478 del sitio.
+      Nada de eso rompía la medición, pero volvía inservibles los números para
+      decidir cualquier cosa: la propia GA4 llegó a alertar de un "pico de
+      usuarios en Estados Unidos" que era una tanda de tests.
+
+      Consecuencia buscada: en local NO existen `window.fbq` ni el GTM cargado.
+      metaTrack() ya lo contempla y trackEvent() crea `dataLayer` por su cuenta,
+      así que el código sigue funcionando; los tests sustituyen fbq por un
+      grabador (e2e/fixtures.js) y verifican la instrumentación igual.
+
+      El dominio se declara UNA vez acá y lo consultan los dos snippets.
+    -->
+    <script>
+      window.__medir =
+        location.hostname === 'saboresdemama.com' || location.hostname === 'www.saboresdemama.com'
+    </script>
+
     <!-- Google Tag Manager -->
-    <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+    <script>if(window.__medir){(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
     new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
     j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
-    })(window,document,'script','dataLayer','GTM-PN56NXLC');</script>
+    })(window,document,'script','dataLayer','GTM-PN56NXLC')}</script>
     <!-- End Google Tag Manager -->
 
     <!--
@@ -24,18 +48,8 @@
       Contrapartida: cambiarlo exige un deploy, ya no basta con editar GTM.
     -->
     <script>
-      // El píxel SOLO se carga en el dominio de producción.
-      //
-      // Sin esta guarda cargaba en cualquier host, y cada `npm run dev`, cada
-      // `vite preview` y cada verificación local mandaba PageView al mismo
-      // dataset: en los 28 días hasta el 15/08/2026, 1.700 eventos venían de
-      // localhost contra 131 del sitio real. Eso no rompe la medición, pero
-      // vuelve inservibles los números para decidir cualquier cosa.
-      //
-      // Consecuencia buscada: en local `window.fbq` NO existe. metaTrack() ya lo
-      // contempla (src/lib/metaPixel.js) y los tests sustituyen fbq por un
-      // grabador, así que la instrumentación se sigue verificando igual.
-      if (location.hostname === 'saboresdemama.com' || location.hostname === 'www.saboresdemama.com') {
+      // Solo en el dominio real (window.__medir, definido arriba con el motivo).
+      if (window.__medir) {
         !(function (f, b, e, v, n, t, s) {
           if (f.fbq) return
           n = f.fbq = function () {

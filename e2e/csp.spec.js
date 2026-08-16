@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test'
+import { test, expect } from './fixtures'
 
 /**
  * La CSP de producción, verificada en un navegador de verdad.
@@ -90,15 +90,19 @@ test.describe('CSP de producción (servidor de preview)', () => {
     // Definidas por scripts inline: si la CSP los bloqueara quedarían indefinidas
     // y el sitio no hidrataría.
     expect(await page.evaluate(() => typeof window.__VITE_REACT_SSG_HASH__)).toBe('string')
-    expect(await page.evaluate(() => Array.isArray(window.dataLayer))).toBe(true)
+    // `__medir` lo define otro script inline (la guarda de dominio). Antes acá se
+    // comprobaba `window.dataLayer`, pero ya no existe en localhost: lo creaba el
+    // snippet de GTM, que la guarda no carga fuera de producción.
+    expect(await page.evaluate(() => typeof window.__medir)).toBe('boolean')
 
-    // El píxel de Meta sigue declarado en index.html y no en un tag de GTM: es la
-    // razón de que la CSP no lo bloquee. Si alguien lo devuelve a GTM, esto lo
-    // detecta. Se comprueba en el HTML servido y no con `typeof window.fbq`
-    // porque aquí el host es localhost y la guarda de dominio no lo carga —eso
-    // se verifica en meta-pixel.spec.js.
+    // El píxel de Meta y GTM siguen declarados en index.html y no como tags de
+    // HTML personalizado: es la razón de que la CSP no los bloquee. Si alguien
+    // devuelve el píxel a GTM, esto lo detecta. Se comprueba en el HTML servido y
+    // no con `typeof window.fbq` porque aquí el host es localhost y la guarda no
+    // lo carga —eso se verifica en meta-pixel.spec.js.
     const html = await (await page.request.get(`${PREVIEW}/`)).text()
     expect(html).toContain("fbq('init', '1524660162308441')")
+    expect(html).toContain('GTM-PN56NXLC')
 
     await expect(page.locator('#root')).not.toBeEmpty()
   })
