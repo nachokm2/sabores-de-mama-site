@@ -24,24 +24,37 @@
       Contrapartida: cambiarlo exige un deploy, ya no basta con editar GTM.
     -->
     <script>
-      !(function (f, b, e, v, n, t, s) {
-        if (f.fbq) return
-        n = f.fbq = function () {
-          n.callMethod ? n.callMethod.apply(n, arguments) : n.queue.push(arguments)
-        }
-        if (!f._fbq) f._fbq = n
-        n.push = n
-        n.loaded = !0
-        n.version = '2.0'
-        n.queue = []
-        t = b.createElement(e)
-        t.async = !0
-        t.src = v
-        s = b.getElementsByTagName(e)[0]
-        s.parentNode.insertBefore(t, s)
-      })(window, document, 'script', 'https://connect.facebook.net/en_US/fbevents.js')
-      fbq('init', '1524660162308441')
-      fbq('track', 'PageView')
+      // El píxel SOLO se carga en el dominio de producción.
+      //
+      // Sin esta guarda cargaba en cualquier host, y cada `npm run dev`, cada
+      // `vite preview` y cada verificación local mandaba PageView al mismo
+      // dataset: en los 28 días hasta el 15/08/2026, 1.700 eventos venían de
+      // localhost contra 131 del sitio real. Eso no rompe la medición, pero
+      // vuelve inservibles los números para decidir cualquier cosa.
+      //
+      // Consecuencia buscada: en local `window.fbq` NO existe. metaTrack() ya lo
+      // contempla (src/lib/metaPixel.js) y los tests sustituyen fbq por un
+      // grabador, así que la instrumentación se sigue verificando igual.
+      if (location.hostname === 'saboresdemama.com' || location.hostname === 'www.saboresdemama.com') {
+        !(function (f, b, e, v, n, t, s) {
+          if (f.fbq) return
+          n = f.fbq = function () {
+            n.callMethod ? n.callMethod.apply(n, arguments) : n.queue.push(arguments)
+          }
+          if (!f._fbq) f._fbq = n
+          n.push = n
+          n.loaded = !0
+          n.version = '2.0'
+          n.queue = []
+          t = b.createElement(e)
+          t.async = !0
+          t.src = v
+          s = b.getElementsByTagName(e)[0]
+          s.parentNode.insertBefore(t, s)
+        })(window, document, 'script', 'https://connect.facebook.net/en_US/fbevents.js')
+        fbq('init', '1524660162308441')
+        fbq('track', 'PageView')
+      }
     </script>
     <!-- El <noscript> del píxel va en el <body>, no aquí: dentro del <head>
          solo se admiten link, style y meta. Ver más abajo. -->

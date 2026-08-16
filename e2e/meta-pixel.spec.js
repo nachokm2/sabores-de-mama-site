@@ -60,3 +60,51 @@ test.describe('Píxel de Meta', () => {
       .toContainEqual(['track', 'Contact', { content_name: 'WhatsApp' }])
   })
 })
+
+/**
+ * La guarda de dominio de index.html.
+ *
+ * Existe porque el píxel cargaba en cualquier host: en los 28 días hasta el
+ * 15/08/2026, 1.700 de los eventos del dataset venían de localhost y solo 131
+ * del sitio real. Estos dos tests son las dos mitades de la guarda, y ninguno
+ * usa el grabador: aquí lo que se prueba es justamente si el píxel se carga.
+ */
+test.describe('Guarda de dominio del píxel', () => {
+  const PREVIEW = process.env.E2E_PREVIEW_URL || 'http://localhost:4173'
+
+  test('en localhost NO carga: ni fbq ni petición a connect.facebook.net', async ({ page }) => {
+    const aMeta = []
+    page.on('request', (r) => { if (/facebook/.test(r.url())) aMeta.push(r.url()) })
+
+    await page.goto(`${PREVIEW}/`, { waitUntil: 'networkidle' })
+    await page.waitForTimeout(1500)
+
+    expect(await page.evaluate(() => typeof window.fbq)).toBe('undefined')
+    expect(aMeta).toEqual([])
+  })
+
+  test('bajo el dominio de producción SÍ carga', async ({ page, request }) => {
+    // Nada de tráfico real a Meta: si `fbevents.js` cargara de verdad, este test
+    // registraría un PageView en la cuenta en cada corrida de CI — exactamente
+    // la contaminación que la guarda viene a arreglar. Abortado, `fbq` se queda
+    // en el stub que define el snippet, que es lo que hay que comprobar.
+    await page.route(/facebook\.(net|com)/, (r) => r.abort())
+
+    // Se sirve el contenido del preview bajo el hostname de producción, con sus
+    // cabeceras: así la guarda ve el dominio real sin salir a internet.
+    await page.route('https://saboresdemama.com/**', async (route) => {
+      const url = new URL(route.request().url())
+      const resp = await request.get(PREVIEW + url.pathname + url.search)
+      const headers = { ...resp.headers() }
+      delete headers['content-encoding']
+      delete headers['content-length']
+      await route.fulfill({ status: resp.status(), headers, body: await resp.body() })
+    })
+
+    await page.goto('https://saboresdemama.com/', { waitUntil: 'domcontentloaded' })
+
+    expect(await page.evaluate(() => typeof window.fbq)).toBe('function')
+    expect(await page.evaluate(() => (window.fbq.queue || []).map((a) => [...a].slice(0, 2))))
+      .toEqual([['init', '1524660162308441'], ['track', 'PageView']])
+  })
+})

@@ -92,9 +92,13 @@ test.describe('CSP de producción (servidor de preview)', () => {
     expect(await page.evaluate(() => typeof window.__VITE_REACT_SSG_HASH__)).toBe('string')
     expect(await page.evaluate(() => Array.isArray(window.dataLayer))).toBe(true)
 
-    // El píxel de Meta: es la razón por la que está declarado en index.html en vez
-    // de en un tag de GTM. Si alguien lo devuelve a GTM, esto lo detecta.
-    expect(await page.evaluate(() => typeof window.fbq)).toBe('function')
+    // El píxel de Meta sigue declarado en index.html y no en un tag de GTM: es la
+    // razón de que la CSP no lo bloquee. Si alguien lo devuelve a GTM, esto lo
+    // detecta. Se comprueba en el HTML servido y no con `typeof window.fbq`
+    // porque aquí el host es localhost y la guarda de dominio no lo carga —eso
+    // se verifica en meta-pixel.spec.js.
+    const html = await (await page.request.get(`${PREVIEW}/`)).text()
+    expect(html).toContain("fbq('init', '1524660162308441')")
 
     await expect(page.locator('#root')).not.toBeEmpty()
   })
