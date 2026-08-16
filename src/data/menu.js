@@ -15,7 +15,9 @@ export const SERVICES = [
       'Cocino directamente en tu hogar usando tus propios ingredientes. Eliges hasta 5 preparaciones y yo me encargo del resto.',
     features: [
       'Hasta 5 preparaciones a elegir',
-      'De 1 a 5 porciones por preparación',
+      // Acá sí es a elección: el paso de lista de compras pregunta los comensales
+      // (1 a 5) y escala los ingredientes.
+      'Eliges de 1 a 5 porciones por preparación',
       'Duración: 2 a 5 horas',
       'Usas tus propios ingredientes',
       'Dejo la cocina limpia y ordenada',
@@ -39,7 +41,10 @@ export const SERVICES = [
       'Preparo tus comidas en mi cocina, porcionadas individualmente y selladas al vacío. Tú eliges y yo cocino.',
     features: [
       'Hasta 5 preparaciones a elegir',
-      'De 1 a 5 porciones por preparación',
+      // Fijo en 5, no a elección: el flujo de Meal Prep no pregunta comensales y
+      // el backend calcula los ingredientes para 5. Decir "de 1 a 5" prometía una
+      // elección que no existe.
+      '5 porciones por preparación (hasta 25 en total)',
       'Porcionado y sellado al vacío',
       'Envías ingredientes vía delivery',
       // El monto exacto lo muestra la tarjeta bajo las comunas, leyéndolo de la

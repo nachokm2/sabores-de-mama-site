@@ -36,7 +36,7 @@ const FAQ_ITEMS = [
     // Va en la página de FAQ además de en la home: es la pregunta que decide la
     // compra y esta página es la que aparece en las búsquedas de Google.
     q: '¿Cuántas porciones rinde cada preparación?',
-    a: 'Cada preparación se puede hacer de 1 a 5 porciones, según lo que necesites. Como eliges hasta 5 preparaciones por pedido, el servicio rinde entre 5 y 25 porciones individuales, porcionadas y selladas al vacío una por una. En la Cocinera a Domicilio defines el número de comensales al armar el pedido y con eso calculamos la lista de compras.',
+    a: 'En Meal Prep cada preparación rinde 5 porciones individuales, porcionadas y selladas al vacío una por una. Como eliges hasta 5 preparaciones por pedido, son hasta 25 porciones para tu semana. En la Cocinera a Domicilio lo eliges tú: al armar el pedido indicas para cuántas personas cocinamos (de 1 a 5) y con eso calculamos la lista de compras.',
   },
   {
     q: '¿Cómo hago un pedido?',
