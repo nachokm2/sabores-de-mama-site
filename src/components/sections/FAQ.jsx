@@ -21,7 +21,7 @@ const FAQ_ITEMS = [
     // que permite juzgar el precio: sin él nadie puede calcular si le conviene.
     // De hecho ya lo preguntaban en público, en los comentarios de Instagram.
     q: '¿Cuántas porciones rinde cada preparación?',
-    a: 'Cada preparación se puede hacer de 1 a 5 porciones, según lo que necesites. Como puedes elegir hasta 5 preparaciones por pedido, el servicio rinde entre 5 y 25 porciones individuales. En la Cocinera a Domicilio eliges el número de comensales al armar el pedido y con eso calculamos la lista de compras.',
+    a: 'En Meal Prep cada preparación rinde 5 porciones individuales, porcionadas y selladas al vacío una por una: con hasta 5 preparaciones por pedido, son hasta 25 porciones. En la Cocinera a Domicilio tú eliges: al armar el pedido indicas para cuántas personas (de 1 a 5) y con eso calculamos la lista de compras.',
   },
   {
     q: '¿En qué comunas trabajan?',
