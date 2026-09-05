@@ -1,5 +1,6 @@
 import { test, expect } from './fixtures'
 import { API_URL, ensureCupo, fechaFutura } from './helpers/api'
+import { TERMINOS_VERSION } from '../src/data/terminos'
 
 let n = 0
 function nuevoCliente() {
@@ -65,6 +66,10 @@ test.describe('Portal de clientes', () => {
         servicio: 'cocinera',
         platos: [{ id: 1, nombre: 'X' }],
         total: 55000,
+        // Igual que el formulario: sin la aceptación de los T&C la API responde 400.
+        acepta_terminos: true,
+        terminos_version: TERMINOS_VERSION,
+        terminos_aceptados_en: new Date().toISOString(),
       },
     })
     expect(crear.ok()).toBeTruthy()
