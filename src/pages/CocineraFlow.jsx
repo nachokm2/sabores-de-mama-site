@@ -52,6 +52,10 @@ const initialState = {
   nombre: '',
   email: '',
   telefono: '',
+  // Aceptación de los Términos y Condiciones (obligatoria en el resumen).
+  aceptaTerminos: false,
+  terminosAceptadosEn: null,
+  terminosVersion: null,
   total: computeTotal({ base: COCINERA_BASE, costo_despacho: DELIVERY_COST, bakingTotal: 0 }),
 }
 

@@ -75,6 +75,8 @@ describe('BakingAddon', () => {
     render(<SummaryWrapper />)
     await screen.findByText('Brownie Nuez') // add-on cargado
 
+    // Sin aceptar los Términos y Condiciones el botón está deshabilitado.
+    fireEvent.click(screen.getByRole('checkbox', { name: /Términos y Condiciones/ }))
     fireEvent.click(screen.getByRole('button', { name: /Confirmar Pedido/ }))
 
     await waitFor(() => expect(createPedido).toHaveBeenCalledTimes(1))
@@ -90,6 +92,8 @@ describe('BakingAddon', () => {
     const checkbox = screen.getByText('Brownie Nuez').closest('label').querySelector('input[type="checkbox"]')
     fireEvent.click(checkbox)
 
+    // Sin aceptar los Términos y Condiciones el botón está deshabilitado.
+    fireEvent.click(screen.getByRole('checkbox', { name: /Términos y Condiciones/ }))
     fireEvent.click(screen.getByRole('button', { name: /Confirmar Pedido/ }))
 
     await waitFor(() => expect(createPedido).toHaveBeenCalledTimes(1))

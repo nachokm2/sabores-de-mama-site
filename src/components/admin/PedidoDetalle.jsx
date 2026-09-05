@@ -16,6 +16,15 @@ function platoNombre(p) {
   return typeof p === 'string' ? p : p?.nombre || ''
 }
 
+/** Fecha y hora local (es-CL) de un timestamp; '—' si no hay. */
+function fmtFechaHora(v) {
+  if (!v) return '—'
+  const d = new Date(v)
+  return isNaN(d.getTime())
+    ? '—'
+    : d.toLocaleString('es-CL', { dateStyle: 'short', timeStyle: 'short' })
+}
+
 function Bloque({ titulo, children }) {
   return (
     <div>
@@ -192,6 +201,23 @@ export default function PedidoDetalle({ pedido, platosCatalogo = [], postresCata
               <p className="text-espresso">{pedido.observaciones}</p>
             </Bloque>
           )}
+
+          {/* Respaldo de la aceptación de los T&C. Es sólo lectura a propósito:
+              editable dejaría de ser evidencia. Los pedidos anteriores a la
+              casilla y las altas manuales del panel muestran "sin registro". */}
+          <Bloque titulo="Términos y Condiciones">
+            {pedido.terminos_aceptados ? (
+              <>
+                <p className="text-espresso">
+                  ✅ Aceptados{pedido.terminos_version ? ` · versión ${pedido.terminos_version}` : ''}
+                </p>
+                <p className="text-warm-gray">{fmtFechaHora(pedido.terminos_aceptados_en)}</p>
+                {pedido.terminos_ip && <p className="text-warm-gray text-xs">IP: {pedido.terminos_ip}</p>}
+              </>
+            ) : (
+              <p className="text-warm-gray">Sin registro de aceptación</p>
+            )}
+          </Bloque>
 
           {fotosEntrega.length > 0 && (
             <Bloque titulo={fotosEntrega.length > 1 ? `Fotos de entrega (${fotosEntrega.length})` : 'Foto de entrega'}>

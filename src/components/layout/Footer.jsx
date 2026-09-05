@@ -14,6 +14,7 @@ const FOOTER_LINKS = [
   { label: 'Consultar pedido', to: '/consultar-pedido' },
   { label: 'Mi cuenta', to: '/cuenta' },
   { label: 'Contacto',  to: '/contacto' },
+  { label: 'Términos y Condiciones', to: '/terminos-y-condiciones' },
 ]
 
 const InstagramIcon = () => (

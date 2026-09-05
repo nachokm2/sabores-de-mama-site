@@ -215,6 +215,22 @@ UPDATE pedidos
  WHERE foto_entrega IS NOT NULL
    AND foto_entrega <> ''
    AND fotos_entrega = '[]'::jsonb;
+-- ── Aceptación de los Términos y Condiciones ────────────────────────────────
+-- Respaldo de que el cliente aceptó las condiciones ANTES de enviar el pedido.
+-- La VERSIÓN es la columna clave: sin ella, al cambiar los términos se pierde
+-- para siempre qué condiciones aceptó cada cliente, que es justo lo que un
+-- reclamo obliga a demostrar. IP y user-agent acompañan la constancia (mismo
+-- criterio que encuestas_satisfaccion).
+--
+-- Los pedidos ANTERIORES a esta migración quedan en false / NULL: es la verdad
+-- (nadie aceptó nada porque la casilla no existía), y no un default optimista
+-- que inventaría aceptaciones retroactivas.
+ALTER TABLE pedidos ADD COLUMN IF NOT EXISTS terminos_aceptados    BOOLEAN NOT NULL DEFAULT false;
+ALTER TABLE pedidos ADD COLUMN IF NOT EXISTS terminos_version      VARCHAR(20);
+ALTER TABLE pedidos ADD COLUMN IF NOT EXISTS terminos_aceptados_en TIMESTAMPTZ;
+ALTER TABLE pedidos ADD COLUMN IF NOT EXISTS terminos_ip           VARCHAR(64);
+ALTER TABLE pedidos ADD COLUMN IF NOT EXISTS terminos_user_agent   TEXT;
+
 -- Servicio por plato (un plato puede estar en Meal Prep, Cocinera o ambos).
 ALTER TABLE platos ADD COLUMN IF NOT EXISTS meal_prep BOOLEAN NOT NULL DEFAULT true;
 ALTER TABLE platos ADD COLUMN IF NOT EXISTS cocinera  BOOLEAN NOT NULL DEFAULT true;

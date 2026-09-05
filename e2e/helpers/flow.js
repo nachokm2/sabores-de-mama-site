@@ -72,7 +72,11 @@ export async function completarDatosYConfirmar(page, datos) {
   await expect(page.getByRole('textbox', { name: /Email/ })).toHaveValue(datos.email)
   await expect(page.getByRole('textbox', { name: /Teléfono/ })).toHaveValue(datos.telefono)
 
+  // Los Términos y Condiciones son obligatorios: sin la casilla marcada el
+  // botón está deshabilitado y el pedido no se puede enviar.
   const confirmar = page.getByRole('button', { name: /Confirmar Pedido/ })
+  await expect(confirmar).toBeDisabled()
+  await page.getByRole('checkbox', { name: /Términos y Condiciones/ }).check()
   await expect(confirmar).toBeEnabled()
 
   // Esperar la respuesta del POST (bajo carga el backend puede tardar) para que

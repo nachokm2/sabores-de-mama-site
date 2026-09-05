@@ -1,11 +1,12 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import BakingAddon from './BakingAddon'
 import AdicionalesMealPrep from './AdicionalesMealPrep'
 import EnsaladasAddon from './EnsaladasAddon'
 import { createPedido, ApiError } from '../../lib/publicApi'
 import { trackEvent } from '../../lib/analytics'
 import { fmtCLP } from '../../lib/flowConfig'
+import { TERMINOS_RUTA, TERMINOS_VERSION } from '../../data/terminos'
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
@@ -38,7 +39,26 @@ export default function StepSummary({ data, update, onBack }) {
   const [error, setError] = useState('')
 
   const emailValido = EMAIL_RE.test(data.email || '')
-  const valido = (data.nombre || '').trim() !== '' && emailValido && (data.telefono || '').trim() !== ''
+  // La aceptación de los Términos y Condiciones es parte de la validación, no un
+  // aviso: sin ella el botón "Confirmar Pedido" queda deshabilitado y `confirmar`
+  // corta antes del POST.
+  const aceptaTerminos = data.aceptaTerminos === true
+  const valido =
+    (data.nombre || '').trim() !== '' && emailValido && (data.telefono || '').trim() !== '' && aceptaTerminos
+
+  /**
+   * Marca/desmarca la aceptación y guarda el INSTANTE en que se marcó. Ese
+   * momento —no el del envío— es el que viaja al backend como fecha de
+   * aceptación; al desmarcar se borra para que no quede una hora colgada de una
+   * aceptación que ya no existe.
+   */
+  const toggleTerminos = (checked) => {
+    update({
+      aceptaTerminos: checked,
+      terminosAceptadosEn: checked ? new Date().toISOString() : null,
+      terminosVersion: checked ? TERMINOS_VERSION : null,
+    })
+  }
 
   const platosDetalle = data.platosDetalle || []
   const restricciones = data.restricciones || []
@@ -79,6 +99,12 @@ export default function StepSummary({ data, update, onBack }) {
         lista_compras: data.lista_compras || [],
         // Nº de comensales (flujo Cocinera); null en Meal Prep.
         personas: data.personas || null,
+        // Respaldo de la aceptación de los Términos y Condiciones. La versión
+        // acompaña siempre a la aceptación: si mañana cambian las condiciones,
+        // este pedido sigue mostrando cuáles aceptó su cliente.
+        acepta_terminos: true,
+        terminos_version: data.terminosVersion || TERMINOS_VERSION,
+        terminos_aceptados_en: data.terminosAceptadosEn || new Date().toISOString(),
       })
       // Conversión: pedido creado con éxito. GTM escucha 'pedido_confirmado' y
       // lo envía a GA4 (donde se marca como evento clave / conversión).
@@ -209,6 +235,50 @@ export default function StepSummary({ data, update, onBack }) {
             <span className="text-xs text-primary-600 mt-1 block">El teléfono es obligatorio.</span>
           )}
         </label>
+      </div>
+
+      {/* Aceptación de los Términos y Condiciones · obligatoria ANTES de enviar.
+          El enlace abre en una pestaña nueva a propósito: el pedido vive en el
+          estado del componente (no se persiste), así que navegar en la misma
+          pestaña haría perder los 6 pasos ya completados. */}
+      <div className="mb-5">
+        <label
+          className={`flex items-start gap-3 rounded-xl border px-4 py-3.5 cursor-pointer transition-colors ${
+            aceptaTerminos
+              ? 'border-terracotta bg-amber/10'
+              : 'border-espresso/15 bg-background-surface hover:border-terracotta/40'
+          }`}
+        >
+          <input
+            type="checkbox"
+            checked={aceptaTerminos}
+            onChange={(e) => toggleTerminos(e.target.checked)}
+            className="accent-terracotta w-4 h-4 mt-0.5 flex-shrink-0"
+            aria-describedby="terminos-ayuda"
+          />
+          <span className="text-sm text-espresso leading-relaxed">
+            He leído y acepto los{' '}
+            <Link
+              to={TERMINOS_RUTA}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-terracotta font-semibold underline underline-offset-2 hover:text-ember"
+              onClick={(e) => e.stopPropagation()}
+            >
+              Términos y Condiciones
+            </Link>{' '}
+            del servicio.{' '}
+            <span className="text-warm-gray">(versión {TERMINOS_VERSION})</span>
+          </span>
+        </label>
+        <p id="terminos-ayuda" className="text-xs text-warm-gray mt-1.5 px-1">
+          Incluye cómo funcionan los horarios de entrega: nos comprometemos con la fecha, no con una hora exacta.
+        </p>
+        {touched && !aceptaTerminos && (
+          <span className="text-xs text-primary-600 mt-1 block px-1">
+            Debes aceptar los Términos y Condiciones para enviar tu pedido.
+          </span>
+        )}
       </div>
 
       {error && (

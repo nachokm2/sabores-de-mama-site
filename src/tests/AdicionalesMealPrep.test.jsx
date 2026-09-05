@@ -101,6 +101,8 @@ describe('AdicionalesMealPrep', () => {
       .querySelector('input[type="checkbox"]')
     fireEvent.click(checkbox)
 
+    // Sin aceptar los Términos y Condiciones el botón está deshabilitado.
+    fireEvent.click(screen.getByRole('checkbox', { name: /Términos y Condiciones/ }))
     fireEvent.click(screen.getByRole('button', { name: /Confirmar Pedido/ }))
 
     await waitFor(() => expect(createPedido).toHaveBeenCalledTimes(1))

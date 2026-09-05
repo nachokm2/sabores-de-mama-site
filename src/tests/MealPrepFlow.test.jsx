@@ -177,6 +177,10 @@ describe('MealPrepFlow (stepper)', () => {
     fireEvent.change(screen.getByRole('textbox', { name: /Email/ }), { target: { value: 'juan@example.com' } })
     fireEvent.change(screen.getByRole('textbox', { name: /Teléfono/ }), { target: { value: '+56 9 1111 1111' } })
 
+    // La casilla de los Términos y Condiciones es obligatoria: sin marcarla el
+    // botón de confirmar queda deshabilitado.
+    fireEvent.click(screen.getByRole('checkbox', { name: /Términos y Condiciones/ }))
+
     fireEvent.click(screen.getByRole('button', { name: /Confirmar Pedido/ }))
 
     // Navegó a la página de pago (replace).
