@@ -72,11 +72,10 @@ export async function completarDatosYConfirmar(page, datos) {
   await expect(page.getByRole('textbox', { name: /Email/ })).toHaveValue(datos.email)
   await expect(page.getByRole('textbox', { name: /Teléfono/ })).toHaveValue(datos.telefono)
 
-  // Los Términos y Condiciones son obligatorios: sin la casilla marcada el
-  // botón está deshabilitado y el pedido no se puede enviar.
+  // Términos y Condiciones: leer y luego aceptar, en ese orden.
   const confirmar = page.getByRole('button', { name: /Confirmar Pedido/ })
   await expect(confirmar).toBeDisabled()
-  await page.getByRole('checkbox', { name: /Términos y Condiciones/ }).check()
+  await leerYAceptarTerminos(page)
   await expect(confirmar).toBeEnabled()
 
   // Esperar la respuesta del POST (bajo carga el backend puede tardar) para que
@@ -89,4 +88,27 @@ export async function completarDatosYConfirmar(page, datos) {
     confirmar.click(),
   ])
   if (!resp.ok()) throw new Error(`POST /api/pedidos falló: ${resp.status()} ${await resp.text()}`)
+}
+
+/**
+ * Lee los Términos y Condiciones en el modal y marca la aceptación.
+ *
+ * El scroll es real (no un atajo por JS): en el navegador el botón "He leído"
+ * está deshabilitado hasta llegar al final, que es justo lo que se quiere probar.
+ */
+export async function leerYAceptarTerminos(page) {
+  const casilla = page.getByRole('checkbox', { name: /Términos y Condiciones/ })
+  await expect(casilla).toBeDisabled()
+
+  await page.getByRole('button', { name: /Leer los Términos y Condiciones/ }).click()
+  const heLeido = page.getByRole('button', { name: /He leído los términos/ })
+  await expect(heLeido).toBeDisabled()
+
+  const contenido = page.getByTestId('terminos-contenido')
+  await contenido.evaluate((el) => el.scrollTo(0, el.scrollHeight))
+  await expect(heLeido).toBeEnabled()
+  await heLeido.click()
+
+  await expect(casilla).toBeEnabled()
+  await casilla.check()
 }

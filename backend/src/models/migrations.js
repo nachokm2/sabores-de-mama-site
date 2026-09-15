@@ -228,6 +228,10 @@ UPDATE pedidos
 ALTER TABLE pedidos ADD COLUMN IF NOT EXISTS terminos_aceptados    BOOLEAN NOT NULL DEFAULT false;
 ALTER TABLE pedidos ADD COLUMN IF NOT EXISTS terminos_version      VARCHAR(20);
 ALTER TABLE pedidos ADD COLUMN IF NOT EXISTS terminos_aceptados_en TIMESTAMPTZ;
+-- Cuándo terminó de LEER los términos (el formulario no deja marcar la casilla
+-- hasta recorrer el documento). Separada de la aceptación a propósito: juntas
+-- muestran que hubo lectura ANTES del "acepto", no un clic sobre algo no visto.
+ALTER TABLE pedidos ADD COLUMN IF NOT EXISTS terminos_leidos_en    TIMESTAMPTZ;
 ALTER TABLE pedidos ADD COLUMN IF NOT EXISTS terminos_ip           VARCHAR(64);
 ALTER TABLE pedidos ADD COLUMN IF NOT EXISTS terminos_user_agent   TEXT;
 

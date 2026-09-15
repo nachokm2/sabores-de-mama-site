@@ -83,7 +83,10 @@ describe('EnsaladasAddon', () => {
     const checkbox = screen.getByText('César').closest('label').querySelector('input[type="checkbox"]')
     fireEvent.click(checkbox)
 
-    // Sin aceptar los Términos y Condiciones el botón está deshabilitado.
+    // Términos y Condiciones: primero LEER (la casilla está bloqueada hasta
+    // recorrer el modal) y después aceptar.
+    fireEvent.click(screen.getByRole('button', { name: /Leer los Términos y Condiciones/ }))
+    fireEvent.click(screen.getByRole('button', { name: /He leído los términos/ }))
     fireEvent.click(screen.getByRole('checkbox', { name: /Términos y Condiciones/ }))
     fireEvent.click(screen.getByRole('button', { name: /Confirmar Pedido/ }))
 

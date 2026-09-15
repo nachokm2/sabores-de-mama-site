@@ -41,6 +41,7 @@ const pedidoValido = (over = {}) => ({
   acepta_terminos: true,
   terminos_version: '1.0',
   terminos_aceptados_en: new Date().toISOString(),
+  terminos_leidos_en: new Date(Date.now() - 60_000).toISOString(),
   ...over,
 })
 
@@ -212,6 +213,46 @@ describe('POST /api/pedidos', () => {
     expect(new Date(rows[0].terminos_aceptados_en).toISOString()).toBe(aceptadoEn)
     expect(rows[0].terminos_user_agent).toContain('e2e-terminos')
     expect(rows[0].terminos_ip).toBeTruthy()
+  })
+
+  it('guarda cuándo se leyeron los términos, y que fue antes de aceptarlos', async () => {
+    await seedCupo('2026-12-01', 5)
+    const leidos = new Date(Date.now() - 120_000).toISOString()
+    const aceptados = new Date(Date.now() - 30_000).toISOString()
+    const res = await request(app)
+      .post('/api/pedidos')
+      .send(pedidoValido({ terminos_leidos_en: leidos, terminos_aceptados_en: aceptados }))
+
+    expect(res.status).toBe(201)
+    const { rows } = await pool.query(
+      'SELECT terminos_leidos_en, terminos_aceptados_en FROM pedidos WHERE id = $1',
+      [res.body.pedido.id]
+    )
+    expect(new Date(rows[0].terminos_leidos_en).toISOString()).toBe(leidos)
+    expect(rows[0].terminos_leidos_en.getTime()).toBeLessThan(rows[0].terminos_aceptados_en.getTime())
+  })
+
+  it('no inventa una hora de lectura: si no viene o no es creíble, queda null', async () => {
+    await seedCupo('2026-12-01', 5)
+    // Sin el campo: el pedido se crea igual (la lectura es evidencia, no una
+    // segunda puerta), pero sin constancia inventada por el servidor.
+    const sinLectura = pedidoValido()
+    delete sinLectura.terminos_leidos_en
+    const r1 = await request(app).post('/api/pedidos').send(sinLectura)
+    expect(r1.status).toBe(201)
+
+    // Con una fecha incoherente: tampoco se guarda.
+    const r2 = await request(app)
+      .post('/api/pedidos')
+      .send(pedidoValido({ terminos_leidos_en: '1999-01-01T00:00:00.000Z' }))
+    expect(r2.status).toBe(201)
+
+    const { rows } = await pool.query(
+      'SELECT terminos_leidos_en FROM pedidos WHERE id = ANY($1) ORDER BY id',
+      [[r1.body.pedido.id, r2.body.pedido.id]]
+    )
+    expect(rows[0].terminos_leidos_en).toBeNull()
+    expect(rows[1].terminos_leidos_en).toBeNull()
   })
 
   it('ignora una fecha de aceptación incoherente y usa la del servidor', async () => {

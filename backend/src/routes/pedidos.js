@@ -22,19 +22,39 @@ function cuposCols(servicio) {
 }
 
 /**
+ * ¿Es coherente un instante declarado por el navegador? Fecha válida, no futura
+ * (salvo 2 minutos de desfase de reloj) y dentro de las últimas 12 horas.
+ */
+function instanteCoherente(t) {
+  const ahora = Date.now()
+  return Number.isFinite(t) && t <= ahora + 2 * 60_000 && t >= ahora - 12 * 60 * 60_000
+}
+
+/**
  * Momento en que el cliente marcó la casilla de aceptación.
  *
  * El navegador manda el instante exacto del clic, que es unos segundos anterior
  * al envío y por tanto más fiel que la hora del INSERT. Pero es un dato del
- * cliente: se acepta sólo si es coherente (fecha válida, no futura salvo 2
- * minutos de desfase de reloj, y dentro de las últimas 12 horas). Cualquier otra
- * cosa cae a la hora del servidor, que es la única que podemos respaldar.
+ * cliente: si no es coherente cae a la hora del servidor, la única que podemos
+ * respaldar.
  */
 function fechaAceptacion(valor) {
   const t = Date.parse(valor)
-  const ahora = Date.now()
-  const coherente = Number.isFinite(t) && t <= ahora + 2 * 60_000 && t >= ahora - 12 * 60 * 60_000
-  return new Date(coherente ? t : ahora)
+  return new Date(instanteCoherente(t) ? t : Date.now())
+}
+
+/**
+ * Momento en que el cliente terminó de LEER los términos.
+ *
+ * A diferencia de la aceptación, acá NO se inventa una hora de respaldo: si el
+ * dato no vino o no es creíble se guarda null. Un timestamp puesto por el
+ * servidor diría "leyó a esta hora" sin que nadie haya leído nada, y una
+ * evidencia inventada es peor que la ausencia de evidencia.
+ */
+function fechaLectura(valor) {
+  if (valor == null) return null
+  const t = Date.parse(valor)
+  return instanteCoherente(t) ? new Date(t) : null
 }
 
 /** Recorta un texto para que quepa en su columna (null si viene vacío). */
@@ -147,13 +167,15 @@ router.post('/', async (req, res, next) => {
             platos, restricciones, observaciones, tipo_entrega,
             costo_despacho, total, servicio, productos_hornear, lista_compras, personas, usuario_id,
             adicionales,
-            terminos_aceptados, terminos_version, terminos_aceptados_en, terminos_ip, terminos_user_agent)
+            terminos_aceptados, terminos_version, terminos_aceptados_en, terminos_ip, terminos_user_agent,
+            terminos_leidos_en)
          VALUES
            ($1,$2,$3,$4,$5,$6,
             $7::jsonb,$8::jsonb,$9,$10,
             $11,$12,$13,$14::jsonb,$15::jsonb,$16,$17,
             $18::jsonb,
-            true,$19,$20,$21,$22)
+            true,$19,$20,$21,$22,
+            $23)
          RETURNING *`,
         [
           b.nombre,
@@ -178,6 +200,7 @@ router.post('/', async (req, res, next) => {
           fechaAceptacion(b.terminos_aceptados_en),
           recorte(req.ip, 64),
           recorte(req.get('user-agent'), 500),
+          fechaLectura(b.terminos_leidos_en),
         ]
       )
       return insert.rows[0]

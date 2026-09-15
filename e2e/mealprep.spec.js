@@ -51,6 +51,14 @@ test.describe('Flujo Meal Prep', () => {
     expect(pedido.servicio).toBe('meal_prep')
     expect(pedido.estado).toBe('solicitud_recibida')
 
+    // La evidencia de los T&C viaja con el pedido y queda en la BD: aceptación,
+    // versión, y la LECTURA anterior a ella (el flujo no deja aceptar sin leer).
+    expect(pedido.terminos_aceptados).toBe(true)
+    expect(pedido.terminos_version).toBe('1.0')
+    expect(Date.parse(pedido.terminos_leidos_en)).toBeLessThanOrEqual(
+      Date.parse(pedido.terminos_aceptados_en)
+    )
+
     // La conversión llega a Meta con el monto real del pedido. Es la única
     // señal que tiene la campaña para optimizar, y en GTM nunca existió: se
     // implementó en el código el 16/08/2026 (src/lib/analytics.js).

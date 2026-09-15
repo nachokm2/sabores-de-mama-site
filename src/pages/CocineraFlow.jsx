@@ -52,7 +52,10 @@ const initialState = {
   nombre: '',
   email: '',
   telefono: '',
-  // Aceptación de los Términos y Condiciones (obligatoria en el resumen).
+  // Lectura y aceptación de los Términos y Condiciones (obligatorias en el
+  // resumen, y en ese orden: sin leer no se puede aceptar).
+  terminosLeidos: false,
+  terminosLeidosEn: null,
   aceptaTerminos: false,
   terminosAceptadosEn: null,
   terminosVersion: null,

@@ -211,7 +211,12 @@ export default function PedidoDetalle({ pedido, platosCatalogo = [], postresCata
                 <p className="text-espresso">
                   ✅ Aceptados{pedido.terminos_version ? ` · versión ${pedido.terminos_version}` : ''}
                 </p>
-                <p className="text-warm-gray">{fmtFechaHora(pedido.terminos_aceptados_en)}</p>
+                {/* Lectura primero: el orden en pantalla es el orden en que
+                    ocurrió, que es justamente lo que esta evidencia demuestra. */}
+                {pedido.terminos_leidos_en && (
+                  <p className="text-warm-gray">Leídos: {fmtFechaHora(pedido.terminos_leidos_en)}</p>
+                )}
+                <p className="text-warm-gray">Aceptados: {fmtFechaHora(pedido.terminos_aceptados_en)}</p>
                 {pedido.terminos_ip && <p className="text-warm-gray text-xs">IP: {pedido.terminos_ip}</p>}
               </>
             ) : (

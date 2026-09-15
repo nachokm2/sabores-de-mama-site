@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import BakingAddon from './BakingAddon'
 import AdicionalesMealPrep from './AdicionalesMealPrep'
 import EnsaladasAddon from './EnsaladasAddon'
+import TerminosModal from './TerminosModal'
 import { createPedido, ApiError } from '../../lib/publicApi'
 import { trackEvent } from '../../lib/analytics'
 import { fmtCLP } from '../../lib/flowConfig'
@@ -37,22 +38,39 @@ export default function StepSummary({ data, update, onBack }) {
   const [touched, setTouched] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
+  const [modalTerminos, setModalTerminos] = useState(false)
 
   const emailValido = EMAIL_RE.test(data.email || '')
   // La aceptación de los Términos y Condiciones es parte de la validación, no un
   // aviso: sin ella el botón "Confirmar Pedido" queda deshabilitado y `confirmar`
   // corta antes del POST.
+  //
+  // Y la aceptación, a su vez, exige haberlos LEÍDO: la casilla no se puede
+  // marcar hasta recorrer el documento. Sin eso, "acepto" es un clic sobre algo
+  // que el cliente nunca vio, que es justo lo que pasaba con los horarios de
+  // entrega cuando la regla vivía escondida en un correo posterior al pedido.
+  const terminosLeidos = data.terminosLeidos === true
   const aceptaTerminos = data.aceptaTerminos === true
   const valido =
     (data.nombre || '').trim() !== '' && emailValido && (data.telefono || '').trim() !== '' && aceptaTerminos
+
+  /** El cliente llegó al final del documento en el modal. */
+  const confirmarLectura = () => {
+    setModalTerminos(false)
+    if (!terminosLeidos) update({ terminosLeidos: true, terminosLeidosEn: new Date().toISOString() })
+  }
 
   /**
    * Marca/desmarca la aceptación y guarda el INSTANTE en que se marcó. Ese
    * momento —no el del envío— es el que viaja al backend como fecha de
    * aceptación; al desmarcar se borra para que no quede una hora colgada de una
    * aceptación que ya no existe.
+   *
+   * La lectura NO se borra al desmarcar: leer ya ocurrió, y obligar a releer
+   * para volver a marcar la casilla castigaría un clic accidental.
    */
   const toggleTerminos = (checked) => {
+    if (!terminosLeidos) return
     update({
       aceptaTerminos: checked,
       terminosAceptadosEn: checked ? new Date().toISOString() : null,
@@ -105,6 +123,8 @@ export default function StepSummary({ data, update, onBack }) {
         acepta_terminos: true,
         terminos_version: data.terminosVersion || TERMINOS_VERSION,
         terminos_aceptados_en: data.terminosAceptadosEn || new Date().toISOString(),
+        // Cuándo terminó de LEERLOS, que es lo que precede y sostiene al "acepto".
+        terminos_leidos_en: data.terminosLeidosEn || null,
       })
       // Conversión: pedido creado con éxito. GTM escucha 'pedido_confirmado' y
       // lo envía a GA4 (donde se marca como evento clave / conversión).
@@ -237,27 +257,64 @@ export default function StepSummary({ data, update, onBack }) {
         </label>
       </div>
 
-      {/* Aceptación de los Términos y Condiciones · obligatoria ANTES de enviar.
-          El enlace abre en una pestaña nueva a propósito: el pedido vive en el
-          estado del componente (no se persiste), así que navegar en la misma
-          pestaña haría perder los 6 pasos ya completados. */}
+      {/* Términos y Condiciones · lectura y aceptación obligatorias ANTES de
+          enviar. Son dos pasos y en este orden a propósito: primero se lee el
+          documento (modal, sin salir del flujo) y sólo entonces se habilita la
+          casilla. Aceptar algo que no se puede haber leído no es aceptar. */}
       <div className="mb-5">
+        <div
+          className={`rounded-xl border px-4 py-3.5 mb-2.5 transition-colors ${
+            terminosLeidos ? 'border-espresso/15 bg-background-surface' : 'border-terracotta/50 bg-amber/[0.07]'
+          }`}
+        >
+          <div className="flex items-start gap-3">
+            <span className="text-lg leading-none mt-0.5 flex-shrink-0" aria-hidden="true">
+              {terminosLeidos ? '✅' : '📄'}
+            </span>
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-semibold text-espresso">
+                {terminosLeidos ? 'Términos y Condiciones leídos' : 'Antes de enviar, lee los Términos y Condiciones'}
+              </p>
+              <p id="terminos-ayuda" className="text-xs text-warm-gray mt-0.5 leading-relaxed">
+                Incluyen cómo funcionan los horarios de entrega: nos comprometemos con la fecha, no con una hora
+                exacta.
+              </p>
+              <button
+                type="button"
+                onClick={() => setModalTerminos(true)}
+                className={`mt-2.5 rounded-full px-4 py-2 text-sm font-semibold transition-colors ${
+                  terminosLeidos
+                    ? 'text-terracotta hover:text-ember underline underline-offset-2'
+                    : 'bg-terracotta text-ivory hover:bg-ember'
+                }`}
+              >
+                {terminosLeidos ? 'Volver a leerlos' : 'Leer los Términos y Condiciones'}
+              </button>
+            </div>
+          </div>
+        </div>
+
         <label
-          className={`flex items-start gap-3 rounded-xl border px-4 py-3.5 cursor-pointer transition-colors ${
-            aceptaTerminos
-              ? 'border-terracotta bg-amber/10'
-              : 'border-espresso/15 bg-background-surface hover:border-terracotta/40'
+          className={`flex items-start gap-3 rounded-xl border px-4 py-3.5 transition-colors ${
+            !terminosLeidos
+              ? 'border-espresso/10 bg-espresso/[0.03] cursor-not-allowed'
+              : aceptaTerminos
+                ? 'border-terracotta bg-amber/10 cursor-pointer'
+                : 'border-espresso/15 bg-background-surface hover:border-terracotta/40 cursor-pointer'
           }`}
         >
           <input
             type="checkbox"
             checked={aceptaTerminos}
+            disabled={!terminosLeidos}
             onChange={(e) => toggleTerminos(e.target.checked)}
-            className="accent-terracotta w-4 h-4 mt-0.5 flex-shrink-0"
+            className="accent-terracotta w-4 h-4 mt-0.5 flex-shrink-0 disabled:cursor-not-allowed"
             aria-describedby="terminos-ayuda"
           />
-          <span className="text-sm text-espresso leading-relaxed">
+          <span className={`text-sm leading-relaxed ${terminosLeidos ? 'text-espresso' : 'text-warm-gray'}`}>
             He leído y acepto los{' '}
+            {/* El enlace abre en pestaña nueva a propósito: el pedido vive en el
+                estado del componente, así que navegar acá perdería los pasos. */}
             <Link
               to={TERMINOS_RUTA}
               target="_blank"
@@ -267,19 +324,29 @@ export default function StepSummary({ data, update, onBack }) {
             >
               Términos y Condiciones
             </Link>{' '}
-            del servicio.{' '}
-            <span className="text-warm-gray">(versión {TERMINOS_VERSION})</span>
+            del servicio. <span className="text-warm-gray">(versión {TERMINOS_VERSION})</span>
           </span>
         </label>
-        <p id="terminos-ayuda" className="text-xs text-warm-gray mt-1.5 px-1">
-          Incluye cómo funcionan los horarios de entrega: nos comprometemos con la fecha, no con una hora exacta.
-        </p>
+
+        {!terminosLeidos && (
+          <p className="text-xs text-warm-gray mt-1.5 px-1">
+            Para poder marcar esta casilla, primero abre y revisa los términos.
+          </p>
+        )}
         {touched && !aceptaTerminos && (
           <span className="text-xs text-primary-600 mt-1 block px-1">
-            Debes aceptar los Términos y Condiciones para enviar tu pedido.
+            {terminosLeidos
+              ? 'Debes aceptar los Términos y Condiciones para enviar tu pedido.'
+              : 'Debes leer y aceptar los Términos y Condiciones para enviar tu pedido.'}
           </span>
         )}
       </div>
+
+      <TerminosModal
+        abierto={modalTerminos}
+        onCerrar={() => setModalTerminos(false)}
+        onLeido={confirmarLectura}
+      />
 
       {error && (
         <div className="mb-4 text-sm text-primary-700 bg-primary-50 border border-primary-200 rounded-lg px-4 py-2.5">
