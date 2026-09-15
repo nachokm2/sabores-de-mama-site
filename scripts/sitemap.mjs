@@ -40,6 +40,7 @@ const FUENTES = {
   '/almuerzos-a-domicilio-santiago': ['src/pages/AlmuerzosDomicilio.jsx'],
   '/comida-para-empresas': ['src/pages/ComidaEmpresas.jsx'],
   '/preguntas-frecuentes': ['src/pages/PreguntasFrecuentes.jsx'],
+  '/terminos-y-condiciones': ['src/pages/Terminos.jsx', 'src/data/terminos.js'],
   '/blog': ['src/pages/Blog.jsx', 'src/content/blog'],
 }
 
@@ -64,6 +65,7 @@ const AJUSTES = {
   '/nosotros': ['monthly', '0.7'],
   '/contacto': ['monthly', '0.7'],
   '/preguntas-frecuentes': ['monthly', '0.7'],
+  '/terminos-y-condiciones': ['yearly', '0.3'],
   '/galeria': ['monthly', '0.6'],
 }
 const ajustesDe = (ruta) =>

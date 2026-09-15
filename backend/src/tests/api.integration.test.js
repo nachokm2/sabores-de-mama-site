@@ -37,6 +37,11 @@ const pedidoValido = (over = {}) => ({
   servicio: 'meal_prep',
   platos: [{ id: 1, nombre: 'Pollo al Curry' }],
   total: 60000,
+  // La aceptación de los T&C es obligatoria en el alta pública.
+  acepta_terminos: true,
+  terminos_version: '1.0',
+  terminos_aceptados_en: new Date().toISOString(),
+  terminos_leidos_en: new Date(Date.now() - 60_000).toISOString(),
   ...over,
 })
 
@@ -171,6 +176,97 @@ describe('POST /api/pedidos', () => {
 
     // Dispara el correo de solicitud_recibida.
     expect(sendEstadoEmail).toHaveBeenCalledWith(expect.objectContaining({ id: res.body.pedido.id }), 'solicitud_recibida')
+  })
+
+  it('rechaza el pedido si no se aceptaron los Términos y Condiciones (400)', async () => {
+    await seedCupo('2026-12-01', 5)
+    // La casilla del formulario ya bloquea el envío; esto cubre la llamada
+    // directa a la API, donde el bloqueo del navegador no existe.
+    const sinAceptar = pedidoValido()
+    delete sinAceptar.acepta_terminos
+
+    const res = await request(app).post('/api/pedidos').send(sinAceptar)
+    expect(res.status).toBe(400)
+    expect(res.body.error).toMatch(/Términos y Condiciones/i)
+
+    // Y no consumió cupo: el pedido no llegó a crearse.
+    const { rows } = await pool.query('SELECT confirmados_meal_prep FROM cupos WHERE fecha = $1', ['2026-12-01'])
+    expect(rows[0].confirmados_meal_prep).toBe(0)
+  })
+
+  it('guarda el respaldo de la aceptación: versión, fecha, IP y navegador', async () => {
+    await seedCupo('2026-12-01', 5)
+    const aceptadoEn = new Date(Date.now() - 30_000).toISOString()
+    const res = await request(app)
+      .post('/api/pedidos')
+      .set('User-Agent', 'Mozilla/5.0 (e2e-terminos)')
+      .send(pedidoValido({ terminos_version: '1.0', terminos_aceptados_en: aceptadoEn }))
+
+    expect(res.status).toBe(201)
+    const { rows } = await pool.query(
+      `SELECT terminos_aceptados, terminos_version, terminos_aceptados_en, terminos_ip, terminos_user_agent
+         FROM pedidos WHERE id = $1`,
+      [res.body.pedido.id]
+    )
+    expect(rows[0].terminos_aceptados).toBe(true)
+    expect(rows[0].terminos_version).toBe('1.0')
+    expect(new Date(rows[0].terminos_aceptados_en).toISOString()).toBe(aceptadoEn)
+    expect(rows[0].terminos_user_agent).toContain('e2e-terminos')
+    expect(rows[0].terminos_ip).toBeTruthy()
+  })
+
+  it('guarda cuándo se leyeron los términos, y que fue antes de aceptarlos', async () => {
+    await seedCupo('2026-12-01', 5)
+    const leidos = new Date(Date.now() - 120_000).toISOString()
+    const aceptados = new Date(Date.now() - 30_000).toISOString()
+    const res = await request(app)
+      .post('/api/pedidos')
+      .send(pedidoValido({ terminos_leidos_en: leidos, terminos_aceptados_en: aceptados }))
+
+    expect(res.status).toBe(201)
+    const { rows } = await pool.query(
+      'SELECT terminos_leidos_en, terminos_aceptados_en FROM pedidos WHERE id = $1',
+      [res.body.pedido.id]
+    )
+    expect(new Date(rows[0].terminos_leidos_en).toISOString()).toBe(leidos)
+    expect(rows[0].terminos_leidos_en.getTime()).toBeLessThan(rows[0].terminos_aceptados_en.getTime())
+  })
+
+  it('no inventa una hora de lectura: si no viene o no es creíble, queda null', async () => {
+    await seedCupo('2026-12-01', 5)
+    // Sin el campo: el pedido se crea igual (la lectura es evidencia, no una
+    // segunda puerta), pero sin constancia inventada por el servidor.
+    const sinLectura = pedidoValido()
+    delete sinLectura.terminos_leidos_en
+    const r1 = await request(app).post('/api/pedidos').send(sinLectura)
+    expect(r1.status).toBe(201)
+
+    // Con una fecha incoherente: tampoco se guarda.
+    const r2 = await request(app)
+      .post('/api/pedidos')
+      .send(pedidoValido({ terminos_leidos_en: '1999-01-01T00:00:00.000Z' }))
+    expect(r2.status).toBe(201)
+
+    const { rows } = await pool.query(
+      'SELECT terminos_leidos_en FROM pedidos WHERE id = ANY($1) ORDER BY id',
+      [[r1.body.pedido.id, r2.body.pedido.id]]
+    )
+    expect(rows[0].terminos_leidos_en).toBeNull()
+    expect(rows[1].terminos_leidos_en).toBeNull()
+  })
+
+  it('ignora una fecha de aceptación incoherente y usa la del servidor', async () => {
+    await seedCupo('2026-12-01', 5)
+    const res = await request(app)
+      .post('/api/pedidos')
+      .send(pedidoValido({ terminos_aceptados_en: '1999-01-01T00:00:00.000Z' }))
+
+    expect(res.status).toBe(201)
+    const { rows } = await pool.query('SELECT terminos_aceptados_en FROM pedidos WHERE id = $1', [
+      res.body.pedido.id,
+    ])
+    // Se guardó "ahora" (margen amplio), no la fecha antigua enviada por el cliente.
+    expect(Date.now() - new Date(rows[0].terminos_aceptados_en).getTime()).toBeLessThan(60_000)
   })
 
   it('sin cupo configurado para la fecha devuelve 409', async () => {

@@ -22,6 +22,48 @@ function cuposCols(servicio) {
 }
 
 /**
+ * ¿Es coherente un instante declarado por el navegador? Fecha válida, no futura
+ * (salvo 2 minutos de desfase de reloj) y dentro de las últimas 12 horas.
+ */
+function instanteCoherente(t) {
+  const ahora = Date.now()
+  return Number.isFinite(t) && t <= ahora + 2 * 60_000 && t >= ahora - 12 * 60 * 60_000
+}
+
+/**
+ * Momento en que el cliente marcó la casilla de aceptación.
+ *
+ * El navegador manda el instante exacto del clic, que es unos segundos anterior
+ * al envío y por tanto más fiel que la hora del INSERT. Pero es un dato del
+ * cliente: si no es coherente cae a la hora del servidor, la única que podemos
+ * respaldar.
+ */
+function fechaAceptacion(valor) {
+  const t = Date.parse(valor)
+  return new Date(instanteCoherente(t) ? t : Date.now())
+}
+
+/**
+ * Momento en que el cliente terminó de LEER los términos.
+ *
+ * A diferencia de la aceptación, acá NO se inventa una hora de respaldo: si el
+ * dato no vino o no es creíble se guarda null. Un timestamp puesto por el
+ * servidor diría "leyó a esta hora" sin que nadie haya leído nada, y una
+ * evidencia inventada es peor que la ausencia de evidencia.
+ */
+function fechaLectura(valor) {
+  if (valor == null) return null
+  const t = Date.parse(valor)
+  return instanteCoherente(t) ? new Date(t) : null
+}
+
+/** Recorta un texto para que quepa en su columna (null si viene vacío). */
+function recorte(valor, max) {
+  const s = String(valor ?? '').trim()
+  return s ? s.slice(0, max) : null
+}
+
+/**
  * Id de pedido validado. Sin esto, un id no numérico llegaba tal cual a
  * PostgreSQL, que respondía con el error 22P02 y el servidor lo convertía en un
  * 500: un error de cliente presentado como una falla del servidor, que además
@@ -59,6 +101,16 @@ router.post('/', async (req, res, next) => {
     if (!SERVICIOS_VALIDOS.includes(b.servicio)) errores.push('servicio (meal_prep|cocinera)')
     if (errores.length) {
       return res.status(400).json({ error: 'Faltan o son inválidos los campos: ' + errores.join(', ') })
+    }
+
+    // Aceptación de los Términos y Condiciones: requisito para crear un pedido
+    // público. El formulario ya bloquea el envío sin la casilla marcada; esta
+    // comprobación es la que garantiza que NINGÚN pedido pueda quedar guardado
+    // sin su respaldo (la API es pública y se puede llamar directamente).
+    if (b.acepta_terminos !== true) {
+      return res.status(400).json({
+        error: 'Debes aceptar los Términos y Condiciones del servicio para enviar tu pedido.',
+      })
     }
 
     // El total y el costo de despacho se calculan ACÁ, no se aceptan del cliente.
@@ -114,12 +166,16 @@ router.post('/', async (req, res, next) => {
            (nombre, email, telefono, direccion, comuna, fecha_entrega,
             platos, restricciones, observaciones, tipo_entrega,
             costo_despacho, total, servicio, productos_hornear, lista_compras, personas, usuario_id,
-            adicionales)
+            adicionales,
+            terminos_aceptados, terminos_version, terminos_aceptados_en, terminos_ip, terminos_user_agent,
+            terminos_leidos_en)
          VALUES
            ($1,$2,$3,$4,$5,$6,
             $7::jsonb,$8::jsonb,$9,$10,
             $11,$12,$13,$14::jsonb,$15::jsonb,$16,$17,
-            $18::jsonb)
+            $18::jsonb,
+            true,$19,$20,$21,$22,
+            $23)
          RETURNING *`,
         [
           b.nombre,
@@ -140,6 +196,11 @@ router.post('/', async (req, res, next) => {
           Number.isInteger(Number(b.personas)) && Number(b.personas) > 0 ? Number(b.personas) : null,
           optionalUserId(req),
           JSON.stringify(asArray(b.adicionales)),
+          recorte(b.terminos_version, 20),
+          fechaAceptacion(b.terminos_aceptados_en),
+          recorte(req.ip, 64),
+          recorte(req.get('user-agent'), 500),
+          fechaLectura(b.terminos_leidos_en),
         ]
       )
       return insert.rows[0]

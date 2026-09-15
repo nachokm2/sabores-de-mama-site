@@ -118,6 +118,12 @@ describe('CocineraFlow (7 pasos)', () => {
     fireEvent.change(screen.getByRole('textbox', { name: /Email/ }), { target: { value: 'ana@example.com' } })
     fireEvent.change(screen.getByRole('textbox', { name: /Teléfono/ }), { target: { value: '+56 9 2222 2222' } })
 
+    // Términos y Condiciones: primero LEER (la casilla está bloqueada hasta
+    // recorrer el modal) y después aceptar.
+    fireEvent.click(screen.getByRole('button', { name: /Leer los Términos y Condiciones/ }))
+    fireEvent.click(screen.getByRole('button', { name: /He leído los términos/ }))
+    fireEvent.click(screen.getByRole('checkbox', { name: /Términos y Condiciones/ }))
+
     fireEvent.click(screen.getByRole('button', { name: /Confirmar Pedido/ }))
 
     await waitFor(() => expect(createPedido).toHaveBeenCalledTimes(1))

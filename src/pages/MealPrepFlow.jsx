@@ -51,6 +51,13 @@ const initialState = {
   nombre: '',
   email: '',
   telefono: '',
+  // Lectura y aceptación de los Términos y Condiciones (obligatorias en el
+  // resumen, y en ese orden: sin leer no se puede aceptar).
+  terminosLeidos: false,
+  terminosLeidosEn: null,
+  aceptaTerminos: false,
+  terminosAceptadosEn: null,
+  terminosVersion: null,
   // Total (recalculado en cada SET)
   total: computeTotal({ base: MEAL_PREP_BASE, costo_despacho: DELIVERY_COST, bakingTotal: 0 }),
 }

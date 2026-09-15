@@ -1,5 +1,6 @@
 import { test, expect } from './fixtures'
 import { API_URL, ensureCupo, fechaFutura } from './helpers/api'
+import { TERMINOS_VERSION } from '../src/data/terminos'
 
 // Sin valores por defecto: este repositorio es público (ver e2e/helpers/api.js).
 const ADMIN_EMAIL = process.env.E2E_ADMIN_EMAIL
@@ -19,6 +20,10 @@ test.describe('Panel administrador', () => {
         servicio: 'meal_prep',
         platos: [{ id: 1, nombre: 'X' }],
         total: 60000,
+        // Igual que el formulario: sin la aceptación de los T&C la API responde 400.
+        acepta_terminos: true,
+        terminos_version: TERMINOS_VERSION,
+        terminos_aceptados_en: new Date().toISOString(),
       },
     })
     expect(crear.ok()).toBeTruthy()

@@ -209,6 +209,7 @@ export const routes = [
       { path: 'almuerzos-a-domicilio-santiago', lazy: lazyRoute(() => import('./pages/AlmuerzosDomicilio')) },
       { path: 'comida-para-empresas', lazy: lazyRoute(() => import('./pages/ComidaEmpresas')) },
       { path: 'preguntas-frecuentes', lazy: lazyRoute(() => import('./pages/PreguntasFrecuentes')) },
+      { path: 'terminos-y-condiciones', lazy: lazyRoute(() => import('./pages/Terminos')) },
       // Landings por comuna (SEO local); las comunas válidas se pre-renderizan
       // (ver ssgOptions.includedRoutes); un slug desconocido redirige al home.
       { path: 'comida-a-domicilio/:comuna', lazy: lazyRoute(() => import('./pages/ComunaLanding')) },
