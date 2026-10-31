@@ -15,17 +15,30 @@ export const MEAL_PREP_PORCIONADO = Number(import.meta.env.VITE_MEAL_PREP_PORCIO
 export const ENSALADA_PRECIO = Number(import.meta.env.VITE_ENSALADA_PRECIO) || 1500
 
 /**
- * Total del pedido = base del servicio + despacho + add-ons de hornear +
- * servicios adicionales. `base` es parametrizable por flujo (Meal Prep vs
- * Cocinera); por defecto Meal Prep.
+ * Total del pedido = base del servicio − descuento de la fecha + despacho +
+ * add-ons de hornear + servicios adicionales. `base` es parametrizable por
+ * flujo (Meal Prep vs Cocinera); por defecto Meal Prep. Debe coincidir con
+ * backend/src/services/pricing.js.
  */
-export function computeTotal({ base = MEAL_PREP_BASE, costo_despacho = 0, bakingTotal = 0, adicionalesTotal = 0 } = {}) {
+export function computeTotal({
+  base = MEAL_PREP_BASE,
+  descuento = 0,
+  costo_despacho = 0,
+  bakingTotal = 0,
+  adicionalesTotal = 0,
+} = {}) {
   return (
-    Number(base || MEAL_PREP_BASE) +
+    Number(base || MEAL_PREP_BASE) -
+    Number(descuento || 0) +
     Number(costo_despacho || 0) +
     Number(bakingTotal || 0) +
     Number(adicionalesTotal || 0)
   )
+}
+
+/** Monto (en pesos) del descuento de la fecha: un % del precio base. */
+export function montoDescuento(base, pct) {
+  return Math.round((Number(base || 0) * Number(pct || 0)) / 100)
 }
 
 export function fmtCLP(n) {

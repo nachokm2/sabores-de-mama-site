@@ -132,6 +132,7 @@ export default function AdminCupos() {
         fecha: String(c.fecha).slice(0, 10),
         capacidad_maxima: Number(c.capacidad_maxima),
         activo: c.activo,
+        descuento: Number(c.descuento) || 0,
         servicio,
       })
       setCupos((prev) => prev.map((x) => (x.id === c.id ? { ...x, _dirty: false } : x)))
@@ -163,7 +164,8 @@ export default function AdminCupos() {
   return (
     <AdminLayout title="Cupos">
       <p className="text-sm text-warm-gray -mt-3 mb-5">
-        Capacidad por fecha de este servicio. Es independiente del otro servicio.
+        Capacidad por fecha de este servicio. Es independiente del otro servicio. El descuento (%) se
+        aplica sobre el precio del servicio en esa fecha y se le muestra al cliente al elegirla.
       </p>
       {msg && (
         <div className="mb-4 text-sm text-[#15803D] bg-[#15803D]/10 border border-[#15803D]/30 rounded-lg px-4 py-2">
@@ -240,6 +242,7 @@ export default function AdminCupos() {
                   <th className="px-5 py-3 font-medium">Capacidad</th>
                   <th className="px-5 py-3 font-medium">Confirmados</th>
                   <th className="px-5 py-3 font-medium">Disponibles</th>
+                  <th className="px-5 py-3 font-medium">Descuento %</th>
                   <th className="px-5 py-3 font-medium">Activo</th>
                   <th className="px-5 py-3 font-medium"></th>
                 </tr>
@@ -268,6 +271,17 @@ export default function AdminCupos() {
                       <td className="px-5 py-2.5 text-warm-gray">{c.pedidos_confirmados}</td>
                       <td className={`px-5 py-2.5 font-semibold ${lleno ? 'text-primary-600' : 'text-[#15803D]'}`}>
                         {disponibles}
+                      </td>
+                      <td className="px-5 py-2.5">
+                        <input
+                          type="number"
+                          min={0}
+                          max={100}
+                          className={inputCls + ' w-20'}
+                          value={c.descuento ?? 0}
+                          onChange={(e) => setCampo(c.id, 'descuento', e.target.value)}
+                          aria-label={`Descuento del ${fmtFecha(c.fecha)}`}
+                        />
                       </td>
                       <td className="px-5 py-2.5">
                         <label className="inline-flex items-center gap-2">

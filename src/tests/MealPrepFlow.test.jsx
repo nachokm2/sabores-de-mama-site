@@ -151,6 +151,24 @@ describe('MealPrepFlow (stepper)', () => {
     )
   })
 
+  it('una fecha con descuento rebaja el % sobre el precio base (no sobre el despacho)', async () => {
+    getCupos.mockResolvedValue([{ ...CUPOS[0], descuento: 10 }, CUPOS[1]])
+    renderFlow()
+    await step1to2()
+    await step2to3()
+    await selectDishes(5)
+    fireEvent.click(continuar()) // paso 3 → 4
+    fireEvent.click(continuar()) // paso 4 → 5 (entrega)
+
+    const descuento = Math.round(MEAL_PREP_BASE * 0.1)
+    expect(screen.getByText('Descuento de la fecha (10%)').closest('div').textContent).toContain(
+      `-${fmtCLP(descuento)}`
+    )
+    expect(screen.getByText('Total').closest('div').textContent).toContain(
+      fmtCLP(MEAL_PREP_BASE - descuento + DELIVERY_COST)
+    )
+  })
+
   it('el paso de pago no puede retroceder al flujo (navegación con replace)', async () => {
     render(
       <HelmetProvider>

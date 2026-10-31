@@ -8,15 +8,16 @@ const router = Router()
 // Cada servicio tiene su propia capacidad, confirmados y disponibilidad.
 function cols(servicio) {
   return servicio === 'cocinera'
-    ? { cap: 'capacidad_cocinera', conf: 'confirmados_cocinera', act: 'activo_cocinera' }
-    : { cap: 'capacidad_meal_prep', conf: 'confirmados_meal_prep', act: 'activo_meal_prep' }
+    ? { cap: 'capacidad_cocinera', conf: 'confirmados_cocinera', act: 'activo_cocinera', desc: 'descuento_cocinera' }
+    : { cap: 'capacidad_meal_prep', conf: 'confirmados_meal_prep', act: 'activo_meal_prep', desc: 'descuento_meal_prep' }
 }
 
-const sel = ({ cap, conf, act }) => `
+const sel = ({ cap, conf, act, desc }) => `
   id, fecha,
   COALESCE(${cap}, 0)     AS capacidad_maxima,
   COALESCE(${conf}, 0)    AS pedidos_confirmados,
   COALESCE(${act}, false) AS activo,
+  COALESCE(${desc}, 0)    AS descuento,
   GREATEST(COALESCE(${cap}, 0) - COALESCE(${conf}, 0), 0) AS disponibles`
 
 /**
@@ -47,32 +48,45 @@ function parseCapacidad(v) {
   return Number.isInteger(n) && n >= 0 ? n : null
 }
 
+// Descuento en %: entero de 0 a 100. `undefined` = no viene (se conserva el
+// actual); NaN = inválido.
+function parseDescuento(v) {
+  if (v === undefined || v === null || v === '') return undefined
+  const n = Number(v)
+  return Number.isInteger(n) && n >= 0 && n <= 100 ? n : NaN
+}
+
 // Upsert del cupo de una fecha PARA UN SERVICIO. No reinicia los confirmados.
-async function upsertCupo(c, fecha, capacidad, activo) {
+// Sin descuento explícito se conserva el que tenga la fecha: así crear fechas
+// en lote no borra un descuento ya configurado.
+async function upsertCupo(c, fecha, capacidad, activo, descuento) {
   const { rows } = await query(
-    `INSERT INTO cupos (fecha, ${c.cap}, ${c.conf}, ${c.act})
-     VALUES ($1, $2, 0, $3)
+    `INSERT INTO cupos (fecha, ${c.cap}, ${c.conf}, ${c.act}, ${c.desc})
+     VALUES ($1, $2, 0, $3, COALESCE($4::int, 0))
      ON CONFLICT (fecha) DO UPDATE
        SET ${c.cap}  = EXCLUDED.${c.cap},
            ${c.act}  = EXCLUDED.${c.act},
-           ${c.conf} = COALESCE(cupos.${c.conf}, 0)
+           ${c.conf} = COALESCE(cupos.${c.conf}, 0),
+           ${c.desc} = COALESCE($4::int, cupos.${c.desc})
      RETURNING ${sel(c)}`,
-    [fecha, capacidad, activo !== false]
+    [fecha, capacidad, activo !== false, descuento ?? null]
   )
   return rows[0]
 }
 
 /**
  * POST /api/cupos  (admin) — crea/edita el cupo de una fecha PARA UN SERVICIO.
- * Body: { fecha, servicio, capacidad_maxima, activo }
+ * Body: { fecha, servicio, capacidad_maxima, activo, descuento? }
  */
 router.post('/', requireAdmin, async (req, res, next) => {
   try {
-    const { fecha, servicio, capacidad_maxima, activo } = req.body || {}
+    const { fecha, servicio, capacidad_maxima, activo, descuento } = req.body || {}
     if (!fecha) return res.status(400).json({ error: 'La fecha es obligatoria.' })
     const capacidad = parseCapacidad(capacidad_maxima)
     if (capacidad === null) return res.status(400).json({ error: 'capacidad_maxima debe ser un entero >= 0.' })
-    const cupo = await upsertCupo(cols(servicio), fecha, capacidad, activo)
+    const pct = parseDescuento(descuento)
+    if (Number.isNaN(pct)) return res.status(400).json({ error: 'descuento debe ser un entero entre 0 y 100.' })
+    const cupo = await upsertCupo(cols(servicio), fecha, capacidad, activo, pct)
     return res.status(201).json({ cupo })
   } catch (err) {
     next(err)
@@ -81,21 +95,23 @@ router.post('/', requireAdmin, async (req, res, next) => {
 
 /**
  * POST /api/cupos/bulk  (admin) — varias fechas a la vez PARA UN SERVICIO.
- * Body: { fechas: [...], servicio, capacidad_maxima, activo }
+ * Body: { fechas: [...], servicio, capacidad_maxima, activo, descuento? }
  */
 router.post('/bulk', requireAdmin, async (req, res, next) => {
   try {
-    const { fechas, servicio, capacidad_maxima, activo } = req.body || {}
+    const { fechas, servicio, capacidad_maxima, activo, descuento } = req.body || {}
     if (!Array.isArray(fechas) || fechas.length === 0) {
       return res.status(400).json({ error: 'Debes enviar al menos una fecha.' })
     }
     const capacidad = parseCapacidad(capacidad_maxima)
     if (capacidad === null) return res.status(400).json({ error: 'capacidad_maxima debe ser un entero >= 0.' })
+    const pct = parseDescuento(descuento)
+    if (Number.isNaN(pct)) return res.status(400).json({ error: 'descuento debe ser un entero entre 0 y 100.' })
 
     const c = cols(servicio)
     const creados = []
     for (const fecha of fechas) {
-      creados.push(await upsertCupo(c, fecha, capacidad, activo))
+      creados.push(await upsertCupo(c, fecha, capacidad, activo, pct))
     }
     return res.status(201).json({ cupos: creados, count: creados.length })
   } catch (err) {
@@ -112,7 +128,7 @@ router.delete('/:id', requireAdmin, async (req, res, next) => {
   try {
     const c = cols(req.query.servicio)
     const { rows } = await query(
-      `UPDATE cupos SET ${c.cap} = NULL, ${c.conf} = NULL, ${c.act} = NULL
+      `UPDATE cupos SET ${c.cap} = NULL, ${c.conf} = NULL, ${c.act} = NULL, ${c.desc} = 0
        WHERE id = $1 RETURNING capacidad_meal_prep, capacidad_cocinera`,
       [req.params.id]
     )

@@ -41,6 +41,12 @@ export default function StepDelivery({ data, update, onNext, onBack }) {
           <span>{serviceLabel}</span>
           <span>{fmtCLP(base)}</span>
         </div>
+        {data.descuento > 0 && (
+          <div className="flex justify-between text-sm font-semibold text-[#15803D] mt-1">
+            <span>Descuento de la fecha ({data.descuentoPct}%)</span>
+            <span>-{fmtCLP(data.descuento)}</span>
+          </div>
+        )}
         <div className="flex justify-between text-sm text-warm-gray mt-1">
           <span>Despacho</span>
           <span>{fmtCLP(data.costo_despacho)}</span>

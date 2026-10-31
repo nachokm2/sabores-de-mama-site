@@ -156,6 +156,9 @@ export default function PedidoDetalle({ pedido, platosCatalogo = [], postresCata
             <p className="text-espresso">{pedido.tipo_entrega || '—'}</p>
             <p className="text-warm-gray">{pedido.direccion || '—'}{pedido.comuna ? `, ${pedido.comuna}` : ''}</p>
             <p className="text-warm-gray">Despacho: {fmtCLP(pedido.costo_despacho)}</p>
+            {Number(pedido.descuento) > 0 && (
+              <p className="text-[#15803D]">Descuento de la fecha: -{fmtCLP(pedido.descuento)}</p>
+            )}
             <p className="text-warm-gray">Entrega: {fmtFecha(pedido.fecha_entrega)}</p>
             {pedido.personas > 0 && (
               <p className="text-warm-gray">

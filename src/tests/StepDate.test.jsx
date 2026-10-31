@@ -68,6 +68,28 @@ describe('StepDate', () => {
     const disponible = await screen.findByText('5 cupos')
     fireEvent.click(disponible.closest('button'))
 
-    expect(update).toHaveBeenCalledWith({ fecha_entrega: '2026-07-01' })
+    expect(update).toHaveBeenCalledWith({ fecha_entrega: '2026-07-01', descuentoPct: 0 })
+  })
+
+  it('una fecha con descuento se marca y al elegirla guarda su %', async () => {
+    getCupos.mockResolvedValue([CUPO_A, { ...CUPO_B, descuento: 10 }])
+    const { update } = renderStep()
+
+    expect(await screen.findByText('-10%')).toBeInTheDocument()
+    expect(screen.getByText(/Hay fechas con descuento/)).toBeInTheDocument()
+    // Sólo la fecha con descuento lleva la marca.
+    expect(screen.getAllByText('10% de descuento')).toHaveLength(1)
+
+    fireEvent.click(screen.getByText('2 cupos').closest('button'))
+    expect(update).toHaveBeenCalledWith({ fecha_entrega: '2026-07-03', descuentoPct: 10 })
+  })
+
+  it('una fecha llena no anuncia su descuento', async () => {
+    getCupos.mockResolvedValue([CUPO_A, { ...CUPO_LLENO, descuento: 10 }])
+    renderStep()
+
+    await screen.findByText('Sin cupo')
+    expect(screen.queryByText('-10%')).not.toBeInTheDocument()
+    expect(screen.queryByText(/Hay fechas con descuento/)).not.toBeInTheDocument()
   })
 })

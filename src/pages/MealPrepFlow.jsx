@@ -14,6 +14,7 @@ import {
   MEAL_PREP_INGREDIENTES,
   MEAL_PREP_PORCIONADO,
   computeTotal,
+  montoDescuento,
 } from '../lib/flowConfig'
 import { getServicioConfig } from '../lib/publicApi'
 
@@ -29,6 +30,8 @@ const initialState = {
   comunaCosto: DELIVERY_COST, // costo de despacho de la comuna elegida
   // Paso 2
   fecha_entrega: '',
+  descuentoPct: 0, // % de descuento de la fecha elegida (lo configura la admin)
+  descuento: 0, // monto en pesos (recalculado en cada SET)
   // Paso 3
   platos: [], // ids
   platosDetalle: [], // [{id, nombre, descripcion}]
@@ -66,8 +69,10 @@ function reducer(state, action) {
   switch (action.type) {
     case 'SET': {
       const next = { ...state, ...action.payload }
+      next.descuento = montoDescuento(next.base, next.descuentoPct)
       next.total = computeTotal({
         base: next.base,
+        descuento: next.descuento,
         costo_despacho: next.costo_despacho,
         bakingTotal: next.bakingTotal,
         adicionalesTotal: next.adicionalesTotal,
