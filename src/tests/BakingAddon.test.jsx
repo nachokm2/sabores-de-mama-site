@@ -71,6 +71,34 @@ describe('BakingAddon', () => {
     expect(screen.getByText(/¿Quieres agregar algo saludable\?/)).toBeInTheDocument()
   })
 
+  it('los productos con etiqueta salen agrupados en un recuadro destacado', async () => {
+    getProductosHornear.mockResolvedValue([
+      { id: 20, nombre: 'Pan de Pascua Tradicional', formato: '1 kg', precio: 9500, etiqueta: 'Pan de Pascua 🎄' },
+      { id: 21, nombre: 'Pan de Pascua Frutos Secos', formato: '1 kg', precio: 10500, etiqueta: 'Pan de Pascua 🎄' },
+      ...PRODUCTOS,
+    ])
+    const update = vi.fn()
+    render(<BakingAddon data={{ productos_hornear: [] }} update={update} />)
+
+    const titulo = await screen.findByRole('heading', { name: 'Pan de Pascua 🎄' })
+    const recuadro = titulo.closest('section')
+    expect(recuadro).toHaveTextContent('Pan de Pascua Tradicional')
+    expect(recuadro).toHaveTextContent('$10.500')
+    // Los normales quedan fuera del recuadro destacado, en su bloque de siempre.
+    expect(recuadro).not.toHaveTextContent('Brownie Nuez')
+    expect(screen.getByText(/¿Quieres agregar algo saludable\?/)).toBeInTheDocument()
+
+    // Se agregan al pedido igual que cualquier otro producto.
+    fireEvent.click(screen.getByText('Pan de Pascua Tradicional').closest('label').querySelector('input'))
+    expect(update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        productos_hornear: [20],
+        productosHornearDetalle: [{ id: 20, nombre: 'Pan de Pascua Tradicional', precio: 9500 }],
+        bakingTotal: 9500,
+      })
+    )
+  })
+
   it('es opcional: el flujo avanza aunque no se seleccione ningún producto', async () => {
     render(<SummaryWrapper />)
     await screen.findByText('Brownie Nuez') // add-on cargado

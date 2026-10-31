@@ -34,13 +34,16 @@ function mapProducto(p, i) {
     image: p.imagen ? imagenUrl(p.imagen) : null,
     emoji: '🧁',
     gradient: GRADIENTS[i % GRADIENTS.length],
+    badge: p.etiqueta || null,
   }
 }
 
 function DulceCard({ item, index }) {
   return (
     <motion.div
-      className="bg-ivory border border-wheat/50 rounded-2xl overflow-hidden hover:border-amber/40 hover:shadow-lg transition-all duration-400"
+      className={`bg-ivory border rounded-2xl overflow-hidden hover:border-amber/40 hover:shadow-lg transition-all duration-400 ${
+        item.badge ? 'border-terracotta ring-1 ring-terracotta' : 'border-wheat/50'
+      }`}
       initial={{ opacity: 0, y: 30 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: '-40px' }}
@@ -51,6 +54,11 @@ function DulceCard({ item, index }) {
           <img src={item.image} alt={item.name} loading="lazy" className="absolute inset-0 w-full h-full object-cover" />
         ) : (
           <span className="text-4xl" aria-hidden="true">{item.emoji}</span>
+        )}
+        {item.badge && (
+          <span className="absolute top-2 left-2 rounded-full bg-terracotta text-ivory text-2xs font-bold px-2 py-0.5 shadow-sm">
+            {item.badge}
+          </span>
         )}
       </div>
       <div className="p-3">

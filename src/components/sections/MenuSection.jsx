@@ -27,6 +27,7 @@ function mapDulce(p, i) {
     image: p.imagen ? imagenUrl(p.imagen) : null,
     emoji: '🧁',
     gradient: DULCE_GRADIENTS[i % DULCE_GRADIENTS.length],
+    badge: p.etiqueta || null,
   }
 }
 
@@ -401,6 +402,11 @@ function DulceCard({ item, index }) {
         <div className="absolute top-2.5 left-2.5 bg-espresso/85 backdrop-blur-sm text-amber text-xs font-bold px-2.5 py-1 rounded-full">
           {item.priceLabel}
         </div>
+        {item.badge && (
+          <div className="absolute bottom-2.5 left-2.5 bg-terracotta text-ivory text-2xs font-bold px-2 py-0.5 rounded-full">
+            {item.badge}
+          </div>
+        )}
       </div>
       {/* Info */}
       <div className="bg-background-surface border-x border-b border-espresso/8 rounded-b-2xl p-3.5">

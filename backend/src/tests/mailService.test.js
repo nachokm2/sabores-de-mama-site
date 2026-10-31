@@ -145,6 +145,14 @@ describe('mailService', () => {
     const html = ultimoHtml()
     expect(html).not.toContain('Postres y Snacks')
     expect(html).not.toContain('Servicios adicionales')
+    expect(html).not.toContain('Descuento de la fecha')
+  })
+
+  it('el resumen muestra el descuento de la fecha cuando lo hay', async () => {
+    await sendEstadoEmail({ ...PEDIDO, descuento: 6000, total: 59000 }, 'solicitud_recibida')
+    const html = ultimoHtml()
+    expect(html).toContain('Descuento de la fecha')
+    expect(html).toContain('-$6.000')
   })
 
   it('clasifica los ingredientes en su categoría (incluidos los nombres compuestos)', () => {

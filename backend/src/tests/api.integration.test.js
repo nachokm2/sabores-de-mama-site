@@ -502,6 +502,122 @@ describe('El total del pedido lo calcula el servidor (A1)', () => {
     expect(Number(res.body.pedido.total)).toBe(60000)
     expect(Number(res.body.pedido.costo_despacho)).toBe(0)
   })
+
+  it('aplica el descuento de la fecha sólo sobre el precio base y lo guarda', async () => {
+    await pool.query(`UPDATE cupos SET descuento_meal_prep = 10 WHERE fecha = '2026-12-20'`)
+    const { rows } = await pool.query(
+      `INSERT INTO productos_hornear (nombre, precio, activo) VALUES ('Pan de Pascua', 9500, true) RETURNING id`
+    )
+    const res = await request(app)
+      .post('/api/pedidos')
+      .send(pedidoConDespacho({ productos_hornear: [{ id: rows[0].id, nombre: 'Pan de Pascua', precio: 9500 }] }))
+
+    expect(res.status).toBe(201)
+    // 60000 − 6000 (10% de la base) + 5000 despacho + 9500 pan (sin descuento).
+    expect(Number(res.body.pedido.total)).toBe(68500)
+    expect(Number(res.body.pedido.descuento)).toBe(6000)
+  })
+
+  it('el descuento de un servicio no se aplica al otro', async () => {
+    await pool.query(`UPDATE cupos SET descuento_meal_prep = 10 WHERE fecha = '2026-12-20'`)
+    await pool.query(`UPDATE comunas SET costo_cocinera = 5000, activo_cocinera = true WHERE nombre = $1`, [COMUNA])
+    const { rows } = await pool.query(`SELECT precio_base FROM servicios_config WHERE servicio = 'cocinera'`)
+
+    const res = await request(app).post('/api/pedidos').send(pedidoConDespacho({ servicio: 'cocinera' }))
+
+    expect(res.status).toBe(201)
+    expect(Number(res.body.pedido.descuento)).toBe(0)
+    expect(Number(res.body.pedido.total)).toBe(Number(rows[0].precio_base) + 5000)
+  })
+})
+
+describe('Descuento por fecha en /api/cupos', () => {
+  it('la admin lo fija por servicio, el público lo ve y crear en lote no lo borra', async () => {
+    const token = await login()
+    const auth = { Authorization: `Bearer ${token}` }
+
+    const guardado = await request(app)
+      .post('/api/cupos')
+      .set(auth)
+      .send({ fecha: '2026-12-04', servicio: 'meal_prep', capacidad_maxima: 5, activo: true, descuento: 10 })
+    expect(guardado.status).toBe(201)
+    expect(guardado.body.cupo.descuento).toBe(10)
+
+    // Re-crear la fecha en lote (sin descuento) conserva el 10%.
+    await request(app)
+      .post('/api/cupos/bulk')
+      .set(auth)
+      .send({ fechas: ['2026-12-04'], servicio: 'meal_prep', capacidad_maxima: 8, activo: true })
+
+    const mp = await request(app).get('/api/cupos?servicio=meal_prep')
+    expect(mp.body.cupos[0]).toMatchObject({ capacidad_maxima: 8, descuento: 10 })
+
+    // El otro servicio no hereda el descuento.
+    await request(app)
+      .post('/api/cupos')
+      .set(auth)
+      .send({ fecha: '2026-12-04', servicio: 'cocinera', capacidad_maxima: 5, activo: true })
+    const coc = await request(app).get('/api/cupos?servicio=cocinera')
+    expect(coc.body.cupos[0].descuento).toBe(0)
+  })
+
+  it('rechaza un descuento fuera de 0–100 (400)', async () => {
+    const token = await login()
+    const res = await request(app)
+      .post('/api/cupos')
+      .set({ Authorization: `Bearer ${token}` })
+      .send({ fecha: '2026-12-04', servicio: 'meal_prep', capacidad_maxima: 5, descuento: 150 })
+    expect(res.status).toBe(400)
+  })
+})
+
+describe('Etiqueta destacada en /api/productos-hornear', () => {
+  it('se guarda desde el panel y los destacados salen primero', async () => {
+    const token = await login()
+    const auth = { Authorization: `Bearer ${token}` }
+    await request(app).post('/api/productos-hornear').set(auth).send({ nombre: 'Alfajor', precio: 3000 })
+    const pan = await request(app)
+      .post('/api/productos-hornear')
+      .set(auth)
+      .send({ nombre: 'Pan de Pascua Tradicional', precio: 9500, formato: '1 kg', etiqueta: '  Pan de Pascua 🎄 ' })
+    expect(pan.status).toBe(201)
+    expect(pan.body.producto.etiqueta).toBe('Pan de Pascua 🎄')
+
+    const res = await request(app).get('/api/productos-hornear')
+    expect(res.body.productos.map((p) => p.nombre)).toEqual(['Pan de Pascua Tradicional', 'Alfajor'])
+  })
+})
+
+describe('Siembra del Pan de Pascua', () => {
+  const MARCA = 'pan-de-pascua-2026'
+
+  it('crea los 4 panes destacados una sola vez (no reaparecen si la admin los borra)', async () => {
+    await pool.query('DELETE FROM siembras_aplicadas WHERE nombre = $1', [MARCA])
+    await runMigrations()
+
+    const res = await request(app).get('/api/productos-hornear')
+    expect(res.body.productos.map((p) => [p.nombre, Number(p.precio), p.etiqueta])).toEqual([
+      ['Pan de Pascua Tradicional ½\u00A0kg', 5000, 'Pan de Pascua 🎄'],
+      ['Pan de Pascua Frutos Secos ½\u00A0kg', 6000, 'Pan de Pascua 🎄'],
+      ['Pan de Pascua Tradicional 1\u00A0kg', 9500, 'Pan de Pascua 🎄'],
+      ['Pan de Pascua Frutos Secos 1\u00A0kg', 10500, 'Pan de Pascua 🎄'],
+    ])
+    expect(res.body.productos.every((p) => p.imagen.startsWith('/assets/images/pan-de-pascua-'))).toBe(true)
+
+    await pool.query('DELETE FROM productos_hornear')
+    await runMigrations()
+    const { rows } = await pool.query('SELECT count(*)::int AS n FROM productos_hornear')
+    expect(rows[0].n).toBe(0)
+  })
+
+  it('no duplica si ya había un Pan de Pascua cargado a mano', async () => {
+    await pool.query('DELETE FROM siembras_aplicadas WHERE nombre = $1', [MARCA])
+    await pool.query(`INSERT INTO productos_hornear (nombre, precio, activo) VALUES ('Pan de pascua casero', 8000, true)`)
+    await runMigrations()
+
+    const { rows } = await pool.query('SELECT nombre FROM productos_hornear')
+    expect(rows.map((r) => r.nombre)).toEqual(['Pan de pascua casero'])
+  })
 })
 
 describe('Separación de roles admin/cliente (A2)', () => {

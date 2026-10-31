@@ -19,6 +19,7 @@ const VACIO = {
   porciones: '',
   descripcion: '',
   imagen: '',
+  etiqueta: '',
   activo: true,
 }
 
@@ -101,6 +102,7 @@ export default function AdminProductos() {
         imagen: form.imagen.trim() || null,
         formato: form.formato.trim() || null,
         porciones: form.porciones.trim() || null,
+        etiqueta: form.etiqueta.trim() || null,
         activo: form.activo,
       })
       setMsg(`Producto "${form.nombre.trim()}" ${editando ? 'actualizado' : 'creado'}.`)
@@ -122,6 +124,7 @@ export default function AdminProductos() {
       porciones: p.porciones || '',
       descripcion: p.descripcion || '',
       imagen: p.imagen || '',
+      etiqueta: p.etiqueta || '',
       activo: p.activo,
     })
     window.scrollTo({ top: 0, behavior: 'smooth' })
@@ -186,6 +189,20 @@ export default function AdminProductos() {
           <label className="block mb-3 text-sm">
             <span className="block text-espresso font-medium mb-1">Porciones</span>
             <input className={inputCls} value={form.porciones} onChange={(e) => setCampo('porciones', e.target.value)} placeholder="8 a 10 porciones" />
+          </label>
+
+          <label className="block mb-3 text-sm">
+            <span className="block text-espresso font-medium mb-1">Etiqueta destacada (opcional)</span>
+            <input
+              className={inputCls}
+              maxLength={40}
+              value={form.etiqueta}
+              onChange={(e) => setCampo('etiqueta', e.target.value)}
+              placeholder="Pan de Pascua 🎄"
+            />
+            <span className="block text-2xs text-warm-gray mt-1">
+              Los productos con la misma etiqueta salen primero, agrupados y resaltados. Déjala vacía para un producto normal.
+            </span>
           </label>
 
           <label className="block mb-3 text-sm">
@@ -265,7 +282,8 @@ export default function AdminProductos() {
                     )}
                     {p.descripcion && <p className="text-xs text-warm-gray mt-1 line-clamp-2">{p.descripcion}</p>}
                     <div className="flex items-center gap-3 mt-3 pt-2 border-t border-espresso/5">
-                      {!p.activo && <span className="text-2xs text-warm-gray bg-espresso/[0.06] px-2 py-0.5 rounded-full">Inactivo</span>}
+                      {p.etiqueta && <span className="text-2xs font-semibold text-ivory bg-terracotta px-2 py-0.5 rounded-full">{p.etiqueta}</span>}
+                      {!p.activo &&<span className="text-2xs text-warm-gray bg-espresso/[0.06] px-2 py-0.5 rounded-full">Inactivo</span>}
                       <button onClick={() => onEditar(p)} className="text-xs font-medium text-terracotta hover:underline ml-auto">Editar</button>
                       <button onClick={() => onEliminar(p)} className="text-xs text-warm-gray hover:text-primary-600">Eliminar</button>
                     </div>

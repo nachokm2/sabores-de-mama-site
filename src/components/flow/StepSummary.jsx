@@ -200,6 +200,12 @@ export default function StepSummary({ data, update, onBack }) {
             {ensaladasSel.map((a) => a.nombre.replace(/^Ensalada:\s*/, '')).join(', ')}
           </Fila>
         )}
+        {data.descuento > 0 && (
+          <div className="flex justify-between gap-4 py-1.5 text-sm font-semibold text-[#15803D]">
+            <span>Descuento de la fecha ({data.descuentoPct}%)</span>
+            <span>-{fmtCLP(data.descuento)}</span>
+          </div>
+        )}
         <div className="flex justify-between font-bold text-espresso mt-2 pt-2 border-t border-espresso/10">
           <span>Total</span>
           <span className="text-terracotta">{fmtCLP(data.total)}</span>

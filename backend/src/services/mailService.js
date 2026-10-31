@@ -254,6 +254,7 @@ function resumenPedidoHtml(pedido) {
         ${pedido.comuna ? row('Comuna', pedido.comuna) : ''}
         ${pedido.tipo_entrega ? row('Entrega', pedido.tipo_entrega) : ''}
         ${row('Despacho', fmtCLP(pedido.costo_despacho))}
+        ${Number(pedido.descuento) > 0 ? row('Descuento de la fecha', '-' + fmtCLP(pedido.descuento)) : ''}
         <tr>
           <td style="padding:6px 0 0;font-weight:bold;color:${INK};font-size:15px;">Total</td>
           <td style="padding:6px 0 0;text-align:right;font-weight:bold;color:${BRAND};font-size:15px;">${esc(fmtCLP(pedido.total))}</td>

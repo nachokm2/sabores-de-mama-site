@@ -11,7 +11,8 @@ import { query } from '../models/index.js'
  *
  * La fórmula replica la del frontend (`src/lib/flowConfig.js` → computeTotal):
  *
- *     total = precio base + despacho + productos para hornear + adicionales
+ *     total = precio base − descuento de la fecha + despacho
+ *             + productos para hornear + adicionales
  *
  * pero cada componente se lee de su fuente autoritativa en la BD, no del body.
  */
@@ -68,6 +69,18 @@ async function costoDespacho(b) {
 }
 
 /**
+ * Descuento (%) que la admin configuró para la fecha de entrega en ese
+ * servicio. Sin cupo para la fecha devuelve 0: la reserva del cupo es la que
+ * rechaza el pedido, no el cálculo del precio.
+ */
+async function descuentoFecha(b) {
+  const col = b.servicio === 'cocinera' ? 'descuento_cocinera' : 'descuento_meal_prep'
+  const { rows } = await query(`SELECT COALESCE(${col}, 0) AS pct FROM cupos WHERE fecha = $1`, [b.fecha_entrega])
+  const pct = Number(rows[0]?.pct) || 0
+  return Math.min(Math.max(pct, 0), 100)
+}
+
+/**
  * Suma de los productos para hornear, con el precio de la tabla (no el del
  * body). Los ids que no existan o estén inactivos suman 0.
  */
@@ -104,8 +117,9 @@ function totalAdicionales(adicionales, cfg) {
 }
 
 /**
- * Calcula el total del pedido. Devuelve también el `costo_despacho` para
- * guardarlo coherente con el total (antes también venía del cliente).
+ * Calcula el total del pedido. Devuelve también el `costo_despacho` y el
+ * `descuento` (en pesos) para guardarlos coherentes con el total (antes el
+ * despacho también venía del cliente).
  *
  * Lanza un error con `status = 400` si el pedido no es despachable.
  */
@@ -125,10 +139,13 @@ export async function calcularTotal(b) {
   const hornear = await totalHornear(b.productos_hornear)
   const adicionales = totalAdicionales(b.adicionales, cfg)
   const base = Number(cfg.precio_base) || 0
+  // El descuento de la fecha sólo rebaja el precio del servicio.
+  const descuento = Math.round((base * (await descuentoFecha(b))) / 100)
 
   return {
-    total: base + despacho + hornear + adicionales,
+    total: base - descuento + despacho + hornear + adicionales,
     costo_despacho: despacho,
-    detalle: { base, despacho, hornear, adicionales },
+    descuento,
+    detalle: { base, descuento, despacho, hornear, adicionales },
   }
 }

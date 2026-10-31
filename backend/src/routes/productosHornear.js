@@ -4,7 +4,11 @@ import { requireAdmin, isAdminToken } from '../middleware/authJWT.js'
 
 const router = Router()
 
-const COLS = 'id, nombre, descripcion, precio, imagen, formato, porciones, activo'
+const COLS = 'id, nombre, descripcion, precio, imagen, formato, porciones, activo, etiqueta'
+
+// Los destacados (con etiqueta) primero, agrupados por etiqueta y de menor a
+// mayor precio (se leen como lista de precios); el resto, por nombre.
+const ORDEN = 'ORDER BY etiqueta IS NULL, etiqueta, CASE WHEN etiqueta IS NOT NULL THEN precio END, nombre'
 
 /**
  * GET /api/productos-hornear  (público)
@@ -15,8 +19,8 @@ router.get('/', async (req, res, next) => {
   try {
     const verTodos = req.query.todos === 'true' && isAdminToken(req)
     const sql = verTodos
-      ? `SELECT ${COLS} FROM productos_hornear ORDER BY nombre`
-      : `SELECT ${COLS} FROM productos_hornear WHERE activo = true ORDER BY nombre`
+      ? `SELECT ${COLS} FROM productos_hornear ${ORDEN}`
+      : `SELECT ${COLS} FROM productos_hornear WHERE activo = true ${ORDEN}`
     const { rows } = await query(sql)
     return res.json({ productos: rows, count: rows.length })
   } catch (err) {
@@ -26,11 +30,11 @@ router.get('/', async (req, res, next) => {
 
 /**
  * POST /api/productos-hornear  (protegido) — crear o editar (upsert por id).
- * Body: { id?, nombre, descripcion, precio, imagen, formato, porciones, activo }
+ * Body: { id?, nombre, descripcion, precio, imagen, formato, porciones, activo, etiqueta }
  */
 router.post('/', requireAdmin, async (req, res, next) => {
   try {
-    const { id, nombre, descripcion, precio, imagen, formato, porciones, activo } = req.body || {}
+    const { id, nombre, descripcion, precio, imagen, formato, porciones, activo, etiqueta } = req.body || {}
     if (!nombre || !String(nombre).trim()) return res.status(400).json({ error: 'El nombre es obligatorio.' })
     const vals = [
       String(nombre).trim(),
@@ -40,14 +44,15 @@ router.post('/', requireAdmin, async (req, res, next) => {
       formato || null,
       porciones || null,
       activo !== false,
+      String(etiqueta ?? '').trim().slice(0, 40) || null,
     ]
 
     if (id) {
       const { rows } = await query(
         `UPDATE productos_hornear
             SET nombre = $1, descripcion = $2, precio = $3, imagen = $4,
-                formato = $5, porciones = $6, activo = $7
-          WHERE id = $8 RETURNING ${COLS}`,
+                formato = $5, porciones = $6, activo = $7, etiqueta = $8
+          WHERE id = $9 RETURNING ${COLS}`,
         [...vals, id]
       )
       if (!rows[0]) return res.status(404).json({ error: 'Producto no encontrado.' })
@@ -55,8 +60,8 @@ router.post('/', requireAdmin, async (req, res, next) => {
     }
 
     const { rows } = await query(
-      `INSERT INTO productos_hornear (nombre, descripcion, precio, imagen, formato, porciones, activo)
-       VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING ${COLS}`,
+      `INSERT INTO productos_hornear (nombre, descripcion, precio, imagen, formato, porciones, activo, etiqueta)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING ${COLS}`,
       vals
     )
     return res.status(201).json({ producto: rows[0] })

@@ -272,6 +272,23 @@ UPDATE cupos c SET
 WHERE c.capacidad_meal_prep IS NULL OR c.capacidad_cocinera IS NULL
    OR c.confirmados_meal_prep IS NULL OR c.confirmados_cocinera IS NULL
    OR c.activo_meal_prep IS NULL OR c.activo_cocinera IS NULL;
+-- Descuento (%) de una fecha, por servicio. Se aplica sobre el precio base del
+-- servicio (no sobre despacho ni adicionales). 0 = sin descuento.
+ALTER TABLE cupos ADD COLUMN IF NOT EXISTS descuento_meal_prep INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE cupos ADD COLUMN IF NOT EXISTS descuento_cocinera  INTEGER NOT NULL DEFAULT 0;
+-- Monto descontado en el pedido (en pesos), para que el correo y el panel
+-- muestren por qué el total es menor que base + despacho + extras.
+ALTER TABLE pedidos ADD COLUMN IF NOT EXISTS descuento INTEGER NOT NULL DEFAULT 0;
+-- Etiqueta destacada de un producto (p. ej. "Pan de Pascua 🎄"): si la tiene,
+-- sale primero y resaltado en la landing y en el flujo de pedido.
+ALTER TABLE productos_hornear ADD COLUMN IF NOT EXISTS etiqueta VARCHAR(40);
+-- Siembras de datos de UNA sola vez (p. ej. productos de temporada). Cada una
+-- deja su marca acá: como las migraciones corren en cada arranque, sin la marca
+-- lo sembrado reaparecería después de que la admin lo borre o lo edite.
+CREATE TABLE IF NOT EXISTS siembras_aplicadas (
+  nombre      VARCHAR(80) PRIMARY KEY,
+  aplicada_en TIMESTAMPTZ NOT NULL DEFAULT now()
+);
 
 -- ── Encuestas de satisfacción (post-entrega) ──────────────────────────────────
 -- Una respuesta por pedido (UNIQUE order_id impide duplicados). El enlace del
@@ -320,6 +337,48 @@ async function seedComunas(client) {
   console.log(`[migrate] ${COMUNAS_INICIALES.length} comunas sembradas (costo por defecto: ${costo}).`)
 }
 
+// Pan de Pascua (temporada 2026): se suman como adicional al pedido, igual que
+// los demás Postres y Snacks. Las fotos viven en public/assets/images. El
+// tamaño va con espacio no separable (\u00A0) para que "1 kg" no se corte en dos
+// líneas en las tarjetas.
+const PAN_DE_PASCUA_ETIQUETA = 'Pan de Pascua 🎄'
+const PAN_DE_PASCUA = [
+  { nombre: 'Pan de Pascua Tradicional 1\u00A0kg', precio: 9500, imagen: '/assets/images/pan-de-pascua-tradicional.jpg' },
+  { nombre: 'Pan de Pascua Frutos Secos 1\u00A0kg', precio: 10500, imagen: '/assets/images/pan-de-pascua-frutos-secos.jpg' },
+  { nombre: 'Pan de Pascua Tradicional ½\u00A0kg', precio: 5000, imagen: '/assets/images/pan-de-pascua-tradicional.jpg' },
+  { nombre: 'Pan de Pascua Frutos Secos ½\u00A0kg', precio: 6000, imagen: '/assets/images/pan-de-pascua-frutos-secos.jpg' },
+]
+
+async function seedPanDePascua(client) {
+  await client.query('BEGIN')
+  try {
+    // La marca va primero y en la misma transacción: si dos instancias arrancan
+    // a la vez, la segunda espera el commit de la primera y no siembra de nuevo.
+    const marca = await client.query(
+      `INSERT INTO siembras_aplicadas (nombre) VALUES ('pan-de-pascua-2026')
+       ON CONFLICT (nombre) DO NOTHING RETURNING nombre`
+    )
+    // Si la admin ya los cargó a mano, no se duplican.
+    const existentes = await client.query(
+      "SELECT 1 FROM productos_hornear WHERE nombre ILIKE 'pan de pascua%' LIMIT 1"
+    )
+    if (marca.rowCount && !existentes.rowCount) {
+      for (const p of PAN_DE_PASCUA) {
+        await client.query(
+          `INSERT INTO productos_hornear (nombre, precio, imagen, activo, etiqueta)
+           VALUES ($1, $2, $3, true, $4)`,
+          [p.nombre, p.precio, p.imagen, PAN_DE_PASCUA_ETIQUETA]
+        )
+      }
+      console.log(`[migrate] ${PAN_DE_PASCUA.length} productos de Pan de Pascua sembrados.`)
+    }
+    await client.query('COMMIT')
+  } catch (err) {
+    await client.query('ROLLBACK')
+    throw err
+  }
+}
+
 async function seedAdmin(client) {
   const email = process.env.ADMIN_EMAIL
   const password = process.env.ADMIN_PASSWORD
@@ -349,6 +408,7 @@ export async function runMigrations() {
     // ADD VALUE no puede ejecutarse dentro de la transacción que crea el tipo.
     await client.query("ALTER TYPE estado_pedido ADD VALUE IF NOT EXISTS 'en_delivery'")
     await seedComunas(client)
+    await seedPanDePascua(client)
     await seedAdmin(client)
     console.log('[migrate] Migraciones aplicadas correctamente.')
   } finally {

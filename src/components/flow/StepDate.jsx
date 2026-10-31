@@ -38,13 +38,23 @@ export default function StepDate({ data, update, onNext, onBack }) {
 
   const seleccionar = (cupo) => {
     if (cupo.disponibles <= 0) return
-    update({ fecha_entrega: String(cupo.fecha).slice(0, 10) })
+    // El descuento viaja con la fecha: el total se recalcula en el reducer, y el
+    // backend lo vuelve a calcular desde el cupo (no confía en este valor).
+    update({ fecha_entrega: String(cupo.fecha).slice(0, 10), descuentoPct: Number(cupo.descuento) || 0 })
   }
+
+  const hayDescuento = cupos.some((c) => Number(c.descuento) > 0 && c.disponibles > 0)
 
   return (
     <div>
       <h2 className="font-display text-2xl font-bold text-espresso mb-1">Elige la fecha de entrega</h2>
       <p className="text-warm-gray text-sm mb-6">Sólo mostramos las fechas con cupo disponible.</p>
+
+      {hayDescuento && (
+        <p className="rounded-xl border border-[#15803D]/30 bg-[#15803D]/10 text-[#15803D] text-sm font-semibold px-4 py-2.5 mb-4">
+          🎉 Hay fechas con descuento: elige una marcada y el descuento se aplica solo.
+        </p>
+      )}
 
       {loading ? (
         <p className="text-warm-gray text-sm py-8 text-center">Cargando fechas…</p>
@@ -60,6 +70,7 @@ export default function StepDate({ data, update, onNext, onBack }) {
             const value = String(c.fecha).slice(0, 10)
             const disabled = c.disponibles <= 0
             const selected = data.fecha_entrega === value
+            const descuento = Number(c.descuento) || 0
             const { dia, fecha } = fmtFechaLarga(c.fecha)
             return (
               <button
@@ -67,19 +78,29 @@ export default function StepDate({ data, update, onNext, onBack }) {
                 onClick={() => seleccionar(c)}
                 disabled={disabled}
                 aria-pressed={selected}
-                className={`rounded-2xl border p-3 text-left transition-all ${
+                className={`relative rounded-2xl border p-3 text-left transition-all ${
                   disabled
                     ? 'border-espresso/10 bg-espresso/[0.03] opacity-50 cursor-not-allowed'
                     : selected
                       ? 'border-terracotta bg-amber/10 ring-1 ring-terracotta'
-                      : 'border-espresso/15 bg-background-surface hover:border-terracotta/50'
+                      : descuento > 0
+                        ? 'border-[#15803D]/50 bg-[#15803D]/[0.06] hover:border-[#15803D]'
+                        : 'border-espresso/15 bg-background-surface hover:border-terracotta/50'
                 }`}
               >
+                {descuento > 0 && !disabled && (
+                  <span className="absolute -top-2.5 right-2 rounded-full bg-[#15803D] text-ivory text-2xs font-bold px-2 py-0.5 shadow-sm">
+                    -{descuento}%
+                  </span>
+                )}
                 <span className="block text-xs text-warm-gray capitalize">{dia}</span>
                 <span className="block text-sm font-semibold text-espresso capitalize">{fecha}</span>
                 <span className={`block text-2xs mt-1 ${disabled ? 'text-warm-gray' : 'text-[#15803D]'}`}>
                   {disabled ? 'Sin cupo' : `${c.disponibles} cupos`}
                 </span>
+                {descuento > 0 && !disabled && (
+                  <span className="block text-2xs font-semibold text-[#15803D]">{descuento}% de descuento</span>
+                )}
               </button>
             )
           })}

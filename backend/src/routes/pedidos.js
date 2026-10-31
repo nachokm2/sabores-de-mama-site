@@ -168,14 +168,14 @@ router.post('/', async (req, res, next) => {
             costo_despacho, total, servicio, productos_hornear, lista_compras, personas, usuario_id,
             adicionales,
             terminos_aceptados, terminos_version, terminos_aceptados_en, terminos_ip, terminos_user_agent,
-            terminos_leidos_en)
+            terminos_leidos_en, descuento)
          VALUES
            ($1,$2,$3,$4,$5,$6,
             $7::jsonb,$8::jsonb,$9,$10,
             $11,$12,$13,$14::jsonb,$15::jsonb,$16,$17,
             $18::jsonb,
             true,$19,$20,$21,$22,
-            $23)
+            $23,$24)
          RETURNING *`,
         [
           b.nombre,
@@ -201,6 +201,7 @@ router.post('/', async (req, res, next) => {
           recorte(req.ip, 64),
           recorte(req.get('user-agent'), 500),
           fechaLectura(b.terminos_leidos_en),
+          precio.descuento,
         ]
       )
       return insert.rows[0]
