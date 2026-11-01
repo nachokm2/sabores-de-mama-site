@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { useState } from 'react'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
@@ -62,6 +62,11 @@ beforeEach(() => {
   createPedido.mockReset().mockResolvedValue({ id: 1, total: 65000 })
 })
 
+// Deshace los spyOn de medidas del DOM (sólo los usa el test de "Ver más").
+afterEach(() => {
+  vi.restoreAllMocks()
+})
+
 describe('BakingAddon', () => {
   it('renderiza los productos para hornear desde la API', async () => {
     render(<BakingAddon data={{ productos_hornear: [] }} update={vi.fn()} />)
@@ -97,6 +102,37 @@ describe('BakingAddon', () => {
         bakingTotal: 9500,
       })
     )
+  })
+
+  it('recorta la descripción larga con "Ver más" sin marcar el producto', async () => {
+    const larga =
+      'Galletas artesanales elaboradas con harina de avena, harina integral, miel, huevo, limón y polvo de hornear. Suaves y frescas.'
+    // jsdom no calcula layout: se simula que sólo el texto largo desborda sus 2 líneas.
+    vi.spyOn(HTMLElement.prototype, 'clientHeight', 'get').mockReturnValue(40)
+    vi.spyOn(HTMLElement.prototype, 'scrollHeight', 'get').mockImplementation(function () {
+      return this.textContent === larga ? 80 : 40
+    })
+    getProductosHornear.mockResolvedValue([
+      { id: 30, nombre: 'Galletas de Avena y Limón', porciones: '10', precio: 8000, descripcion: larga },
+      { id: 31, nombre: 'Kuchen', formato: 'Molde 20 cm', porciones: '8 a 10 porciones', precio: 9000, descripcion: 'Corta.' },
+    ])
+    const update = vi.fn()
+    render(<BakingAddon data={{ productos_hornear: [] }} update={update} />)
+
+    // Un número solo en porciones se lee como unidades; un texto se deja tal cual.
+    expect(await screen.findByText('10 unidades')).toBeInTheDocument()
+    expect(screen.getByText('Molde 20 cm · 8 a 10 porciones')).toBeInTheDocument()
+
+    const desc = screen.getByText(larga)
+    expect(desc.className).toMatch(/line-clamp-2/)
+    // La descripción corta no lleva "Ver más".
+    expect(screen.getAllByRole('button', { name: 'Ver más' })).toHaveLength(1)
+
+    fireEvent.click(screen.getByRole('button', { name: 'Ver más' }))
+    expect(desc.className).not.toMatch(/line-clamp-2/)
+    expect(screen.getByRole('button', { name: 'Ver menos' })).toBeInTheDocument()
+    // Abrir la descripción no agrega el producto al pedido.
+    expect(update).not.toHaveBeenCalled()
   })
 
   it('es opcional: el flujo avanza aunque no se seleccione ningún producto', async () => {

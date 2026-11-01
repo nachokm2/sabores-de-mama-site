@@ -9,6 +9,7 @@ import SectionLabel from '../components/ui/SectionLabel'
 import { DULCES_FAMILIAR, DULCES_SNACKS } from '../data/menu'
 import { getProductosHornear, imagenUrl } from '../lib/publicApi'
 import { fmtCLP } from '../lib/flowConfig'
+import { detalleProducto } from '../lib/productos'
 
 // Degradados para el fondo de las tarjetas sin foto (se rotan por índice).
 const GRADIENTS = [
@@ -29,7 +30,7 @@ function mapProducto(p, i) {
   return {
     key: p.id,
     name: p.nombre,
-    subtitle: [p.formato, p.porciones].filter(Boolean).join(' · ') || p.descripcion || '',
+    subtitle: detalleProducto(p) || p.descripcion || '',
     priceLabel: fmtCLP(p.precio),
     image: p.imagen ? imagenUrl(p.imagen) : null,
     emoji: '🧁',

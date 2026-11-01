@@ -342,41 +342,82 @@ async function seedComunas(client) {
 // tamaño va con espacio no separable (\u00A0) para que "1 kg" no se corte en dos
 // líneas en las tarjetas.
 const PAN_DE_PASCUA_ETIQUETA = 'Pan de Pascua 🎄'
+// `imagenSembrada` es la foto con la que la primera siembra cargó cada pan:
+// iban cruzadas (la del pan abierto, con pasas y fruta confitada, quedó en el
+// de Frutos Secos, que según su descripción no lleva ninguna de las dos).
+const PAN_TRADICIONAL = {
+  descripcion:
+    '¡El sabor de la Navidad en cada bocado! ❤️ Una irresistible combinación de frutas confitadas, nueces y pasas, llena de sabor y tradición.',
+  imagen: '/assets/images/pan-de-pascua-abierto.jpg',
+  imagenSembrada: '/assets/images/pan-de-pascua-tradicional.jpg',
+}
+const PAN_FRUTOS_SECOS = {
+  descripcion:
+    '¡Una delicia para los amantes de los frutos secos! 🤎 Una exquisita combinación de almendras y nueces, perfecta para quienes prefieren disfrutar de la Navidad sin frutas confitadas ni pasas.',
+  imagen: '/assets/images/pan-de-pascua-envuelto.jpg',
+  imagenSembrada: '/assets/images/pan-de-pascua-frutos-secos.jpg',
+}
 const PAN_DE_PASCUA = [
-  { nombre: 'Pan de Pascua Tradicional 1\u00A0kg', precio: 9500, imagen: '/assets/images/pan-de-pascua-tradicional.jpg' },
-  { nombre: 'Pan de Pascua Frutos Secos 1\u00A0kg', precio: 10500, imagen: '/assets/images/pan-de-pascua-frutos-secos.jpg' },
-  { nombre: 'Pan de Pascua Tradicional ½\u00A0kg', precio: 5000, imagen: '/assets/images/pan-de-pascua-tradicional.jpg' },
-  { nombre: 'Pan de Pascua Frutos Secos ½\u00A0kg', precio: 6000, imagen: '/assets/images/pan-de-pascua-frutos-secos.jpg' },
+  { nombre: 'Pan de Pascua Tradicional 1\u00A0kg', precio: 9500, formato: '1.000 g aprox.', ...PAN_TRADICIONAL },
+  { nombre: 'Pan de Pascua Frutos Secos 1\u00A0kg', precio: 10500, formato: '1.000 g aprox.', ...PAN_FRUTOS_SECOS },
+  { nombre: 'Pan de Pascua Tradicional ½\u00A0kg', precio: 5000, formato: '500 g aprox.', ...PAN_TRADICIONAL },
+  { nombre: 'Pan de Pascua Frutos Secos ½\u00A0kg', precio: 6000, formato: '500 g aprox.', ...PAN_FRUTOS_SECOS },
 ]
 
-async function seedPanDePascua(client) {
+/**
+ * Corre `fn` UNA sola vez en la vida de la base, dejando la marca `nombre` en
+ * siembras_aplicadas. La marca va primero y en la misma transacción: si dos
+ * instancias arrancan a la vez, la segunda espera el commit de la primera y ya
+ * no la corre.
+ */
+async function unaVez(client, nombre, fn) {
   await client.query('BEGIN')
   try {
-    // La marca va primero y en la misma transacción: si dos instancias arrancan
-    // a la vez, la segunda espera el commit de la primera y no siembra de nuevo.
     const marca = await client.query(
-      `INSERT INTO siembras_aplicadas (nombre) VALUES ('pan-de-pascua-2026')
-       ON CONFLICT (nombre) DO NOTHING RETURNING nombre`
+      `INSERT INTO siembras_aplicadas (nombre) VALUES ($1)
+       ON CONFLICT (nombre) DO NOTHING RETURNING nombre`,
+      [nombre]
     )
-    // Si la admin ya los cargó a mano, no se duplican.
-    const existentes = await client.query(
-      "SELECT 1 FROM productos_hornear WHERE nombre ILIKE 'pan de pascua%' LIMIT 1"
-    )
-    if (marca.rowCount && !existentes.rowCount) {
-      for (const p of PAN_DE_PASCUA) {
-        await client.query(
-          `INSERT INTO productos_hornear (nombre, precio, imagen, activo, etiqueta)
-           VALUES ($1, $2, $3, true, $4)`,
-          [p.nombre, p.precio, p.imagen, PAN_DE_PASCUA_ETIQUETA]
-        )
-      }
-      console.log(`[migrate] ${PAN_DE_PASCUA.length} productos de Pan de Pascua sembrados.`)
-    }
+    if (marca.rowCount) await fn()
     await client.query('COMMIT')
   } catch (err) {
     await client.query('ROLLBACK')
     throw err
   }
+}
+
+async function seedPanDePascua(client) {
+  await unaVez(client, 'pan-de-pascua-2026', async () => {
+    // Si la admin ya los cargó a mano, no se duplican.
+    const existentes = await client.query(
+      "SELECT 1 FROM productos_hornear WHERE nombre ILIKE 'pan de pascua%' LIMIT 1"
+    )
+    if (existentes.rowCount) return
+    for (const p of PAN_DE_PASCUA) {
+      await client.query(
+        `INSERT INTO productos_hornear (nombre, descripcion, precio, imagen, formato, activo, etiqueta)
+         VALUES ($1, $2, $3, $4, $5, true, $6)`,
+        [p.nombre, p.descripcion, p.precio, p.imagen, p.formato, PAN_DE_PASCUA_ETIQUETA]
+      )
+    }
+    console.log(`[migrate] ${PAN_DE_PASCUA.length} productos de Pan de Pascua sembrados.`)
+  })
+
+  // Las bases sembradas con la primera versión quedaron sin descripción ni peso
+  // y con las fotos cruzadas. Se completa sólo lo que la admin no haya tocado:
+  // descripción y formato vacíos, y la foto que puso la siembra.
+  await unaVez(client, 'pan-de-pascua-2026-descripciones', async () => {
+    for (const p of PAN_DE_PASCUA) {
+      await client.query(
+        `UPDATE productos_hornear
+            SET descripcion = COALESCE(NULLIF(descripcion, ''), $2),
+                formato     = COALESCE(NULLIF(formato, ''), $3),
+                imagen      = CASE WHEN imagen = $4 THEN $5 ELSE imagen END
+          WHERE nombre = $1`,
+        [p.nombre, p.descripcion, p.formato, p.imagenSembrada, p.imagen]
+      )
+    }
+  })
 }
 
 async function seedAdmin(client) {

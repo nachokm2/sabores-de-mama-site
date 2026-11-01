@@ -6,6 +6,7 @@ import SectionLabel from '../ui/SectionLabel'
 import UtensilsIcon from '../ui/UtensilsIcon'
 import { getPlatos, getComunas, getCupos, getProductosHornear, imagenUrl } from '../../lib/publicApi'
 import { fmtCLP } from '../../lib/flowConfig'
+import { detalleProducto } from '../../lib/productos'
 import { openChatBot } from '../../lib/openChatBot'
 
 // Degradados para las tarjetas de dulces sin foto (se rotan por índice).
@@ -22,7 +23,7 @@ const DULCE_GRADIENTS = [
 function mapDulce(p, i) {
   return {
     name: p.nombre,
-    subtitle: [p.formato, p.porciones].filter(Boolean).join(' · ') || p.descripcion || '',
+    subtitle: detalleProducto(p) || p.descripcion || '',
     priceLabel: fmtCLP(p.precio),
     image: p.imagen ? imagenUrl(p.imagen) : null,
     emoji: '🧁',
