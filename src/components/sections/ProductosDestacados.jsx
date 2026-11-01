@@ -4,6 +4,7 @@ import { motion } from 'framer-motion'
 import SectionLabel from '../ui/SectionLabel'
 import { getProductosHornear, imagenUrl } from '../../lib/publicApi'
 import { fmtCLP } from '../../lib/flowConfig'
+import { detalleProducto } from '../../lib/productos'
 
 /**
  * Productos destacados de Postres y Snacks (los que tienen `etiqueta` en el
@@ -68,10 +69,11 @@ export default function ProductosDestacados() {
                   )}
                   <div className="p-3 md:p-4 flex flex-col flex-1">
                     <h3 className="font-display text-espresso text-sm md:text-base font-bold leading-tight">{p.nombre}</h3>
-                    {(p.formato || p.porciones) && (
-                      <p className="font-body text-warm-gray text-xs mt-0.5">
-                        {[p.formato, p.porciones].filter(Boolean).join(' · ')}
-                      </p>
+                    {detalleProducto(p) && (
+                      <p className="font-body text-warm-gray text-xs mt-0.5">{detalleProducto(p)}</p>
+                    )}
+                    {p.descripcion && (
+                      <p className="font-body text-warm-gray text-xs leading-relaxed mt-1 line-clamp-3">{p.descripcion}</p>
                     )}
                     <p className="font-display text-terracotta text-xl md:text-2xl font-bold mt-auto pt-2">
                       {fmtCLP(p.precio)}

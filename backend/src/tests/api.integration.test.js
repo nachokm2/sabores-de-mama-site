@@ -603,6 +603,14 @@ describe('Siembra del Pan de Pascua', () => {
       ['Pan de Pascua Frutos Secos 1\u00A0kg', 10500, 'Pan de Pascua 🎄'],
     ])
     expect(res.body.productos.every((p) => p.imagen.startsWith('/assets/images/pan-de-pascua-'))).toBe(true)
+    // Cada pan con su descripción, su peso y la foto que le corresponde: el
+    // Tradicional (pasas y fruta confitada) lleva la del pan abierto.
+    const [tradMedio, secosMedio, tradKilo] = res.body.productos
+    expect(tradMedio).toMatchObject({ formato: '500 g aprox.', imagen: '/assets/images/pan-de-pascua-abierto.jpg' })
+    expect(tradMedio.descripcion).toMatch(/frutas confitadas, nueces y pasas/)
+    expect(secosMedio).toMatchObject({ formato: '500 g aprox.', imagen: '/assets/images/pan-de-pascua-envuelto.jpg' })
+    expect(secosMedio.descripcion).toMatch(/almendras y nueces/)
+    expect(tradKilo.formato).toBe('1.000 g aprox.')
 
     await pool.query('DELETE FROM productos_hornear')
     await runMigrations()
@@ -617,6 +625,32 @@ describe('Siembra del Pan de Pascua', () => {
 
     const { rows } = await pool.query('SELECT nombre FROM productos_hornear')
     expect(rows.map((r) => r.nombre)).toEqual(['Pan de pascua casero'])
+  })
+
+  it('completa los panes de la primera siembra sin pisar lo que editó la admin', async () => {
+    const NBSP = String.fromCharCode(0xa0)
+    // Base sembrada con la primera versión: sin descripción ni peso y con las
+    // fotos cruzadas. En el de Frutos Secos la admin ya cambió foto y texto.
+    await pool.query(`INSERT INTO siembras_aplicadas (nombre) VALUES ($1) ON CONFLICT DO NOTHING`, [MARCA])
+    await pool.query("DELETE FROM siembras_aplicadas WHERE nombre = 'pan-de-pascua-2026-descripciones'")
+    await pool.query(
+      `INSERT INTO productos_hornear (nombre, precio, imagen, descripcion, activo, etiqueta) VALUES
+         ($1, 9500,  '/assets/images/pan-de-pascua-tradicional.jpg', NULL, true, 'Pan de Pascua 🎄'),
+         ($2, 10500, 'productos-hornear/foto-propia.jpg', 'Texto de la admin', true, 'Pan de Pascua 🎄')`,
+      [`Pan de Pascua Tradicional 1${NBSP}kg`, `Pan de Pascua Frutos Secos 1${NBSP}kg`]
+    )
+
+    await runMigrations()
+
+    const { rows } = await pool.query('SELECT nombre, descripcion, formato, imagen FROM productos_hornear ORDER BY precio')
+    expect(rows).toHaveLength(2)
+    expect(rows[0]).toMatchObject({ formato: '1.000 g aprox.', imagen: '/assets/images/pan-de-pascua-abierto.jpg' })
+    expect(rows[0].descripcion).toMatch(/^¡El sabor de la Navidad/)
+    expect(rows[1]).toMatchObject({
+      formato: '1.000 g aprox.',
+      imagen: 'productos-hornear/foto-propia.jpg',
+      descripcion: 'Texto de la admin',
+    })
   })
 })
 

@@ -1,33 +1,70 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { getProductosHornear, imagenUrl } from '../../lib/publicApi'
 import { computeTotal, fmtCLP } from '../../lib/flowConfig'
+import { detalleProducto } from '../../lib/productos'
 
 function ProductoOpcion({ p, sel, onToggle }) {
+  const [abierta, setAbierta] = useState(false)
+  // ¿La descripción no cabe en sus 2 líneas? Se mide el texto real (no se
+  // cuentan caracteres): lo que cabe depende del ancho de la pantalla.
+  const [recortada, setRecortada] = useState(false)
+  const descRef = useRef(null)
+  const detalle = detalleProducto(p)
+
+  useLayoutEffect(() => {
+    const el = descRef.current
+    if (!el) return undefined
+    const medir = () => setRecortada(el.scrollHeight > el.clientHeight + 1)
+    medir()
+    if (typeof ResizeObserver === 'undefined') return undefined
+    const ro = new ResizeObserver(medir)
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [p.descripcion])
+
   return (
     <label
-      className={`flex items-start justify-between gap-2 rounded-xl border px-3 py-2.5 cursor-pointer transition-colors ${
+      className={`flex items-start gap-3 rounded-xl border px-3 py-2.5 cursor-pointer transition-colors ${
         sel ? 'border-terracotta bg-amber/10' : 'border-espresso/15 bg-background-surface hover:border-terracotta/40'
       }`}
     >
-      <div className="flex items-start gap-2.5 min-w-0">
-        <input type="checkbox" checked={sel} onChange={onToggle} className="mt-0.5 accent-terracotta w-4 h-4 flex-shrink-0" />
-        {p.imagen && (
-          <img
-            src={imagenUrl(p.imagen)}
-            alt=""
-            className="w-12 h-12 rounded-lg object-cover flex-shrink-0"
-            onError={(e) => { e.currentTarget.style.display = 'none' }}
-          />
-        )}
-        <div className="min-w-0">
-          <p className="text-sm font-semibold text-espresso">{p.nombre}</p>
-          {(p.formato || p.porciones) && (
-            <p className="text-2xs text-warm-gray">{[p.formato, p.porciones].filter(Boolean).join(' · ')}</p>
-          )}
-          {p.descripcion && <p className="text-xs text-warm-gray">{p.descripcion}</p>}
+      <input type="checkbox" checked={sel} onChange={onToggle} className="mt-0.5 accent-terracotta w-4 h-4 flex-shrink-0" />
+      {p.imagen && (
+        <img
+          src={imagenUrl(p.imagen)}
+          alt=""
+          className="w-14 h-14 rounded-lg object-cover flex-shrink-0"
+          onError={(e) => { e.currentTarget.style.display = 'none' }}
+        />
+      )}
+      {/* El precio va en la línea del nombre y el resto del texto usa todo el
+          ancho: antes el precio ocupaba una columna propia y la descripción
+          quedaba en una tira angosta y muy alta. */}
+      <div className="min-w-0 flex-1">
+        <div className="flex items-start justify-between gap-2">
+          <p className="text-sm font-semibold text-espresso leading-snug">{p.nombre}</p>
+          <span className="text-sm font-semibold text-terracotta whitespace-nowrap">{fmtCLP(p.precio)}</span>
         </div>
+        {detalle && <p className="text-2xs text-warm-gray mt-0.5">{detalle}</p>}
+        {p.descripcion && (
+          <p ref={descRef} className={`text-xs text-warm-gray leading-relaxed mt-1 ${abierta ? '' : 'line-clamp-2'}`}>
+            {p.descripcion}
+          </p>
+        )}
+        {(recortada || abierta) && (
+          <button
+            type="button"
+            // Dentro del <label>: sin preventDefault el clic marcaría el producto.
+            onClick={(e) => {
+              e.preventDefault()
+              setAbierta((v) => !v)
+            }}
+            className="text-2xs font-semibold text-terracotta hover:underline mt-0.5"
+          >
+            {abierta ? 'Ver menos' : 'Ver más'}
+          </button>
+        )}
       </div>
-      <span className="text-sm font-semibold text-terracotta whitespace-nowrap">{fmtCLP(p.precio)}</span>
     </label>
   )
 }
@@ -82,8 +119,10 @@ export default function BakingAddon({ data, update }) {
     else destacados.set(etiqueta, [...(destacados.get(etiqueta) || []), p])
   }
 
+  // Una sola columna en todos los tamaños: el resumen mide ~670px y en dos
+  // columnas el nombre quedaba partido en 3 o 4 líneas.
   const opciones = (lista) => (
-    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+    <div className="grid grid-cols-1 gap-2.5">
       {lista.map((p) => (
         <ProductoOpcion key={p.id} p={p} sel={seleccionados.includes(p.id)} onToggle={() => toggle(p)} />
       ))}
