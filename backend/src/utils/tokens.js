@@ -56,6 +56,16 @@ export function tokenValido(orderId, token) {
 }
 
 /**
+ * Enlace público de la encuesta de un pedido. Con `rating` (1–5) la página se
+ * abre con esa nota ya marcada: es lo que usan las estrellas del correo.
+ */
+export function encuestaUrl(orderId, rating) {
+  const base = (process.env.CLIENT_URL || 'https://saboresdemama.com').replace(/\/$/, '')
+  const qs = rating ? `?rating=${rating}` : ''
+  return `${base}/encuesta/${orderId}/${surveyToken(orderId)}${qs}`
+}
+
+/**
  * Token del resumen público de un pedido (página de pago). Sin él, `:id` era
  * enumerable y cualquiera podía leer el monto, estado y fecha de TODOS los
  * pedidos recorriendo ids consecutivos.

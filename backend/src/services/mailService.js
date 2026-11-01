@@ -4,7 +4,7 @@ import { query } from '../models/index.js'
 import { presignGet } from './storage.js'
 import { consolidarIngredientes } from '../utils/ingredientes.js'
 import { agruparPorCategoria } from '../utils/categorias.js'
-import { surveyToken } from '../utils/tokens.js'
+import { encuestaUrl } from '../utils/tokens.js'
 import { fotosDePedido } from '../utils/fotos.js'
 
 dotenv.config()
@@ -491,20 +491,66 @@ const TEMPLATES = {
   },
   entregado(pedido) {
     const nombre = esc((pedido.nombre || '').split(' ')[0] || 'hola')
-    const clientUrl = (process.env.CLIENT_URL || 'https://saboresdemama.com').replace(/\/$/, '')
-    const encuestaUrl = `${clientUrl}/encuesta/${pedido.id}/${surveyToken(pedido.id)}`
     return {
       subject: '¡Gracias por tu pedido! ❤️',
       html: baseTemplate({
         titulo: '¡Entregado!',
         intro: `¡${nombre}, esperamos que lo disfrutes! ❤️ Gracias por confiar en Sabores de Mamá.`,
         bodyHtml:
-          `<p style="margin:0 0 16px;color:${INK};line-height:1.6;">¡Esperamos que hayas disfrutado tu pedido! Tu opinión es muy importante para nosotros. Nos tomará menos de un minuto conocer tu experiencia. Haz clic en el siguiente botón para responder una breve encuesta.</p>` +
-          `<div style="text-align:center;margin:8px 0 4px;"><a href="${encuestaUrl}" style="display:inline-block;background:${BRAND};color:#FFFCF7;text-decoration:none;font-weight:bold;padding:13px 30px;border-radius:999px;font-size:15px;">Responder encuesta</a></div>`,
+          `<p style="margin:0 0 16px;color:${INK};line-height:1.6;">¡Esperamos que hayas disfrutado tu pedido! Tu opinión es muy importante para nosotros. ¿Cómo lo calificarías? Toca una estrella: te tomará menos de un minuto.</p>` +
+          estrellasEncuestaHtml(pedido),
         footerNota: '¡Hasta la próxima! 🍽️',
       }),
     }
   },
+}
+
+/**
+ * Las 5 estrellas de la encuesta, cada una con su enlace (?rating=N). Calificar
+ * con un toque desde el propio correo pide mucho menos que "abre la encuesta y
+ * empieza": la página llega con la nota marcada y sólo falta confirmar.
+ */
+function estrellasEncuestaHtml(pedido) {
+  const estrellas = [1, 2, 3, 4, 5]
+    .map(
+      (n) =>
+        `<td align="center" style="padding:0 4px;">` +
+        `<a href="${esc(encuestaUrl(pedido.id, n))}" title="${n} de 5" ` +
+        `style="color:#E0A030;text-decoration:none;font-size:38px;line-height:1;">★</a></td>`
+    )
+    .join('')
+  return `
+      <table role="presentation" cellpadding="0" cellspacing="0" align="center" style="margin:4px auto 6px;">
+        <tr>${estrellas}</tr>
+      </table>
+      <p style="margin:0 0 14px;text-align:center;font-size:12px;color:${MUTED};">1 = muy malo · 5 = excelente</p>
+      <p style="margin:0;text-align:center;font-size:13px;">
+        <a href="${esc(encuestaUrl(pedido.id))}" style="color:${BRAND};font-weight:bold;">Responder la encuesta</a>
+      </p>`
+}
+
+/** Recordatorio (uno solo) de la encuesta, para quien no respondió tras la entrega. */
+function recordatorioEncuestaHtml(pedido) {
+  const nombre = esc((pedido.nombre || '').split(' ')[0] || 'hola')
+  return baseTemplate({
+    titulo: '¿Cómo estuvo tu pedido?',
+    intro: `¡Hola, ${nombre}! Esperamos que hayas disfrutado tu pedido #${esc(pedido.id)}. 😊`,
+    bodyHtml:
+      `<p style="margin:0 0 16px;color:${INK};line-height:1.6;">Tu opinión nos ayuda muchísimo a mejorar. ¿Nos regalas un toque? Elige una estrella:</p>` +
+      estrellasEncuestaHtml(pedido),
+    footerNota: 'Es el único recordatorio que te enviaremos. ¡Gracias! ❤️',
+  })
+}
+
+/** Envía el recordatorio de la encuesta. Mismo contrato que sendEstadoEmail: no lanza. */
+export async function sendRecordatorioEncuesta(pedido) {
+  if (!pedido?.email) return { ok: false, skipped: true, reason: 'pedido sin email' }
+  return dispatchMail({
+    to: pedido.email,
+    subject: '¿Cómo estuvo tu pedido? ⭐',
+    html: recordatorioEncuestaHtml(pedido),
+    label: 'recordatorio-encuesta',
+  })
 }
 
 export const ESTADOS_VALIDOS = Object.keys(TEMPLATES)

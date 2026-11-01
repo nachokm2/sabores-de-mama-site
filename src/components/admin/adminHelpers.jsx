@@ -17,6 +17,18 @@ export function fmtFecha(v) {
   return d.toLocaleDateString('es-CL', { day: '2-digit', month: 'short', year: 'numeric' })
 }
 
+/**
+ * Número para wa.me (sólo dígitos, con el 56 de Chile) a partir del teléfono
+ * que dejó el cliente, venga como venga escrito: "+56 9 1234 5678",
+ * "912345678", "1234 5678". '' si no hay un número usable.
+ */
+export function telefonoWhatsApp(telefono) {
+  const d = String(telefono || '').replace(/\D/g, '')
+  if (/^9\d{8}$/.test(d)) return `56${d}`
+  if (/^\d{8}$/.test(d)) return `569${d}`
+  return d.length >= 10 ? d : ''
+}
+
 /** Fecha de hoy en formato YYYY-MM-DD (zona local). */
 export function todayStr() {
   const d = new Date()

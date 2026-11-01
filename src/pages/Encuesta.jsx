@@ -1,9 +1,16 @@
 import { useEffect, useState } from 'react'
-import { useParams } from 'react-router-dom'
+import { useParams, useSearchParams } from 'react-router-dom'
 import { Helmet } from 'react-helmet-async'
 import { getEncuesta, enviarEncuesta, ApiError } from '../lib/publicApi'
+import { urlResenaGoogle } from '../data/siteConfig'
 
 const COMENT_MAX = 500
+
+/** Nota que viene en el enlace (?rating=N, desde las estrellas del correo); 0 si no hay. */
+function notaDelEnlace(valor) {
+  const n = parseInt(valor, 10)
+  return n >= 1 && n <= 5 ? n : 0
+}
 
 /**
  * Encuesta de satisfacción (pública) enlazada desde el correo de "Entregado".
@@ -12,17 +19,24 @@ const COMENT_MAX = 500
  */
 export default function Encuesta() {
   const { orderId, token } = useParams()
+  const [searchParams] = useSearchParams()
   const [loading, setLoading] = useState(true)
   const [estado, setEstado] = useState(null)
   const [errorCarga, setErrorCarga] = useState('')
 
-  const [rating, setRating] = useState(0)
+  // Si llegó tocando una estrella del correo, la nota ya viene marcada.
+  const [rating, setRating] = useState(() => notaDelEnlace(searchParams.get('rating')))
   const [hover, setHover] = useState(0)
   const [recomienda, setRecomienda] = useState(null)
   const [comentario, setComentario] = useState('')
   const [enviando, setEnviando] = useState(false)
   const [error, setError] = useState('')
   const [enviada, setEnviada] = useState(false)
+  // Nota que acaba de enviar (0 si la encuesta ya estaba respondida de antes).
+  const [notaEnviada, setNotaEnviada] = useState(0)
+  // A quien quedó contento se le invita a dejar la reseña en Google, donde la
+  // ven los clientes nuevos. Sólo si el enlace está configurado.
+  const resenaGoogle = notaEnviada >= 4 ? urlResenaGoogle() : ''
 
   useEffect(() => {
     let active = true
@@ -64,6 +78,7 @@ export default function Encuesta() {
         would_recommend: recomienda,
         improvement_comment: comentario.trim() || null,
       })
+      setNotaEnviada(rating)
       setEnviada(true)
     } catch (err) {
       if (err instanceof ApiError && err.status === 409) {
@@ -100,6 +115,17 @@ export default function Encuesta() {
             <p className="text-5xl mb-3" aria-hidden="true">🙏</p>
             <h1 className="font-display text-2xl font-bold text-espresso mb-2">¡Gracias por tu opinión!</h1>
             <p className="text-warm-gray text-sm">Tu respuesta nos ayuda a seguir mejorando. ❤️</p>
+            {resenaGoogle && (
+              <div className="mt-6 rounded-2xl border border-amber/40 bg-amber/[0.08] p-4">
+                <p className="text-espresso text-sm font-semibold mb-1">¿Nos ayudas con una reseña en Google? ⭐</p>
+                <p className="text-warm-gray text-xs mb-3">
+                  Es lo que más ayuda a que otras familias nos conozcan. Te toma un minuto.
+                </p>
+                <a href={resenaGoogle} target="_blank" rel="noopener noreferrer" className="btn-primary text-sm">
+                  Dejar mi reseña en Google
+                </a>
+              </div>
+            )}
           </div>
         ) : (
           <>

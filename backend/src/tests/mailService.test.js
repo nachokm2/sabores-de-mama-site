@@ -17,7 +17,12 @@ vi.mock('../models/index.js', () => ({
   pool: { query: queryMock },
 }))
 
-import { sendEstadoEmail, sendChecklistIngredientes, ESTADOS_VALIDOS } from '../services/mailService.js'
+import {
+  sendEstadoEmail,
+  sendChecklistIngredientes,
+  sendRecordatorioEncuesta,
+  ESTADOS_VALIDOS,
+} from '../services/mailService.js'
 import { categorizarIngrediente, agruparPorCategoria } from '../utils/categorias.js'
 
 const PEDIDO = {
@@ -146,6 +151,26 @@ describe('mailService', () => {
     expect(html).not.toContain('Postres y Snacks')
     expect(html).not.toContain('Servicios adicionales')
     expect(html).not.toContain('Descuento de la fecha')
+  })
+
+  it('"entregado" trae 5 estrellas, cada una con su nota en el enlace de la encuesta', async () => {
+    await sendEstadoEmail(PEDIDO, 'entregado')
+    const html = ultimoHtml()
+    for (let n = 1; n <= 5; n++) {
+      expect(html).toMatch(new RegExp(`/encuesta/99/[0-9a-f]{32}\\?rating=${n}"`))
+    }
+    // Y el enlace sin nota, para quien prefiera abrirla tal cual.
+    expect(html).toMatch(/\/encuesta\/99\/[0-9a-f]{32}"/)
+  })
+
+  it('el recordatorio de la encuesta lleva las estrellas y avisa que es el único', async () => {
+    const res = await sendRecordatorioEncuesta(PEDIDO)
+    expect(res.ok).toBe(true)
+    expect(ultimoAsunto()).toBe('¿Cómo estuvo tu pedido? ⭐')
+    const html = ultimoHtml()
+    expect(html).toContain('María')
+    expect(html).toMatch(/\/encuesta\/99\/[0-9a-f]{32}\?rating=5"/)
+    expect(html).toContain('único recordatorio')
   })
 
   it('el resumen muestra el descuento de la fecha cuando lo hay', async () => {
