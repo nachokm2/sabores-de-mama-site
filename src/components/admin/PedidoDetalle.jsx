@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { fmtCLP, fmtFecha } from './adminHelpers'
+import { fmtCLP, fmtFecha, telefonoWhatsApp } from './adminHelpers'
 import { editarPedido, ApiError } from '../../lib/adminApi'
 import { imagenUrl } from '../../lib/publicApi'
 import { fotosDePedido } from '../../lib/fotosPedido'
@@ -31,6 +31,58 @@ function Bloque({ titulo, children }) {
       <p className="text-xs font-semibold uppercase tracking-wide text-warm-gray mb-1">{titulo}</p>
       {children}
     </div>
+  )
+}
+
+/**
+ * Estado de la encuesta de un pedido entregado y cómo hacérsela llegar por
+ * WhatsApp: los clientes responden mucho más por ahí que por correo.
+ */
+function EncuestaPedido({ pedido }) {
+  const [copiado, setCopiado] = useState(false)
+  if (pedido.encuesta_respondida) {
+    return <p className="text-[#15803D] font-semibold">✅ Respondida</p>
+  }
+
+  const nombre = (pedido.nombre || '').split(' ')[0]
+  const mensaje =
+    `¡Hola${nombre ? ` ${nombre}` : ''}! 😊 Gracias por tu pedido en Sabores de Mamá. ` +
+    `¿Nos ayudas con una encuesta de 1 minuto? Nos sirve muchísimo para mejorar: ${pedido.encuesta_url}`
+  const numero = telefonoWhatsApp(pedido.telefono)
+
+  const copiar = async () => {
+    try {
+      await navigator.clipboard.writeText(pedido.encuesta_url)
+      setCopiado(true)
+      setTimeout(() => setCopiado(false), 2000)
+    } catch {
+      window.prompt('Copia el enlace de la encuesta:', pedido.encuesta_url)
+    }
+  }
+
+  return (
+    <>
+      <p className="text-warm-gray mb-2">Sin responder todavía.</p>
+      <div className="flex flex-wrap items-center gap-2">
+        {numero && (
+          <a
+            href={`https://wa.me/${numero}?text=${encodeURIComponent(mensaje)}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 rounded-full bg-[#15803D] text-ivory text-xs font-semibold px-3.5 py-2 hover:opacity-90"
+          >
+            Enviar por WhatsApp
+          </a>
+        )}
+        <button
+          type="button"
+          onClick={copiar}
+          className="rounded-full border border-espresso/15 text-espresso text-xs font-semibold px-3.5 py-2 hover:border-terracotta/40"
+        >
+          {copiado ? '¡Copiado!' : 'Copiar enlace'}
+        </button>
+      </div>
+    </>
   )
 }
 
@@ -226,6 +278,12 @@ export default function PedidoDetalle({ pedido, platosCatalogo = [], postresCata
               <p className="text-warm-gray">Sin registro de aceptación</p>
             )}
           </Bloque>
+
+          {pedido.estado === 'entregado' && pedido.encuesta_url && (
+            <Bloque titulo="Encuesta de satisfacción">
+              <EncuestaPedido pedido={pedido} />
+            </Bloque>
+          )}
 
           {fotosEntrega.length > 0 && (
             <Bloque titulo={fotosEntrega.length > 1 ? `Fotos de entrega (${fotosEntrega.length})` : 'Foto de entrega'}>

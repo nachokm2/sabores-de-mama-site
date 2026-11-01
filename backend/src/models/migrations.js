@@ -279,6 +279,12 @@ ALTER TABLE cupos ADD COLUMN IF NOT EXISTS descuento_cocinera  INTEGER NOT NULL 
 -- Monto descontado en el pedido (en pesos), para que el correo y el panel
 -- muestren por qué el total es menor que base + despacho + extras.
 ALTER TABLE pedidos ADD COLUMN IF NOT EXISTS descuento INTEGER NOT NULL DEFAULT 0;
+-- Recordatorio de la encuesta: cuándo se entregó el pedido (se fija la primera
+-- vez que pasa a "entregado") y cuándo se mandó el único recordatorio. Los
+-- pedidos entregados antes de existir la columna quedan en NULL y nunca reciben
+-- recordatorio: no se le escribe de la nada a quien recibió hace semanas.
+ALTER TABLE pedidos ADD COLUMN IF NOT EXISTS entregado_en             TIMESTAMPTZ;
+ALTER TABLE pedidos ADD COLUMN IF NOT EXISTS encuesta_recordatorio_en TIMESTAMPTZ;
 -- Etiqueta destacada de un producto (p. ej. "Pan de Pascua 🎄"): si la tiene,
 -- sale primero y resaltado en la landing y en el flujo de pedido.
 ALTER TABLE productos_hornear ADD COLUMN IF NOT EXISTS etiqueta VARCHAR(40);

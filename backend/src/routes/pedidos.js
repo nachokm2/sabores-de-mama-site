@@ -2,7 +2,7 @@ import { Router } from 'express'
 import { query, withTransaction } from '../models/index.js'
 import { authJWT, requireAdmin, optionalUserId } from '../middleware/authJWT.js'
 import { sendEstadoEmail, ESTADOS_VALIDOS } from '../services/mailService.js'
-import { resumenToken, resumenTokenValido } from '../utils/tokens.js'
+import { resumenToken, resumenTokenValido, encuestaUrl } from '../utils/tokens.js'
 import { calcularTotal } from '../services/pricing.js'
 
 const router = Router()
@@ -61,6 +61,24 @@ function fechaLectura(valor) {
 function recorte(valor, max) {
   const s = String(valor ?? '').trim()
   return s ? s.slice(0, max) : null
+}
+
+/**
+ * Agrega a los pedidos el enlace de su encuesta y si ya fue respondida. Sólo
+ * para respuestas de ADMIN: el enlace lleva el token que permite responderla,
+ * y la admin lo usa para mandarla por WhatsApp desde el panel.
+ */
+async function conEncuesta(pedidos) {
+  if (!pedidos.length) return pedidos
+  const { rows } = await query('SELECT order_id FROM encuestas_satisfaccion WHERE order_id = ANY($1)', [
+    pedidos.map((p) => p.id),
+  ])
+  const respondidas = new Set(rows.map((r) => r.order_id))
+  return pedidos.map((p) => ({
+    ...p,
+    encuesta_url: encuestaUrl(p.id),
+    encuesta_respondida: respondidas.has(p.id),
+  }))
 }
 
 /**
@@ -305,7 +323,8 @@ router.post('/admin', requireAdmin, async (req, res, next) => {
       )
     }
 
-    return res.status(201).json({ pedido, resumen_token: resumenToken(pedido.id) })
+    const [conEnlace] = await conEncuesta([pedido])
+    return res.status(201).json({ pedido: conEnlace, resumen_token: resumenToken(pedido.id) })
   } catch (err) {
     next(err)
   }
@@ -381,7 +400,7 @@ router.get('/', requireAdmin, async (req, res, next) => {
        LIMIT $${params.length - 1} OFFSET $${params.length}`,
       params
     )
-    return res.json({ pedidos: rows, count: rows.length })
+    return res.json({ pedidos: await conEncuesta(rows), count: rows.length })
   } catch (err) {
     next(err)
   }
@@ -448,7 +467,8 @@ router.get('/:id', requireAdmin, async (req, res, next) => {
     if (id === null) return
     const { rows } = await query('SELECT * FROM pedidos WHERE id = $1', [id])
     if (!rows[0]) return res.status(404).json({ error: 'Pedido no encontrado.' })
-    return res.json({ pedido: rows[0] })
+    const [pedido] = await conEncuesta(rows)
+    return res.json({ pedido })
   } catch (err) {
     next(err)
   }
@@ -505,16 +525,20 @@ router.patch('/:id/estado', requireAdmin, async (req, res, next) => {
         ? b.plazo_ingredientes.trim()
         : null
 
+    // `entregado_en` se fija la PRIMERA vez que el pedido pasa a "entregado"
+    // (si la admin lo vuelve a marcar, no se corre la fecha): de ahí se cuenta
+    // el plazo del recordatorio de la encuesta.
     const { rows } = await query(
       `UPDATE pedidos
           SET estado = $1, foto_entrega = $2, fotos_entrega = $3::jsonb,
-              plazo_ingredientes = COALESCE($4, plazo_ingredientes)
+              plazo_ingredientes = COALESCE($4, plazo_ingredientes),
+              entregado_en = CASE WHEN $6 THEN COALESCE(entregado_en, now()) ELSE entregado_en END
         WHERE id = $5 RETURNING *`,
-      [estado, finalFoto, JSON.stringify(finalFotos), plazoBody, id]
+      [estado, finalFoto, JSON.stringify(finalFotos), plazoBody, id, estado === 'entregado']
     )
     if (!rows[0]) return res.status(404).json({ error: 'Pedido no encontrado.' })
 
-    const pedido = rows[0]
+    const [pedido] = await conEncuesta(rows)
     const emailStatus = await sendEstadoEmail(pedido, estado)
 
     return res.json({ pedido, email: emailStatus })
@@ -575,7 +599,8 @@ router.patch('/:id', requireAdmin, async (req, res, next) => {
       params
     )
     if (!rows[0]) return res.status(404).json({ error: 'Pedido no encontrado.' })
-    return res.json({ pedido: rows[0] })
+    const [pedido] = await conEncuesta(rows)
+    return res.json({ pedido })
   } catch (err) {
     next(err)
   }

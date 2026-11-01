@@ -6,6 +6,7 @@ import bcrypt from 'bcryptjs'
 vi.mock('../services/mailService.js', () => ({
   sendEstadoEmail: vi.fn().mockResolvedValue({ ok: true, skipped: true }),
   sendPasswordReset: vi.fn().mockResolvedValue({ ok: true, skipped: true }),
+  sendRecordatorioEncuesta: vi.fn().mockResolvedValue({ ok: true, skipped: true }),
   ESTADOS_VALIDOS: ['solicitud_recibida', 'pagado', 'en_preparacion', 'en_delivery', 'entregado'],
 }))
 
@@ -13,7 +14,8 @@ import app from '../app.js'
 import { pool } from '../models/index.js'
 import { runMigrations } from '../models/migrations.js'
 import { pedidosRateLimiter } from '../middleware/rateLimiter.js'
-import { sendEstadoEmail } from '../services/mailService.js'
+import { sendEstadoEmail, sendRecordatorioEncuesta } from '../services/mailService.js'
+import { enviarRecordatoriosEncuesta } from '../services/recordatorios.js'
 
 // Claves de los fixtures. Van como constantes con nombre en vez de literales
 // pegados a una clave `password`: ese patrón es el que el escáner de secretos
@@ -654,6 +656,42 @@ describe('Siembra del Pan de Pascua', () => {
   })
 })
 
+describe('Recordatorio de la encuesta', () => {
+  // Pedido entregado hace `horas` horas (null = entregado antes de existir la columna).
+  async function pedidoEntregado(email, horas) {
+    const { rows } = await pool.query(
+      `INSERT INTO pedidos (nombre, email, fecha_entrega, servicio, estado, entregado_en)
+       VALUES ('Cliente', $1, '2026-10-20', 'meal_prep', 'entregado',
+               CASE WHEN $2::int IS NULL THEN NULL ELSE now() - make_interval(hours => $2::int) END)
+       RETURNING id`,
+      [email, horas]
+    )
+    return rows[0].id
+  }
+
+  beforeEach(() => sendRecordatorioEncuesta.mockClear())
+
+  it('lo manda una sola vez, sólo a quien no respondió tras 48 h y dentro de 14 días', async () => {
+    const aTiempo = await pedidoEntregado('a-tiempo@example.com', 50)
+    await pedidoEntregado('muy-pronto@example.com', 10)
+    const respondio = await pedidoEntregado('respondio@example.com', 50)
+    await pedidoEntregado('sin-fecha@example.com', null)
+    await pedidoEntregado('muy-antiguo@example.com', 20 * 24)
+    await pool.query(
+      'INSERT INTO encuestas_satisfaccion (order_id, satisfaction_rating, would_recommend) VALUES ($1, 4, true)',
+      [respondio]
+    )
+
+    expect(await enviarRecordatoriosEncuesta()).toBe(1)
+    expect(sendRecordatorioEncuesta).toHaveBeenCalledTimes(1)
+    expect(sendRecordatorioEncuesta).toHaveBeenCalledWith(expect.objectContaining({ id: aTiempo }))
+
+    // La segunda revisión ya no lo repite.
+    expect(await enviarRecordatoriosEncuesta()).toBe(0)
+    expect(sendRecordatorioEncuesta).toHaveBeenCalledTimes(1)
+  })
+})
+
 describe('Separación de roles admin/cliente (A2)', () => {
   it('el token de un cliente NO abre los endpoints de admin (403)', async () => {
     const registro = await request(app).post('/api/auth/registro').send({
@@ -757,6 +795,29 @@ describe('PATCH /api/pedidos/:id/estado', () => {
       .set('Authorization', `Bearer ${token}`)
       .send({ estado: 'inexistente' })
     expect(res.status).toBe(400)
+  })
+
+  it('"entregado" fija la fecha de entrega una sola vez y el panel recibe el enlace de la encuesta', async () => {
+    const id = await crearPedidoDirecto()
+    const auth = { Authorization: `Bearer ${await login()}` }
+
+    const primera = await request(app).patch(`/api/pedidos/${id}/estado`).set(auth).send({ estado: 'entregado' })
+    expect(primera.status).toBe(200)
+    expect(primera.body.pedido.entregado_en).toBeTruthy()
+    expect(primera.body.pedido.encuesta_url).toMatch(new RegExp(`/encuesta/${id}/[0-9a-f]{32}$`))
+    expect(primera.body.pedido.encuesta_respondida).toBe(false)
+
+    // Volver a marcarlo no corre la fecha (de ahí se cuenta el recordatorio).
+    const segunda = await request(app).patch(`/api/pedidos/${id}/estado`).set(auth).send({ estado: 'entregado' })
+    expect(segunda.body.pedido.entregado_en).toBe(primera.body.pedido.entregado_en)
+
+    // Respondida la encuesta, el listado del panel lo refleja.
+    await pool.query(
+      'INSERT INTO encuestas_satisfaccion (order_id, satisfaction_rating, would_recommend) VALUES ($1, 5, true)',
+      [id]
+    )
+    const lista = await request(app).get('/api/pedidos').set(auth)
+    expect(lista.body.pedidos.find((p) => p.id === id).encuesta_respondida).toBe(true)
   })
 
   it('NO permite pasar a "en_delivery" sin una foto del pedido (422)', async () => {

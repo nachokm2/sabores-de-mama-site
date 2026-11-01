@@ -7,6 +7,7 @@ import TerminosModal from './TerminosModal'
 import { createPedido, ApiError } from '../../lib/publicApi'
 import { trackEvent } from '../../lib/analytics'
 import { fmtCLP } from '../../lib/flowConfig'
+import { sugerirEmail } from '../../lib/emailTypos'
 import { TERMINOS_RUTA, TERMINOS_VERSION } from '../../data/terminos'
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
@@ -41,6 +42,9 @@ export default function StepSummary({ data, update, onBack }) {
   const [modalTerminos, setModalTerminos] = useState(false)
 
   const emailValido = EMAIL_RE.test(data.email || '')
+  // "gamil.com" y similares: sin esto el cliente no recibe la confirmación, los
+  // datos de pago ni la encuesta, y nadie se entera.
+  const sugerenciaEmail = sugerirEmail(data.email)
   // La aceptación de los Términos y Condiciones es parte de la validación, no un
   // aviso: sin ella el botón "Confirmar Pedido" queda deshabilitado y `confirmar`
   // corta antes del POST.
@@ -246,6 +250,19 @@ export default function StepSummary({ data, update, onBack }) {
           />
           {touched && !emailValido && (
             <span className="text-xs text-primary-600 mt-1 block">Ingresa un email válido.</span>
+          )}
+          {sugerenciaEmail && (
+            <span className="text-xs text-espresso mt-1 block">
+              ¿Quisiste decir{' '}
+              <button
+                type="button"
+                onClick={() => update({ email: sugerenciaEmail })}
+                className="font-semibold text-terracotta underline underline-offset-2 hover:text-ember"
+              >
+                {sugerenciaEmail}
+              </button>
+              ?
+            </span>
           )}
         </label>
         <label className="block text-sm">

@@ -2,6 +2,7 @@ import dotenv from 'dotenv'
 import app from './app.js'
 import { pool } from './models/index.js'
 import { runMigrations } from './models/migrations.js'
+import { iniciarRecordatoriosEncuesta } from './services/recordatorios.js'
 
 dotenv.config()
 
@@ -36,6 +37,9 @@ async function start() {
   const server = app.listen(PORT, () => {
     console.log(`[server] Sabores de Mamá API escuchando en el puerto ${PORT}`)
   })
+
+  // Recordatorio de la encuesta a quien no respondió tras la entrega.
+  iniciarRecordatoriosEncuesta()
 
   // Cierre ordenado.
   const shutdown = (signal) => {

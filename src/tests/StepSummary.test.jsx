@@ -97,6 +97,21 @@ beforeEach(() => {
   createPedido.mockReset().mockResolvedValue({ id: 123, total: 65000, resumen_token: 'tok' })
 })
 
+describe('StepSummary · email mal escrito', () => {
+  it('sugiere el dominio correcto y lo corrige con un clic', () => {
+    renderSummaryConEstado({ ...DATOS_COMPLETOS, email: 'toto.fernanda@gamil.com' })
+    fireEvent.click(screen.getByRole('button', { name: 'toto.fernanda@gmail.com' }))
+    expect(screen.getByPlaceholderText('tucorreo@ejemplo.com')).toHaveValue('toto.fernanda@gmail.com')
+    // Corregido, la sugerencia desaparece.
+    expect(screen.queryByText(/¿Quisiste decir/)).not.toBeInTheDocument()
+  })
+
+  it('no sugiere nada con un dominio correcto', () => {
+    renderSummary({ ...DATOS_COMPLETOS, email: 'ana@gmail.com' })
+    expect(screen.queryByText(/¿Quisiste decir/)).not.toBeInTheDocument()
+  })
+})
+
 describe('StepSummary · reutilización en Cocinera', () => {
   it('muestra la lista de compras cuando el servicio es "cocinera"', () => {
     renderSummary({

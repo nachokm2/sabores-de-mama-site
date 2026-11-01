@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { fmtCLP } from './adminHelpers'
 import { crearPedidoAdmin, getServiciosConfig, ApiError } from '../../lib/adminApi'
+import { sugerirEmail } from '../../lib/emailTypos'
 
 const inputCls =
   'w-full rounded-lg border border-espresso/15 bg-background px-3 py-2 text-sm text-espresso focus:outline-none focus:border-terracotta/60'
@@ -36,6 +37,7 @@ export default function PedidoNuevo({ servicio, platosCatalogo = [], postresCata
   })
 
   const setCampo = (k, v) => setForm((f) => ({ ...f, [k]: v }))
+  const sugerenciaEmail = sugerirEmail(form.email)
 
   // Precio base del servicio (para sugerir el total).
   useEffect(() => {
@@ -165,6 +167,19 @@ export default function PedidoNuevo({ servicio, platosCatalogo = [], postresCata
         <label className="text-sm">
           <span className="block text-warm-gray mb-1">Email *</span>
           <input type="email" className={inputCls} value={form.email} onChange={(e) => setCampo('email', e.target.value)} required />
+          {sugerenciaEmail && (
+            <span className="text-xs text-espresso mt-1 block">
+              ¿Quisiste decir{' '}
+              <button
+                type="button"
+                onClick={() => setCampo('email', sugerenciaEmail)}
+                className="font-semibold text-terracotta underline underline-offset-2"
+              >
+                {sugerenciaEmail}
+              </button>
+              ?
+            </span>
+          )}
         </label>
         <label className="text-sm">
           <span className="block text-warm-gray mb-1">Teléfono</span>

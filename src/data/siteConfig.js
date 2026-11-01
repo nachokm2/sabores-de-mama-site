@@ -43,6 +43,15 @@ export function mensajeComuna(comuna) {
   return `¡Hola! Quiero pedir comida casera para ${comuna} 📍`
 }
 
+/**
+ * Enlace para dejar una reseña en el perfil de Google del negocio
+ * (VITE_GOOGLE_REVIEW_URL). Vacío = no se ofrece. Es función y no constante
+ * para poder leerla en el momento (y simularla en los tests).
+ */
+export function urlResenaGoogle() {
+  return import.meta.env.VITE_GOOGLE_REVIEW_URL || ''
+}
+
 export function getWhatsAppLink(message = WHATSAPP.defaultMessage) {
   const encoded = encodeURIComponent(message)
   return `${WHATSAPP.baseUrl}${SITE.whatsapp}?text=${encoded}`
